@@ -1,0 +1,82 @@
+﻿using AutoMapper;
+using GPA.Common.DTOs;
+using GPA.Common.DTOs.Inventory;
+using GPA.Common.Entities.Inventory;
+using GPA.Data.Inventory;
+using System.Linq.Expressions;
+
+namespace GPA.Business.Services.Inventory
+{
+    public interface IProductLocationService
+    {
+        public Task<ProductLocationDto?> GetByIdAsync(Guid id);
+
+        public Task<ResponseDto<ProductLocationDto>> GetAllAsync(SearchDto search, Expression<Func<ProductLocation, bool>>? expression = null);
+
+        public Task<ProductLocationDto?> AddAsync(ProductLocationDto ProductLocationDto);
+
+        public Task UpdateAsync(ProductLocationDto ProductLocationDto);
+
+        public Task RemoveAsync(Guid id);
+    }
+
+    public class ProductLocationService : IProductLocationService
+    {
+        private readonly IProductLocationRepository _repository;
+        private readonly IMapper _mapper;
+
+        public ProductLocationService(IProductLocationRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public async Task<ProductLocationDto?> GetByIdAsync(Guid id)
+        {
+            var productLocation = await _repository.GetByIdAsync(query => query, x => x.Id == id);
+            return _mapper.Map<ProductLocationDto>(productLocation);
+        }
+
+        public async Task<ResponseDto<ProductLocationDto>> GetAllAsync(SearchDto search, Expression<Func<ProductLocation, bool>>? expression = null)
+        {
+            var productLocations = await _repository.GetAllAsync(query =>
+            {
+                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
+            }, expression);
+            return new ResponseDto<ProductLocationDto>
+            {
+                Count = await _repository.CountAsync(query => query, expression),
+                Data = _mapper.Map<IEnumerable<ProductLocationDto>>(productLocations)
+            };
+        }
+
+        public async Task<ProductLocationDto> AddAsync(ProductLocationDto dto)
+        {
+            var newProductLocation = _mapper.Map<ProductLocation>(dto);
+            var savedProductLocation = await _repository.AddAsync(newProductLocation);
+            return _mapper.Map<ProductLocationDto>(savedProductLocation);
+        }
+
+        public async Task UpdateAsync(ProductLocationDto dto)
+        {
+            if (dto.Id is null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            var newProductLocation = _mapper.Map<ProductLocation>(dto);
+            newProductLocation.Id = dto.Id.Value;
+            var savedProductLocation = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            await _repository.UpdateAsync(savedProductLocation, newProductLocation, (entityState, _) =>
+            {
+                entityState.Property(x => x.Id).IsModified = false;
+            });
+        }
+
+        public async Task RemoveAsync(Guid id)
+        {
+            var savedProductLocation = await _repository.GetByIdAsync(query => query, x => x.Id == id);
+            await _repository.RemoveAsync(savedProductLocation);
+        }
+    }
+}

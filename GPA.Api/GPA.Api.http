@@ -1,0 +1,6 @@
+@GPA.Api_HostAddress = http://localhost:5156
+
+GET {{GPA.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

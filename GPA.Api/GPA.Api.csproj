@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <UserSecretsId>b75b3b47-b1bf-4b6b-8e68-9e21b0556e06</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\Invoice\" />
+    <Folder Include="Controllers\Security\" />
+    <Folder Include="Controllers\Report\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GPA.Data\GPA.Data.csproj" />
+    <ProjectReference Include="..\GPA.Dtos\GPA.Dtos.csproj" />
+    <ProjectReference Include="..\GPA.Entities\GPA.Entities.csproj" />
+    <ProjectReference Include="..\GPA.Services\GPA.Services.csproj" />
+  </ItemGroup>
+
+</Project>
