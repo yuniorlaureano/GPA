@@ -6,59 +6,59 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GPA.Inventory.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("inventory/[controller]")]
     [ApiController()]
-    public class ProviderAddressController : ControllerBase
+    public class ProductLocationsController : ControllerBase
     {
-        private readonly IProviderAddressService _providerAddressService;
+        private readonly IProductLocationService _ProductLocationService;
         private readonly IMapper _mapper;
 
-        public ProviderAddressController(IProviderAddressService ProviderAddressService, IMapper mapper)
+        public ProductLocationsController(IProductLocationService ProductLocationService, IMapper mapper)
         {
-            _providerAddressService = ProviderAddressService;
+            _ProductLocationService = ProductLocationService;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _providerAddressService.GetByIdAsync(id));
+            return Ok(await _ProductLocationService.GetByIdAsync(id));
         }
 
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
-            return Ok(await _providerAddressService.GetAllAsync(search));
+            return Ok(await _ProductLocationService.GetAllAsync(search));
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(ProviderAddressDto model)
+        public async Task<IActionResult> Create(ProductLocationDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var entity = await _providerAddressService.AddAsync(model);
+            var entity = await _ProductLocationService.AddAsync(model);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(ProviderAddressDto model)
+        public async Task<IActionResult> Update(ProductLocationDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _providerAddressService.UpdateAsync(model);
+            await _ProductLocationService.UpdateAsync(model);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _providerAddressService.RemoveAsync(id);
+            await _ProductLocationService.RemoveAsync(id);
             return NoContent();
         }
     }

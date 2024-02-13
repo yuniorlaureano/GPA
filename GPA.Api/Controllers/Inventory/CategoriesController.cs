@@ -6,59 +6,59 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GPA.Inventory.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("inventory/[controller]")]
     [ApiController()]
-    public class StockController : ControllerBase
+    public class CategoriesController : ControllerBase
     {
-        private readonly IStockService _stockService;
+        private readonly ICategoryService _categoryService;
         private readonly IMapper _mapper;
 
-        public StockController(IStockService StockService, IMapper mapper)
+        public CategoriesController(ICategoryService categoryService, IMapper mapper)
         {
-            _stockService = StockService;
+            _categoryService = categoryService;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _stockService.GetByIdAsync(id));
+            return Ok(await _categoryService.GetByIdAsync(id));
         }
 
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
-            return Ok(await _stockService.GetAllAsync(search));
+            return Ok(await _categoryService.GetAllAsync(search));
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(StockDto model)
+        public async Task<IActionResult> Create(CategoryDto category)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var entity = await _stockService.AddAsync(model);
+            var entity = await _categoryService.AddAsync(category);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(StockDto model)
+        public async Task<IActionResult> Update(CategoryDto category)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _stockService.UpdateAsync(model);
+            await _categoryService.UpdateAsync(category);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _stockService.RemoveAsync(id);
+            await _categoryService.RemoveAsync(id);
             return NoContent();
         }
     }

@@ -6,59 +6,59 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GPA.Inventory.Api.Controllers
 {
-    [Route("inventory/[controller]")]
+    [Route("api/[controller]")]
     [ApiController()]
-    public class ProductLocationController : ControllerBase
+    public class StocksController : ControllerBase
     {
-        private readonly IProductLocationService _ProductLocationService;
+        private readonly IStockService _stockService;
         private readonly IMapper _mapper;
 
-        public ProductLocationController(IProductLocationService ProductLocationService, IMapper mapper)
+        public StocksController(IStockService StockService, IMapper mapper)
         {
-            _ProductLocationService = ProductLocationService;
+            _stockService = StockService;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _ProductLocationService.GetByIdAsync(id));
+            return Ok(await _stockService.GetByIdAsync(id));
         }
 
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
-            return Ok(await _ProductLocationService.GetAllAsync(search));
+            return Ok(await _stockService.GetAllAsync(search));
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(ProductLocationDto model)
+        public async Task<IActionResult> Create(StockDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var entity = await _ProductLocationService.AddAsync(model);
+            var entity = await _stockService.AddAsync(model);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(ProductLocationDto model)
+        public async Task<IActionResult> Update(StockDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ProductLocationService.UpdateAsync(model);
+            await _stockService.UpdateAsync(model);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _ProductLocationService.RemoveAsync(id);
+            await _stockService.RemoveAsync(id);
             return NoContent();
         }
     }
