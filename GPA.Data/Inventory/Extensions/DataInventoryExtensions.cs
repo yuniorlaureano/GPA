@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory.Extensions
     {
         public static void AddDataInventoryRepositories(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<DbContext>(options =>
+            services.AddDbContext<GPADbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("Inventory"), p => p.MigrationsAssembly("GPA.Api")));
             services.AddTransient<ICategoryRepository, CategoryRepository>();
             services.AddTransient<IProductRepository, ProductRepository>();

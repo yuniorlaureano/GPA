@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory
 
     public class StockRepository : Repository<Stock>, IStockRepository
     {
-        public StockRepository(DbContext _dbContext) : base(_dbContext)
+        public StockRepository(GPADbContext _dbContext) : base(_dbContext)
         {
         }
     }

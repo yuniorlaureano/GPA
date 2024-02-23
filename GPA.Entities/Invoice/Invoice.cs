@@ -1,4 +1,4 @@
-﻿using GPA.Common.Entities.Inventory;
+﻿using GPA.Common.Entities.Comon;
 using GPA.Entities;
 
 namespace GPA.Common.Entities.Invoice

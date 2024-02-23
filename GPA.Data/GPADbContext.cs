@@ -1,12 +1,15 @@
 ﻿using GPA.Common.Entities.Inventory;
+using GPA.Common.Entities.Security;
+using GPA.Data.Security.Configurations;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace GPA.Data
 {
-    public class DbContext : Microsoft.EntityFrameworkCore.DbContext
+    public class GPADbContext : IdentityDbContext<GPAUser, GPARole, Guid, GPAUserClaim, GPAUserRole, GPAUserLogin, GPARoleClaim, GPAUserToken>
     {
-        public DbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
+        public GPADbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
         {
         }
 
@@ -19,6 +22,8 @@ namespace GPA.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.ConfigureIdentityTables();
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());//this line register all the configurations
             modelBuilder.Seed();
         }

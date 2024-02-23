@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GPA.Inventory.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("inventory/[controller]")]
     [ApiController()]
     public class StocksController : ControllerBase
     {

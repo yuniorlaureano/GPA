@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory
 
     public class ProductRepository : Repository<Product>, IProductRepository
     {
-        public ProductRepository(DbContext _dbContext) : base(_dbContext)
+        public ProductRepository(GPADbContext _dbContext) : base(_dbContext)
         {
         }
     }

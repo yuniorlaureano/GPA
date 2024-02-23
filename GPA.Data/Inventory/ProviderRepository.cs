@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory
 
     public class ProviderRepository : Repository<Provider>, IProviderRepository
     {
-        public ProviderRepository(DbContext _dbContext) : base(_dbContext)
+        public ProviderRepository(GPADbContext _dbContext) : base(_dbContext)
         {
         }
     }

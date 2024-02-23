@@ -7,9 +7,9 @@ namespace GPA.Data
 
     public abstract class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        protected readonly DbContext _context;
+        protected readonly GPADbContext _context;
         private readonly DbSet<TEntity> _entitySet;
-        public Repository(DbContext context)
+        public Repository(GPADbContext context)
         {
             _context = context;
             _entitySet = _context.Set<TEntity>();

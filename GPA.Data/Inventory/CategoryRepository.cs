@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory
 
     public class CategoryRepository : Repository<Category>, ICategoryRepository
     {
-        public CategoryRepository(DbContext _dbContext) : base(_dbContext)
+        public CategoryRepository(GPADbContext _dbContext) : base(_dbContext)
         {
         }
     }

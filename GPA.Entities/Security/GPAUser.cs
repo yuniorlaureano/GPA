@@ -1,10 +1,10 @@
-﻿using GPA.Entities;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace GPA.Common.Entities.Security
 {
-    public class GPAUser : Entity
+    public class GPAUser : IdentityUser<Guid>
     {
-        public string Name { get; set; }
+        public string FirstName { get; set; }
         public string LastName { get; set; }
     }
 }
