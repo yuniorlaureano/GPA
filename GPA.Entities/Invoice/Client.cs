@@ -1,17 +1,15 @@
 ﻿using GPA.Entities;
 
-namespace GPA.Common.Entities.Inventory
+namespace GPA.Common.Entities.Invoice
 {
-    public class Provider : Entity
+    public class Client : Entity
     {
         public string Name { get; set; }
         public string LastName { get; set; }
         public string Identification { get; set; }
         public string IdentificationType { get; set; }
         public string Phone { get; set; }
+        public decimal AvailableCredit { get; set; }
         public string Email { get; set; }
-
-        public ICollection<ProviderAddress> ProviderAddresses { get; set; }
-        public ICollection<Stock> Stocks { get; set; }
     }
 }
