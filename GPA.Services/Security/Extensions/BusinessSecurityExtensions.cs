@@ -1,4 +1,5 @@
-﻿using GPA.Services.Security;
+﻿using GPA.Business.Services.Security;
+using GPA.Services.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,7 @@ namespace GPA.Business.Security.Extensions
         public static void AddBusinessSecurityServices(this IServiceCollection services)
         {
             services.AddTransient<IGPAJwtService, GPAJwtService>();
+            services.AddTransient<IGPAUserService, GPAUserService>();
         }
 
         public static void AddGPAJwtBearer(this AuthenticationBuilder authenticationBuilder, IConfiguration configuration)

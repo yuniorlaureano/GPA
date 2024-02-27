@@ -63,6 +63,7 @@ namespace GPA.Api.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Deleted = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -476,21 +477,21 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Deleted", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("62a5c5cd-3e36-4e1e-9141-0a331f776281"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null },
-                    { new Guid("9852fe31-392f-4c73-a73e-7b01184098cd"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null }
+                    { new Guid("5381b003-e845-4f97-806c-d1bb15c03bf4"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null },
+                    { new Guid("70a535f6-0eb3-4f58-a1a0-f7d2f7331d45"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { new Guid("5639e08c-e111-486b-a274-f6b35ff019cb"), null, "admin", "ADMIN" });
+                values: new object[] { new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c"), null, "admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { new Guid("561c4565-2e29-441a-b6ef-522e7aea405c"), 0, "566a4782-947c-4c47-884c-e5ff4f688203", "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEPqhdCbgzZBKM/n75AdzsZkWSLW+/j9nKzyIUEW6zCKm4EXUgk5FMY1iJv+xT5lSTQ==", null, false, null, false, "admin" });
+                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Deleted", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[] { new Guid("ec430fef-ff8c-476a-a2e0-eb0a5953eb47"), 0, "fadedb8b-9ec2-4b21-b801-00df66809cc6", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAECxU/C3drWRZuW6XPrt/uGv2kGYhURnwttgU4Hzjzt1AtT1YK3iWeZBCCbQk5Cxj5Q==", null, false, null, false, "admin" });
 
             migrationBuilder.InsertData(
                 schema: "Inventory",
@@ -498,21 +499,21 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "Code", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("87ef046b-08fd-4a62-a0d1-6ac87f1bed52"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null },
-                    { new Guid("bf8379e5-7602-4c60-8620-d782a7d543ab"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null }
+                    { new Guid("1adf0765-690c-41c2-a54d-8d2b7862fc33"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null },
+                    { new Guid("d83f54f5-ab17-43c1-861e-68fe69b63a04"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoleClaims",
                 columns: new[] { "Id", "ClaimType", "ClaimValue", "RoleId" },
-                values: new object[] { 1, "category", "c,r,u,d", new Guid("5639e08c-e111-486b-a274-f6b35ff019cb") });
+                values: new object[] { 1, "category", "c,r,u,d", new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c") });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUserRoles",
                 columns: new[] { "Id", "RoleId", "UserId" },
-                values: new object[] { new Guid("1142673a-5c6f-4767-8c45-c13a52638750"), new Guid("5639e08c-e111-486b-a274-f6b35ff019cb"), new Guid("561c4565-2e29-441a-b6ef-522e7aea405c") });
+                values: new object[] { new Guid("0d96b981-ad29-419e-a7d1-e84a809303ee"), new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c"), new Guid("ec430fef-ff8c-476a-a2e0-eb0a5953eb47") });
 
             migrationBuilder.CreateIndex(
                 name: "IX_GPARoleClaims_RoleId",

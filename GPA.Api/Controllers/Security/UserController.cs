@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using GPA.Business.Security;
+using GPA.Business.Services.Security;
+using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
-using GPA.Data;
 using GPA.Dtos.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -15,34 +15,26 @@ namespace GPA.Api.Controllers.Security
     public class UserController : ControllerBase
     {
         private readonly UserManager<GPAUser> _userManager;
-        private readonly GPADbContext _context;
         private readonly IMapper _mapper;
-        public UserController(UserManager<GPAUser> userManager, GPADbContext context, IMapper mapper)
+        private readonly IGPAUserService _gPAUserService;
+        public UserController(UserManager<GPAUser> userManager, IMapper mapper, IGPAUserService gPAUserService)
         {
             _userManager = userManager;
-            _context = context;
             _mapper = mapper;
+            _gPAUserService = gPAUserService;
         }
 
-        //[AllowAnonymous]
-        //[HttpPost()]
-        //public async Task<IActionResult> Get()
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            return Ok(await _gPAUserService.GetByIdAsync(id));
+        }
 
-        //    if (model is null)
-        //    {
-        //        return BadRequest();
-        //    }
-
-        //    var entity = _mapper.Map<GPAUser>(model);
-        //    entity.Id = Guid.Empty;
-        //    await _userManager.CreateAsync(entity, model.Password);
-        //    return Created();
-        //}
+        [HttpGet()]
+        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        {
+            return Ok(await _gPAUserService.GetAllAsync(search));
+        }
 
         [AllowAnonymous]
         [HttpPost()]
@@ -55,12 +47,23 @@ namespace GPA.Api.Controllers.Security
 
             if (model is null)
             {
-                return BadRequest();
+                ModelState.AddModelError("model", "The model is null");
+                return BadRequest(ModelState);
             }
 
             var entity = _mapper.Map<GPAUser>(model);
             entity.Id = Guid.Empty;
-            await _userManager.CreateAsync(entity, model.Password);
+            entity.Deleted = false;
+            var result = await _userManager.CreateAsync(entity, model.Password);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
+                return BadRequest(ModelState);
+            }
             return Created();
         }
 
@@ -74,18 +77,54 @@ namespace GPA.Api.Controllers.Security
 
             if (model is null)
             {
-                return BadRequest();
+                ModelState.AddModelError("model", "The model is null");
+                return BadRequest(ModelState);
             }
 
-            var savedEntity = _userManager.FindByIdAsync(model.Id.ToString());
+            var savedEntity = await _userManager.FindByIdAsync(model.Id.ToString());
 
-            if (savedEntity == null)
+            if (savedEntity is null)
+            {
+                ModelState.AddModelError("model", "The requested user does not exists");
+                return BadRequest(ModelState);
+            }
+
+            savedEntity.FirstName = model.FirstName;
+            savedEntity.LastName = model.LastName;
+            savedEntity.Email  = model.Email;
+            savedEntity.UserName = model.UserName;
+
+            await _userManager.UpdateAsync(savedEntity);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            if (id == Guid.Empty)
             {
                 return BadRequest();
             }
 
-            var entity = _mapper.Map<GPAUser>(model);            
-            await _userManager.UpdateAsync(entity);
+            var entity = await _userManager.FindByIdAsync(id.ToString());
+
+            if (entity is null)
+            {
+                return BadRequest();
+            }
+
+            entity.Deleted = true;
+            var result = await _userManager.UpdateAsync(entity);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
+                return BadRequest(ModelState);
+            }
+
             return NoContent();
         }
     }

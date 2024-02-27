@@ -5,6 +5,7 @@ using GPA.Bussiness.Services.Security.Mappers;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Data.Inventory.Extensions;
+using GPA.Data.Security.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -68,6 +69,7 @@ builder.Services.AddSecurityMappers();
 builder.Services.AddBusinessSecurityServices();
 
 builder.Services.AddIdentity<GPAUser, GPARole>().AddEntityFrameworkStores<GPADbContext>();
+builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();

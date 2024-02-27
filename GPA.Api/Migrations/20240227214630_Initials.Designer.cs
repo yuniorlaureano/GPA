@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GPA.Api.Migrations
 {
     [DbContext(typeof(GPADbContext))]
-    [Migration("20240227011136_Initials")]
+    [Migration("20240227214630_Initials")]
     partial class Initials
     {
         /// <inheritdoc />
@@ -69,14 +69,14 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("9852fe31-392f-4c73-a73e-7b01184098cd"),
+                            Id = new Guid("70a535f6-0eb3-4f58-a1a0-f7d2f7331d45"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("62a5c5cd-3e36-4e1e-9141-0a331f776281"),
+                            Id = new Guid("5381b003-e845-4f97-806c-d1bb15c03bf4"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
@@ -247,7 +247,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("87ef046b-08fd-4a62-a0d1-6ac87f1bed52"),
+                            Id = new Guid("d83f54f5-ab17-43c1-861e-68fe69b63a04"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -255,7 +255,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("bf8379e5-7602-4c60-8620-d782a7d543ab"),
+                            Id = new Guid("1adf0765-690c-41c2-a54d-8d2b7862fc33"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -573,7 +573,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("5639e08c-e111-486b-a274-f6b35ff019cb"),
+                            Id = new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -608,7 +608,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("5639e08c-e111-486b-a274-f6b35ff019cb")
+                            RoleId = new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c")
                         });
                 });
 
@@ -624,6 +624,9 @@ namespace GPA.Api.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -688,16 +691,17 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("561c4565-2e29-441a-b6ef-522e7aea405c"),
+                            Id = new Guid("ec430fef-ff8c-476a-a2e0-eb0a5953eb47"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "566a4782-947c-4c47-884c-e5ff4f688203",
+                            ConcurrencyStamp = "fadedb8b-9ec2-4b21-b801-00df66809cc6",
+                            Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
                             FirstName = "Admin",
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPqhdCbgzZBKM/n75AdzsZkWSLW+/j9nKzyIUEW6zCKm4EXUgk5FMY1iJv+xT5lSTQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECxU/C3drWRZuW6XPrt/uGv2kGYhURnwttgU4Hzjzt1AtT1YK3iWeZBCCbQk5Cxj5Q==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -776,9 +780,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("1142673a-5c6f-4767-8c45-c13a52638750"),
-                            RoleId = new Guid("5639e08c-e111-486b-a274-f6b35ff019cb"),
-                            UserId = new Guid("561c4565-2e29-441a-b6ef-522e7aea405c")
+                            Id = new Guid("0d96b981-ad29-419e-a7d1-e84a809303ee"),
+                            RoleId = new Guid("3c1757a4-2942-443f-960f-c0838abd7c7c"),
+                            UserId = new Guid("ec430fef-ff8c-476a-a2e0-eb0a5953eb47")
                         });
                 });
 

@@ -2,10 +2,12 @@
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GPA.Inventory.Api.Controllers
 {
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("inventory/[controller]")]
     [ApiController()]
     public class ProviderAddressesController : ControllerBase
