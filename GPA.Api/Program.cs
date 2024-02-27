@@ -1,10 +1,12 @@
 using GPA.Business.Inventory.Extensions;
 using GPA.Business.Security.Extensions;
 using GPA.Bussiness.Services.Inventory.Mappers;
+using GPA.Bussiness.Services.Security.Mappers;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Data.Inventory.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,14 +56,19 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddGPAJwtBearer(builder.Configuration);
 
-builder.Services.AddIdentity<GPAUser, GPARole>().AddEntityFrameworkStores<GPADbContext>();
-builder.Services.AddAuthorization();
+builder.Services.AddDbContext<GPADbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("Default"), p => p.MigrationsAssembly("GPA.Api")));
 
 builder.Services.AddInventoryMappers();
 builder.Services.AddInventoryValidators();
 builder.Services.AddDataInventoryRepositories(builder.Configuration);
 builder.Services.AddBusinessInventoryServices();
+
+builder.Services.AddSecurityMappers();
 builder.Services.AddBusinessSecurityServices();
+
+builder.Services.AddIdentity<GPAUser, GPARole>().AddEntityFrameworkStores<GPADbContext>();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 

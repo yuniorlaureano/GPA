@@ -31,7 +31,7 @@ namespace GPA.Business.Security
             var descriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(tokenDescriptorDto.Claims),
-                Expires = DateTime.Now.AddMinutes(_jwtOptions.Expires),
+                Expires = DateTime.UtcNow.AddMinutes(_jwtOptions.Expires),
                 Issuer = _jwtOptions.Issuer!,
                 Audience = _jwtOptions.Audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), tokenDescriptorDto.Algorithm)

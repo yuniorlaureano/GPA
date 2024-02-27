@@ -9,7 +9,7 @@ namespace GPA.Data
 {
     public class GPADbContext : IdentityDbContext<GPAUser, GPARole, Guid, GPAUserClaim, GPAUserRole, GPAUserLogin, GPARoleClaim, GPAUserToken>
     {
-        public GPADbContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
+        public GPADbContext(DbContextOptions<GPADbContext> dbContextOptions) : base(dbContextOptions)
         {
         }
 

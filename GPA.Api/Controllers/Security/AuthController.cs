@@ -8,9 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace GPA.Api.Controllers.Security
 {
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("security/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -27,7 +30,7 @@ namespace GPA.Api.Controllers.Security
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(GPAUserDto model)
+        public async Task<IActionResult> Login(GPAAuthDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -35,29 +38,38 @@ namespace GPA.Api.Controllers.Security
             }
 
             var user = await _userManager.FindByNameAsync(model.UserName);
-            var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
-
-            if (resultd)
+            if (user is null)
             {
                 return Unauthorized("El usaurio no es válido");
             }
 
-            var roles = await _context.Roles.Include(r => r.Claims)
+            var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
+
+            if (!resultd)
+            {
+                return Unauthorized("El usaurio no es válido");
+            }
+
+            var roles = await _context.Roles.Include(r => r.RoleClaims)
                     .Where(x => x.UserRoles.Any(ur => ur.UserId == user.Id))
                     .ToArrayAsync();
 
-            //Todo: Logic to add the roles and roles clamins to the token. Consier serializng the cliams.
-            /*
-                Claim(Admin, json_with_the_claim)
-                Create a reaquirement handler to quey the db searching for user and clieams and checking they belong
-                .Write a custom query tha run like> Raw(select form roles where id = (select from userRole where rolid --))
-             */
-
-            var claims = new Claim[] { };
-            var token = _jwtService.GenerateToken(new Dtos.Security.TokenDescriptorDto
+            var claims = new List<Claim>();
+            foreach (var role in roles)
             {
-                Algorithm = SecurityAlgorithms.EcdsaSha256Signature,
-                Claims = claims
+                var permissions = role.RoleClaims.Select(x => $"m:{x.ClaimType}p:{x.ClaimValue}").ToArray();
+                var permissionsAsByte = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(permissions));
+                var base64 = Convert.ToBase64String(permissionsAsByte);
+                claims.Add(new Claim(ClaimTypes.Role, $"rid:{role.Id}rn:{role.Name}pm:{base64}"));
+            }
+            claims.Add(new Claim("FullName", $"{user.FirstName} {user.LastName}"));
+            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            claims.Add(new Claim("UserId", user.Id.ToString()));
+            var token = _jwtService.GenerateToken(new TokenDescriptorDto
+            {
+                Algorithm = SecurityAlgorithms.HmacSha256Signature,
+                Claims = claims.ToArray()
             });
             return Ok(token);
         }

@@ -1,6 +1,7 @@
-﻿using GPA.Data.Schemas;
-using Microsoft.AspNetCore.Identity;
+﻿using GPA.Common.Entities.Security;
+using GPA.Data.Schemas;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 namespace GPA.Data.Security.Configurations
 {
@@ -8,39 +9,82 @@ namespace GPA.Data.Security.Configurations
     {
         public static void ConfigureIdentityTables(this ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<IdentityUser>(b =>
+            modelBuilder.Entity<GPAUser>(b =>
             {
                 b.ToTable("GPAUsers", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.HasMany(p => p.UserRoles)
+                    .WithOne(p => p.User)
+                    .HasForeignKey(p => p.UserId);
+
             });
 
-            modelBuilder.Entity<IdentityUserClaim<string>>(b =>
+            modelBuilder.Entity<GPAUserClaim>(b =>
             {
                 b.ToTable("GPAUserClaims", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
             });
 
-            modelBuilder.Entity<IdentityUserLogin<string>>(b =>
+            modelBuilder.Entity<GPAUserLogin>(b =>
             {
                 b.ToTable("GPAUserLogin", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.HasOne(p => p.User)
+                    .WithMany(p => p.UserLogins)
+                    .HasForeignKey(p => p.UserId);
             });
 
-            modelBuilder.Entity<IdentityUserToken<string>>(b =>
+            modelBuilder.Entity<GPAUserToken>(b =>
             {
                 b.ToTable("GPAUserToken", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.HasOne(p => p.User)
+                    .WithMany(p => p.UserTokens)
+                    .HasForeignKey(p => p.UserId);
             });
 
-            modelBuilder.Entity<IdentityRole>(b =>
+            modelBuilder.Entity<GPARole>(b =>
             {
                 b.ToTable("GPARoles", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.HasMany(p => p.UserRoles)
+                    .WithOne(p => p.Role)
+                    .HasForeignKey(p => p.RoleId);
+
+                b.HasMany(p => p.RoleClaims)
+                    .WithOne(p => p.Role)
+                    .HasForeignKey(p => p.RoleId);
+
             });
 
-            modelBuilder.Entity<IdentityRoleClaim<string>>(b =>
+            modelBuilder.Entity<GPARoleClaim>(b =>
             {
                 b.ToTable("GPARoleClaims", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).UseIdentityColumn();
+
+                b.HasOne(p => p.Role)
+                    .WithMany(p => p.RoleClaims)
+                    .HasForeignKey(p => p.RoleId);
+
             });
 
-            modelBuilder.Entity<IdentityUserRole<string>>(b =>
+            modelBuilder.Entity<GPAUserRole>(b =>
             {
                 b.ToTable("GPAUserRoles", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                //b.HasOne(p => p.Role)
+                //   .WithMany(p => p.UserRoles)
+                //   .HasForeignKey(p => p.RoleId);
+
+                //b.HasOne(p => p.User)
+                //   .WithMany(p => p.UserRoles)
+                //   .HasForeignKey(p => p.UserId);
             });
         }
     }

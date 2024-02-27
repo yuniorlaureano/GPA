@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Data.Inventory.Extensions
@@ -8,8 +7,6 @@ namespace GPA.Data.Inventory.Extensions
     {
         public static void AddDataInventoryRepositories(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<GPADbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("Inventory"), p => p.MigrationsAssembly("GPA.Api")));
             services.AddTransient<ICategoryRepository, CategoryRepository>();
             services.AddTransient<IProductRepository, ProductRepository>();
             services.AddTransient<IProductLocationRepository, ProductLocationRepository>();
