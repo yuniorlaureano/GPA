@@ -12,12 +12,12 @@ namespace GPA.Api.Controllers.Security
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("security/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UsersController : ControllerBase
     {
         private readonly UserManager<GPAUser> _userManager;
         private readonly IMapper _mapper;
         private readonly IGPAUserService _gPAUserService;
-        public UserController(UserManager<GPAUser> userManager, IMapper mapper, IGPAUserService gPAUserService)
+        public UsersController(UserManager<GPAUser> userManager, IMapper mapper, IGPAUserService gPAUserService)
         {
             _userManager = userManager;
             _mapper = mapper;
