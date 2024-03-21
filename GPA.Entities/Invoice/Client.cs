@@ -11,5 +11,8 @@ namespace GPA.Common.Entities.Invoice
         public string Phone { get; set; }
         public decimal AvailableCredit { get; set; }
         public string Email { get; set; }
+
+        public ICollection<ClientAddress> ClientAddresses { get; set; }
+        public ICollection<Invoice> Invoices { get; set; }
     }
 }

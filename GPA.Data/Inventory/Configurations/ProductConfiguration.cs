@@ -29,6 +29,10 @@ namespace GPA.Data.Inventory.Configurations
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.ProductLocationId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne(x => x.Item)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.ItemId);
         }
     }
 }

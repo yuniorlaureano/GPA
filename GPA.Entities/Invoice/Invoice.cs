@@ -1,5 +1,4 @@
-﻿using GPA.Common.Entities.Comon;
-using GPA.Entities;
+﻿using GPA.Entities;
 
 namespace GPA.Common.Entities.Invoice
 {
@@ -9,9 +8,9 @@ namespace GPA.Common.Entities.Invoice
         public Sell Sell { get; set; }
 
         public Guid ClientId { get; set; }
-        public Sell Client { get; set; }
+        public Client Client { get; set; }
 
-        public Guid DeliveryId { get; set; }
-        public Delivery Delivery { get; set; }
+        public ICollection<ClientPaymentsDetails> ClientPaymentsDetails { get; set; }
+        public ICollection<InvoiceDelivery> InvoiceDeliveries { get; set; }
     }
 }

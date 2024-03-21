@@ -6,5 +6,7 @@ namespace GPA.Common.Entities.Invoice
     {
         public string Status { get; set; }
         public string Type { get; set; }
+
+        public ICollection<PurchaseDetails> PurchaseDetailses { get; set; }
     }
 }

@@ -14,6 +14,8 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Product, ProductDto>();
             CreateMap<ProductDto, Product>();
+            CreateMap<ProductCreationDto, Product>();
+            CreateMap<Product, ProductCreationDto>();
 
             CreateMap<ProductLocation, ProductLocationDto>();
             CreateMap<ProductLocationDto, ProductLocation>();
@@ -26,6 +28,9 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Stock, StockDto>();
             CreateMap<StockDto, Stock>();
+
+            CreateMap<Item, ItemDto>();
+            CreateMap<ItemDto, Item>();
         }
     }
 

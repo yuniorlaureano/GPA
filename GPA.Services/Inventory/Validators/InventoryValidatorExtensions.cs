@@ -2,7 +2,7 @@
 using GPA.Common.DTOs.Inventory;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace GPA.Bussiness.Services.Inventory.Mappers
+namespace GPA.Bussiness.Services.Inventory.Validator
 {
     public static class InventoryValidatorExtensions
     {

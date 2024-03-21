@@ -1,66 +1,66 @@
 ﻿using AutoMapper;
-using GPA.Business.Services.Inventory;
+using GPA.Business.Services.Common;
 using GPA.Common.DTOs;
-using GPA.Common.DTOs.Inventory;
+using GPA.Common.DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GPA.Inventory.Api.Controllers
+namespace GPA.Common.Api.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [Route("inventory/[controller]")]
+    [Route("common/[controller]")]
     [ApiController()]
-    public class ProductsController : ControllerBase
+    public class UnitsController : ControllerBase
     {
-        private readonly IProductService _ProductService;
+        private readonly IUnitService _unitService;
         private readonly IMapper _mapper;
 
-        public ProductsController(IProductService ProductService, IMapper mapper)
+        public UnitsController(IUnitService unitService, IMapper mapper)
         {
-            _ProductService = ProductService;
+            _unitService = unitService;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _ProductService.GetByIdAsync(id));
+            return Ok(await _unitService.GetByIdAsync(id));
         }
 
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
-            return Ok(await _ProductService.GetAllAsync(search));
+            return Ok(await _unitService.GetAllAsync(search));
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(ProductCreationDto product)
+        public async Task<IActionResult> Create(UnitDto unit)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var entity = await _ProductService.AddAsync(product);
+            var entity = await _unitService.AddAsync(unit);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(ProductCreationDto product)
+        public async Task<IActionResult> Update(UnitDto unit)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ProductService.UpdateAsync(product);
+            await _unitService.UpdateAsync(unit);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _ProductService.RemoveAsync(id);
+            await _unitService.RemoveAsync(id);
             return NoContent();
         }
     }

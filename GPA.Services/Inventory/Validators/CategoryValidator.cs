@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using GPA.Common.DTOs.Inventory;
 
-namespace GPA.Bussiness.Services.Inventory.Mappers
+namespace GPA.Bussiness.Services.Inventory.Validator
 {
     public class CategoryValidator : AbstractValidator<CategoryDto>
     {

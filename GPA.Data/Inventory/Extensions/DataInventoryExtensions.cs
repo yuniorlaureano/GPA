@@ -13,6 +13,7 @@ namespace GPA.Data.Inventory.Extensions
             services.AddTransient<IProviderRepository, ProviderRepository>();
             services.AddTransient<IProviderAddressRepository, ProviderAddressRepository>();
             services.AddTransient<IStockRepository, StockRepository>();
+            services.AddTransient<IItemRepository, ItemRepository>();
         }
     }
 }

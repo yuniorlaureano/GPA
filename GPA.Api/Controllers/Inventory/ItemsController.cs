@@ -10,57 +10,57 @@ namespace GPA.Inventory.Api.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("inventory/[controller]")]
     [ApiController()]
-    public class ProductsController : ControllerBase
+    public class ItemsController : ControllerBase
     {
-        private readonly IProductService _ProductService;
+        private readonly IItemService _itemService;
         private readonly IMapper _mapper;
 
-        public ProductsController(IProductService ProductService, IMapper mapper)
+        public ItemsController(IItemService itemService, IMapper mapper)
         {
-            _ProductService = ProductService;
+            _itemService = itemService;
             _mapper = mapper;
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _ProductService.GetByIdAsync(id));
+            return Ok(await _itemService.GetByIdAsync(id));
         }
 
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
-            return Ok(await _ProductService.GetAllAsync(search));
+            return Ok(await _itemService.GetAllAsync(search));
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(ProductCreationDto product)
+        public async Task<IActionResult> Create(ItemDto item)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var entity = await _ProductService.AddAsync(product);
+            var entity = await _itemService.AddAsync(item);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(ProductCreationDto product)
+        public async Task<IActionResult> Update(ItemDto item)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _ProductService.UpdateAsync(product);
+            await _itemService.UpdateAsync(item);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _ProductService.RemoveAsync(id);
+            await _itemService.RemoveAsync(id);
             return NoContent();
         }
     }
