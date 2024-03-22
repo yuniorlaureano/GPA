@@ -10,6 +10,7 @@ namespace GPA.Bussiness.Services.Common.Mappers
         public MappingPrifles()
         {
             CreateMap<Unit, UnitDto>();
+            CreateMap<UnitDto, Unit>();
         }
     }
 

@@ -29,7 +29,7 @@ namespace GPA.Data
         {
             if (expression is not null)
             {
-                return await func(_entitySet).FirstOrDefaultAsync(expression);
+                return await func(_entitySet).AsNoTracking().FirstOrDefaultAsync(expression);
             }
             return await func(_entitySet).FirstOrDefaultAsync();
         }
@@ -38,10 +38,10 @@ namespace GPA.Data
         {
             if (expression == null)
             {
-                return await func(_entitySet).ToListAsync();
+                return await func(_entitySet).AsNoTracking().ToListAsync();
             }
 
-            return await func(_entitySet).Where(expression).ToListAsync();
+            return await func(_entitySet).AsNoTracking().Where(expression).ToListAsync();
         }
 
         public async Task<TEntity?> AddAsync(TEntity entity)
@@ -50,6 +50,7 @@ namespace GPA.Data
             {
                 _context.Add(entity);
                 await _context.SaveChangesAsync();
+                _context.Entry(entity).State = EntityState.Detached;
                 return entity;
             }
             return null;
@@ -62,6 +63,7 @@ namespace GPA.Data
                 var entityEntry = _entitySet.Update(entity);
                 action?.Invoke(entityEntry, model);
                 await _context.SaveChangesAsync();
+                _context.Entry(entity).State = EntityState.Detached;
             }
         }
 
