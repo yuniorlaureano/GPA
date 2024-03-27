@@ -19,8 +19,5 @@
 
         public Guid? ProductLocationId { get; set; }
         public string ProductLocation { get; set; }
-
-        public Guid ItemId { get; set; }
-        public string Item { get; set; }
     }
 }

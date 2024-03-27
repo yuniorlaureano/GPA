@@ -22,8 +22,6 @@ namespace GPA.Common.Entities.Inventory
         public Guid? ProductLocationId { get; set; }
         public ProductLocation? ProductLocation { get; set; }
 
-        public Guid ItemId { get; set; }
-
         public ICollection<Stock> Stocks { get; set; }
     }
 }
