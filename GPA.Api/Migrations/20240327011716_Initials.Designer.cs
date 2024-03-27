@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GPA.Api.Migrations
 {
     [DbContext(typeof(GPADbContext))]
-    [Migration("20240310222045_Initial")]
-    partial class Initial
+    [Migration("20240327011716_Initials")]
+    partial class Initials
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -106,57 +106,18 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("3058b588-9ab2-4d42-8032-9b724f0ab0cf"),
+                            Id = new Guid("e484d32a-663e-4a6d-846a-ccba047bb1ad"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("c499cc10-c8e0-4080-a0da-23943ecad1ba"),
+                            Id = new Guid("f42953b2-a6de-4228-aed9-19fafdb7dd96"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
                         });
-                });
-
-            modelBuilder.Entity("GPA.Common.Entities.Inventory.Item", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Deleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Items", "Inventory");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Product", b =>
@@ -203,6 +164,10 @@ namespace GPA.Api.Migrations
                     b.Property<Guid>("ItemId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Photo")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
@@ -225,8 +190,6 @@ namespace GPA.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("ItemId");
 
                     b.HasIndex("ProductLocationId");
 
@@ -284,7 +247,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("07c017c6-589b-4f12-adb9-42e7878101e5"),
+                            Id = new Guid("c17c20bc-8fe0-4de7-a3bc-f77e9cae8c64"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -292,7 +255,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("07fe6fc4-02bd-4f49-8079-a5bb4d0050ca"),
+                            Id = new Guid("205c83be-edc3-4298-acae-03f2858331df"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -305,6 +268,20 @@ namespace GPA.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BuildingNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -350,60 +327,9 @@ namespace GPA.Api.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Providers", "Inventory");
-                });
-
-            modelBuilder.Entity("GPA.Common.Entities.Inventory.ProviderAddress", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("BuildingNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Country")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Deleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("PostalCode")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("ProviderId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -423,9 +349,66 @@ namespace GPA.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Providers", "Inventory");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.ProviderAddress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BuildingNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ProviderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
                     b.HasIndex("ProviderId");
 
-                    b.ToTable("ProviderAddresses", "Inventory");
+                    b.ToTable("ProviderAddresses");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Reason", b =>
@@ -1072,7 +1055,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a"),
+                            Id = new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -1107,7 +1090,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a")
+                            RoleId = new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3")
                         });
                 });
 
@@ -1190,9 +1173,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("d8bda6dc-5724-4998-8dbc-10b3c743aac0"),
+                            Id = new Guid("60158c2e-db4d-4a4f-828e-a8c5fab5dc63"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "063ed978-2877-400a-a84e-32fdf3a8d7b7",
+                            ConcurrencyStamp = "de59c405-b86e-4e89-aa2a-5b8ed68fae9f",
                             Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
@@ -1200,7 +1183,7 @@ namespace GPA.Api.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMlDVmBTjDJDOR3o9IUyU5KSqAJpkg3QpXygFisRLob2k3uNcFMIk+Crjp95jMDafQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEM58PkodAyPEvcZev4FoKD9zDkiRIQFeBrIJE3i46bghss6gdBd6uBk0R6tGubPiCg==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -1279,9 +1262,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ccf4bf28-e467-4c30-8466-062e5e6bd7ea"),
-                            RoleId = new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a"),
-                            UserId = new Guid("d8bda6dc-5724-4998-8dbc-10b3c743aac0")
+                            Id = new Guid("9d4d0cb4-b3e9-4a48-96ed-5abb6f6d9d38"),
+                            RoleId = new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3"),
+                            UserId = new Guid("60158c2e-db4d-4a4f-828e-a8c5fab5dc63")
                         });
                 });
 
@@ -1372,12 +1355,6 @@ namespace GPA.Api.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("GPA.Common.Entities.Inventory.Item", "Item")
-                        .WithMany("Products")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("GPA.Common.Entities.Inventory.ProductLocation", "ProductLocation")
                         .WithMany("Products")
                         .HasForeignKey("ProductLocationId")
@@ -1391,8 +1368,6 @@ namespace GPA.Api.Migrations
 
                     b.Navigation("Category");
 
-                    b.Navigation("Item");
-
                     b.Navigation("ProductLocation");
 
                     b.Navigation("Unit");
@@ -1401,7 +1376,7 @@ namespace GPA.Api.Migrations
             modelBuilder.Entity("GPA.Common.Entities.Inventory.ProviderAddress", b =>
                 {
                     b.HasOne("GPA.Common.Entities.Inventory.Provider", "Provider")
-                        .WithMany("ProviderAddresses")
+                        .WithMany()
                         .HasForeignKey("ProviderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1620,11 +1595,6 @@ namespace GPA.Api.Migrations
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("GPA.Common.Entities.Inventory.Item", b =>
-                {
-                    b.Navigation("Products");
-                });
-
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Product", b =>
                 {
                     b.Navigation("Stocks");
@@ -1637,8 +1607,6 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Provider", b =>
                 {
-                    b.Navigation("ProviderAddresses");
-
                     b.Navigation("Stocks");
                 });
 

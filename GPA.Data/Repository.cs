@@ -31,7 +31,7 @@ namespace GPA.Data
             {
                 return await func(_entitySet).AsNoTracking().FirstOrDefaultAsync(expression);
             }
-            return await func(_entitySet).FirstOrDefaultAsync();
+            return await func(_entitySet).AsNoTracking().FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> func, Expression<Func<TEntity, bool>>? expression)

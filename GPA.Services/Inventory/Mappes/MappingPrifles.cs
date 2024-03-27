@@ -12,8 +12,12 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Category, CategoryDto>();
             CreateMap<CategoryDto, Category>();
 
-            CreateMap<Product, ProductDto>();
-            CreateMap<ProductDto, Product>();
+            //ToDo: Obtener estas descripciones desde la base de datos mediante un include
+            CreateMap<Product, ProductDto>()
+                .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => "Unidad"))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => "Category"))
+                .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"));
+            CreateMap<ProductDto, Product>();                
             CreateMap<ProductCreationDto, Product>();
             CreateMap<Product, ProductCreationDto>();
 
@@ -28,9 +32,6 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Stock, StockDto>();
             CreateMap<StockDto, Stock>();
-
-            CreateMap<Item, ItemDto>();
-            CreateMap<ItemDto, Item>();
         }
     }
 

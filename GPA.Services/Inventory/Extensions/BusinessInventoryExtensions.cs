@@ -11,9 +11,7 @@ namespace GPA.Business.Inventory.Extensions
             services.AddTransient<IProductService, ProductService>();
             services.AddTransient<IProductLocationService, ProductLocationService>();
             services.AddTransient<IProviderService, ProviderService>();
-            services.AddTransient<IProviderAddressService, ProviderAddressService>();
             services.AddTransient<IStockService, StockService>();
-            services.AddTransient<IItemService, ItemService>();
         }
     }
 }

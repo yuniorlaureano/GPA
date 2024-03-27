@@ -34,10 +34,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<ProviderDto?> GetByIdAsync(Guid id)
         {
-            var Provider = await _repository.GetByIdAsync(query =>
-            {
-                return query.Include(x => x.ProviderAddresses);
-            }, x => x.Id == id);
+            var Provider = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             return _mapper.Map<ProviderDto>(Provider);
         }
 
@@ -45,7 +42,7 @@ namespace GPA.Business.Services.Inventory
         {
             var providers = await _repository.GetAllAsync(query => 
             {
-                return query.Include(x => x.ProviderAddresses).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
+                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
             return new ResponseDto<ProviderDto>
             {

@@ -33,7 +33,6 @@ namespace GPA.Data
 
         //INVENTORY
         public DbSet<Category> Categories { get; set; }
-        public DbSet<Item> Items { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductLocation> ProductLocations { get; set; }
         public DbSet<Provider> Providers { get; set; }

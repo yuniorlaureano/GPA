@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GPA.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class Initials : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -117,27 +117,6 @@ namespace GPA.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Items",
-                schema: "Inventory",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Items", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ProductLocations",
                 schema: "Inventory",
                 columns: table => new
@@ -171,6 +150,12 @@ namespace GPA.Api.Migrations
                     IdentificationType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Street = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BuildingNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    PostalCode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -476,16 +461,15 @@ namespace GPA.Api.Migrations
 
             migrationBuilder.CreateTable(
                 name: "ProviderAddresses",
-                schema: "Inventory",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Street = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    BuildingNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    State = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Country = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    PostalCode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Street = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BuildingNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ProviderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -493,7 +477,7 @@ namespace GPA.Api.Migrations
                     UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                    Deleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -578,6 +562,7 @@ namespace GPA.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Photo = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
@@ -604,13 +589,6 @@ namespace GPA.Api.Migrations
                         principalSchema: "Inventory",
                         principalTable: "Categories",
                         principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Products_Items_ItemId",
-                        column: x => x.ItemId,
-                        principalSchema: "Inventory",
-                        principalTable: "Items",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Products_ProductLocations_ProductLocationId",
                         column: x => x.ProductLocationId,
@@ -818,21 +796,21 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Deleted", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("3058b588-9ab2-4d42-8032-9b724f0ab0cf"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null },
-                    { new Guid("c499cc10-c8e0-4080-a0da-23943ecad1ba"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null }
+                    { new Guid("e484d32a-663e-4a6d-846a-ccba047bb1ad"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null },
+                    { new Guid("f42953b2-a6de-4228-aed9-19fafdb7dd96"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a"), null, "admin", "ADMIN" });
+                values: new object[] { new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3"), null, "admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Deleted", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { new Guid("d8bda6dc-5724-4998-8dbc-10b3c743aac0"), 0, "063ed978-2877-400a-a84e-32fdf3a8d7b7", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEMlDVmBTjDJDOR3o9IUyU5KSqAJpkg3QpXygFisRLob2k3uNcFMIk+Crjp95jMDafQ==", null, false, null, false, "admin" });
+                values: new object[] { new Guid("60158c2e-db4d-4a4f-828e-a8c5fab5dc63"), 0, "de59c405-b86e-4e89-aa2a-5b8ed68fae9f", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEM58PkodAyPEvcZev4FoKD9zDkiRIQFeBrIJE3i46bghss6gdBd6uBk0R6tGubPiCg==", null, false, null, false, "admin" });
 
             migrationBuilder.InsertData(
                 schema: "Inventory",
@@ -840,21 +818,21 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "Code", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("07c017c6-589b-4f12-adb9-42e7878101e5"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null },
-                    { new Guid("07fe6fc4-02bd-4f49-8079-a5bb4d0050ca"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null }
+                    { new Guid("205c83be-edc3-4298-acae-03f2858331df"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null },
+                    { new Guid("c17c20bc-8fe0-4de7-a3bc-f77e9cae8c64"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoleClaims",
                 columns: new[] { "Id", "ClaimType", "ClaimValue", "RoleId" },
-                values: new object[] { 1, "category", "c,r,u,d", new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a") });
+                values: new object[] { 1, "category", "c,r,u,d", new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3") });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUserRoles",
                 columns: new[] { "Id", "RoleId", "UserId" },
-                values: new object[] { new Guid("ccf4bf28-e467-4c30-8466-062e5e6bd7ea"), new Guid("4f01bbf2-cb40-4019-a395-7c95e386cd0a"), new Guid("d8bda6dc-5724-4998-8dbc-10b3c743aac0") });
+                values: new object[] { new Guid("9d4d0cb4-b3e9-4a48-96ed-5abb6f6d9d38"), new Guid("d1523fcc-402f-4f64-9722-f183a16e84a3"), new Guid("60158c2e-db4d-4a4f-828e-a8c5fab5dc63") });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ClientAddresses_ClientId",
@@ -964,12 +942,6 @@ namespace GPA.Api.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_ItemId",
-                schema: "Inventory",
-                table: "Products",
-                column: "ItemId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Products_ProductLocationId",
                 schema: "Inventory",
                 table: "Products",
@@ -983,7 +955,6 @@ namespace GPA.Api.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProviderAddresses_ProviderId",
-                schema: "Inventory",
                 table: "ProviderAddresses",
                 column: "ProviderId");
 
@@ -1078,8 +1049,7 @@ namespace GPA.Api.Migrations
                 schema: "Invoice");
 
             migrationBuilder.DropTable(
-                name: "ProviderAddresses",
-                schema: "Inventory");
+                name: "ProviderAddresses");
 
             migrationBuilder.DropTable(
                 name: "PurchaseDetails",
@@ -1143,10 +1113,6 @@ namespace GPA.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "Categories",
-                schema: "Inventory");
-
-            migrationBuilder.DropTable(
-                name: "Items",
                 schema: "Inventory");
 
             migrationBuilder.DropTable(

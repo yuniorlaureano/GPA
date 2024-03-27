@@ -11,7 +11,13 @@ namespace GPA.Common.Entities.Inventory
         public string Phone { get; set; }
         public string Email { get; set; }
 
-        public ICollection<ProviderAddress> ProviderAddresses { get; set; }
+        public string Street { get; set; }
+        public string BuildingNumber { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string? Country { get; set; }
+        public string? PostalCode { get; set; }
+
         public ICollection<Stock> Stocks { get; set; }
     }
 }

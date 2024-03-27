@@ -6,6 +6,7 @@ namespace GPA.Common.Entities.Inventory
     public class Product : Entity
     {
         public string Code { get; set; }
+        public string Name { get; set; }
         public string? Photo { get; set; }
         public decimal Price { get; set; }
         public string Description { get; set; }
@@ -22,7 +23,6 @@ namespace GPA.Common.Entities.Inventory
         public ProductLocation? ProductLocation { get; set; }
 
         public Guid ItemId { get; set; }
-        public Item Item { get; set; }
 
         public ICollection<Stock> Stocks { get; set; }
     }
