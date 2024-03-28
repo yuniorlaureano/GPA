@@ -22,6 +22,7 @@ namespace GPA.Data.Inventory.Configurations
             builder.HasOne(x => x.Provider)
                 .WithMany(x => x.Stocks)
                 .HasForeignKey(x => x.ProviderId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.HasOne(x => x.Product)

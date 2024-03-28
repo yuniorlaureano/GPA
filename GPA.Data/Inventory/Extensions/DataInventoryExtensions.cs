@@ -12,6 +12,8 @@ namespace GPA.Data.Inventory.Extensions
             services.AddTransient<IProductLocationRepository, ProductLocationRepository>();
             services.AddTransient<IProviderRepository, ProviderRepository>();
             services.AddTransient<IStockRepository, StockRepository>();
+            services.AddTransient<IStoreRepository, StoreRepository>();
+            services.AddTransient<IReasonRepository, ReasonRepository>();
         }
     }
 }

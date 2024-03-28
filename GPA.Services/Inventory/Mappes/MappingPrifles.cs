@@ -32,6 +32,12 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Stock, StockDto>();
             CreateMap<StockDto, Stock>();
+
+            CreateMap<Reason, ReasonDto>();
+            CreateMap<ReasonDto, Reason>();
+
+            CreateMap<Store, StoreDto>();
+            CreateMap<StoreDto, Store>();
         }
     }
 

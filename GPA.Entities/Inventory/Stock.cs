@@ -12,8 +12,8 @@ namespace GPA.Common.Entities.Inventory
         public Guid ProductId { get; set; }
         public Product Product { get; set; }
 
-        public Guid ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public Guid? ProviderId { get; set; }
+        public Provider? Provider { get; set; }
 
         public Guid StoreId { get; set; }
         public Store Store { get; set; }
