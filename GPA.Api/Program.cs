@@ -1,15 +1,19 @@
 using GPA.Business.Common.Extensions;
 using GPA.Business.Inventory.Extensions;
+using GPA.Business.Invoice.Extensions;
 using GPA.Business.Security.Extensions;
 using GPA.Bussiness.Services.Common.Mappers;
 using GPA.Bussiness.Services.Common.Validator;
 using GPA.Bussiness.Services.Inventory.Mappers;
 using GPA.Bussiness.Services.Inventory.Validator;
+using GPA.Bussiness.Services.Invoice.Mappers;
+using GPA.Bussiness.Services.Invoice.Validator;
 using GPA.Bussiness.Services.Security.Mappers;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Data.Common.Extensions;
 using GPA.Data.Inventory.Extensions;
+using GPA.Data.Invoice.Extensions;
 using GPA.Data.Security.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -78,6 +82,11 @@ builder.Services.AddInventoryMappers();
 builder.Services.AddInventoryValidators();
 builder.Services.AddDataInventoryRepositories(builder.Configuration);
 builder.Services.AddBusinessInventoryServices();
+
+builder.Services.AddInvoiceMappers();
+builder.Services.AddInvoiceValidators();
+builder.Services.AddDataInvoiceRepositories();
+builder.Services.AddBusinessInvoiceServices();
 
 builder.Services.AddCommonMappers();
 builder.Services.AddCommonValidators();

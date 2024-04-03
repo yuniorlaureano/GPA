@@ -2,7 +2,7 @@
 
 namespace GPA.Common.Entities.Inventory
 {
-    public class ProductLocation : Entity
+    public class ProductLocation : Entity<Guid>
     {
         public string? Code { get; set; }
         public string Name { get; set; }

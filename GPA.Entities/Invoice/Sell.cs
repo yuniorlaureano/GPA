@@ -2,7 +2,7 @@
 
 namespace GPA.Common.Entities.Invoice
 {
-    public class Sell : Entity
+    public class Sell : Entity<Guid>
     {
         public string Status { get; set; }
         public string Type { get; set; }

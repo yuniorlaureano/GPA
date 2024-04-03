@@ -3,7 +3,7 @@ using GPA.Entities.Common;
 
 namespace GPA.Common.Entities.Inventory
 {
-    public class Product : Entity
+    public class Product : Entity<Guid>
     {
         public string Code { get; set; }
         public string Name { get; set; }

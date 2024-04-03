@@ -16,10 +16,6 @@ namespace GPA.Data.Invoice.Configurations
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>()
                 .IsRequired();
-
-            builder.HasMany(x => x.ClientAddresses)
-                .WithOne(x => x.Client)
-                .HasForeignKey(x => x.ClientId);
         }
     }
 }

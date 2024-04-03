@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\Invoice\" />
     <Folder Include="Controllers\Report\" />
   </ItemGroup>
 

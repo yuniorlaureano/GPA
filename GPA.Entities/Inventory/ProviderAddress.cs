@@ -2,7 +2,7 @@
 
 namespace GPA.Common.Entities.Inventory
 {
-    public class ProviderAddress : Entity
+    public class ProviderAddress : Entity<Guid>
     {
         public string Street { get; set; }
         public string BuildingNumber { get; set; }

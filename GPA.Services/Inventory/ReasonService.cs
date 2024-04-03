@@ -9,7 +9,7 @@ namespace GPA.Business.Services.Inventory
 {
     public interface IReasonService
     {
-        public Task<ReasonDto?> GetByIdAsync(Guid id);
+        public Task<ReasonDto?> GetByIdAsync(int id);
 
         public Task<ResponseDto<ReasonDto>> GetAllAsync(SearchDto search, Expression<Func<Reason, bool>>? expression = null);
 
@@ -17,7 +17,7 @@ namespace GPA.Business.Services.Inventory
 
         public Task UpdateAsync(ReasonDto deasonDto);
 
-        public Task RemoveAsync(Guid id);
+        public Task RemoveAsync(int id);
     }
 
     public class ReasonService : IReasonService
@@ -31,7 +31,7 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<ReasonDto?> GetByIdAsync(Guid id)
+        public async Task<ReasonDto?> GetByIdAsync(int id)
         {
             var deason = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             return _mapper.Map<ReasonDto>(deason);
@@ -73,7 +73,7 @@ namespace GPA.Business.Services.Inventory
             });
         }
 
-        public async Task RemoveAsync(Guid id)
+        public async Task RemoveAsync(int id)
         {
             var savedReason = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedReason);

@@ -29,6 +29,11 @@ namespace GPA.Data.Inventory.Configurations
                 .WithMany(x => x.Stocks)
                 .HasForeignKey(x => x.ProductId)
                 .IsRequired();
+
+            builder.HasOne(x => x.Reason)
+               .WithMany(x => x.Stocks)
+               .HasForeignKey(x => x.ReasonId)
+               .IsRequired();
         }
     }
 }

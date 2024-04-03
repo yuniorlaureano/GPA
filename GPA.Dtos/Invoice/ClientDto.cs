@@ -1,9 +1,8 @@
-﻿using GPA.Entities;
-
-namespace GPA.Common.Entities.Invoice
+﻿namespace GPA.Common.DTOs.Invoice
 {
-    public class Client : Entity<Guid>
+    public class ClientDto
     {
+        public Guid? Id { get; set; }
         public string Name { get; set; }
         public string? LastName { get; set; }
         public string? Identification { get; set; }
@@ -18,8 +17,5 @@ namespace GPA.Common.Entities.Invoice
         public string? State { get; set; }
         public string? Country { get; set; }
         public string? PostalCode { get; set; }
-
-
-        public ICollection<Invoice> Invoices { get; set; }
     }
 }

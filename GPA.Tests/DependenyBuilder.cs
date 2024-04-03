@@ -1,14 +1,18 @@
 ﻿using GPA.Business.Common.Extensions;
 using GPA.Business.Inventory.Extensions;
+using GPA.Business.Invoice.Extensions;
 using GPA.Business.Security.Extensions;
 using GPA.Bussiness.Services.Common.Mappers;
 using GPA.Bussiness.Services.Common.Validator;
 using GPA.Bussiness.Services.Inventory.Mappers;
 using GPA.Bussiness.Services.Inventory.Validator;
+using GPA.Bussiness.Services.Invoice.Mappers;
+using GPA.Bussiness.Services.Invoice.Validator;
 using GPA.Bussiness.Services.Security.Mappers;
 using GPA.Data;
 using GPA.Data.Common.Extensions;
 using GPA.Data.Inventory.Extensions;
+using GPA.Data.Invoice.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +34,11 @@ namespace GPA.Tests
             services.AddInventoryValidators();
             services.AddDataInventoryRepositories(configurations);
             services.AddBusinessInventoryServices();
+
+            services.AddInvoiceMappers();
+            services.AddInvoiceValidators();
+            services.AddDataInvoiceRepositories();
+            services.AddBusinessInvoiceServices();
 
             services.AddCommonMappers();
             services.AddCommonValidators();

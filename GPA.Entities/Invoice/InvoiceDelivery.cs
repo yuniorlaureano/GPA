@@ -3,7 +3,7 @@ using GPA.Entities;
 
 namespace GPA.Common.Entities.Invoice
 {
-    public class InvoiceDelivery : Entity
+    public class InvoiceDelivery : Entity<Guid>
     {
         public Guid InvoiceId { get; set; }
         public Guid DeliveryId { get; set; }

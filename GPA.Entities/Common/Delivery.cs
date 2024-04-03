@@ -4,7 +4,7 @@ using GPA.Entities;
 
 namespace GPA.Common.Entities.Comon
 {
-    public class Delivery : Entity
+    public class Delivery : Entity<Guid>
     {
         public Guid UserId { get; set; }
         public GPAUser User { get; set; }

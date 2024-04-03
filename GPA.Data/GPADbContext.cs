@@ -43,7 +43,6 @@ namespace GPA.Data
 
         //INVOICE
         public DbSet<Client> Client { get; set; }
-        public DbSet<ClientAddress> ClientAddresses { get; set; }
         public DbSet<ClientPaymentsDetails> ClientPaymentsDetails { get; set; }
         public DbSet<GPA.Common.Entities.Invoice.Invoice> Invoices { get; set; }
         public DbSet<Purchase> Purchases { get; set; }

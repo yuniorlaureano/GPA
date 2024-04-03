@@ -3,7 +3,7 @@ using GPA.Entities;
 
 namespace GPA.Common.Entities.Invoice
 {
-    public class SellDetails : Entity
+    public class SellDetails : Entity<Guid>
     {
         public decimal Price { get; set; }
 

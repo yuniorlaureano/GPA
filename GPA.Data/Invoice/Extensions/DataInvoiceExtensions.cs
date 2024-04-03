@@ -1,12 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace GPA.Data.Inventory.Extensions
+namespace GPA.Data.Invoice.Extensions
 {
     public static class DataInvoiceExtensions
     {
-        public static void AddDataInvoiceRepositories(this IServiceCollection services, IConfiguration configuration)
+        public static void AddDataInvoiceRepositories(this IServiceCollection services)
         {
+            services.AddTransient<IClientRepository, ClientRepository>();
         }
     }
 }
