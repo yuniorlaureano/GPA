@@ -88,7 +88,7 @@ namespace GPA.Tests.Inventory.Service
         }
 
         [Fact]
-        public async Task DeleteUpdate()
+        public async Task ShouldDelete()
         {
             var productLocation = _fixture
                 .Build<ProductLocationDto>()

@@ -14,9 +14,9 @@ namespace GPA.Business.Services.Inventory
 
         public Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null);
 
-        public Task<StockDto?> AddAsync(StockDto StockDto);
+        public Task<StockDto?> AddAsync(StockCreationDto dto);
 
-        public Task UpdateAsync(StockDto StockDto);
+        public Task UpdateAsync(StockCreationDto dto);
 
         public Task RemoveAsync(Guid id);
     }
@@ -57,14 +57,14 @@ namespace GPA.Business.Services.Inventory
             };
         }
 
-        public async Task<StockDto> AddAsync(StockDto dto)
+        public async Task<StockDto> AddAsync(StockCreationDto dto)
         {
             var newStock = _mapper.Map<Stock>(dto);
             var savedStock = await _repository.AddAsync(newStock);
             return _mapper.Map<StockDto>(savedStock);
         }
 
-        public async Task UpdateAsync(StockDto dto)
+        public async Task UpdateAsync(StockCreationDto dto)
         {
             if (dto.Id is null)
             {

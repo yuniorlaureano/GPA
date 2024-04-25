@@ -34,7 +34,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPost()]
-        public async Task<IActionResult> Create(StockDto model)
+        public async Task<IActionResult> Create(StockCreationDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -46,7 +46,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(StockDto model)
+        public async Task<IActionResult> Update(StockCreationDto model)
         {
             if (!ModelState.IsValid)
             {
