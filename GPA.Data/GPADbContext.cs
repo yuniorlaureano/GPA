@@ -47,8 +47,7 @@ namespace GPA.Data
         public DbSet<GPA.Common.Entities.Invoice.Invoice> Invoices { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<PurchaseDetails> PurchaseDetails { get; set; }
-        public DbSet<Sell> Sells { get; set; }
-        public DbSet<SellDetails> SellDetails { get; set; }
+        public DbSet<InvoiceDetails> InvoiceDetails { get; set; }
         public DbSet<StorePaymentsDetails> StorePaymentsDetails { get; set; }
 
         //SECURITY ADDED DINAMICALLY BY EF-CORE

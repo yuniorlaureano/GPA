@@ -20,10 +20,6 @@ namespace GPA.Data.Invoice.Configurations
                 .WithOne(x => x.Invoice)
                 .HasForeignKey(x => x.InvoiceId);
 
-            builder.HasOne(x => x.Sell)
-                .WithOne(x => x.Invoice)
-                .HasForeignKey<GPA.Common.Entities.Invoice.Invoice>(x => x.SellId);
-
             builder.HasOne(x => x.Client)
                 .WithMany(x => x.Invoices)
                 .HasForeignKey(x => x.ClientId);
