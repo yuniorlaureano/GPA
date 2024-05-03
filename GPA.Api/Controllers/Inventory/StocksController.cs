@@ -33,6 +33,12 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockService.GetAllAsync(search));
         }
 
+        [HttpGet("products")]
+        public async Task<IActionResult> GetProductCatalog([FromQuery] SearchDto search)
+        {
+            return Ok(await _stockService.GetProductCatalogAsync(search.Page, search.PageSize));
+        }
+
         [HttpPost()]
         public async Task<IActionResult> Create(StockCreationDto model)
         {
@@ -43,6 +49,18 @@ namespace GPA.Inventory.Api.Controllers
 
             var entity = await _stockService.AddAsync(model);
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
+        }
+
+        [HttpPost("bulk")]
+        public async Task<IActionResult> Create(StockCreationCollectionDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _stockService.AddManyAsync(model.AsStockCreation());
+            return Created();
         }
 
         [HttpPut()]

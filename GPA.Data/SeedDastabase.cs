@@ -83,6 +83,7 @@ namespace GPA.Data
                 new Reason { Id = 2, Name = "Sale" , Description = "Sale" },
                 new Reason { Id = 3, Name = "Return" , Description = "Return" },
                 new Reason { Id = 4, Name = "Adjustment" , Description = "Adjustment" },
+                new Reason { Id = 5, Name = "Manufactured" , Description = "Adjustment" },
             };
 
             modelBuilder.Entity<Reason>().HasData(reasons);

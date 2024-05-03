@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,11 @@ namespace GPA.Business.Services.Inventory
 
         public Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null);
 
+        public Task<ResponseDto<RawProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
+
         public Task<StockDto?> AddAsync(StockCreationDto dto);
+
+        Task<IEnumerable<StockDto>> AddManyAsync(IEnumerable<StockCreationDto> dtos);
 
         public Task UpdateAsync(StockCreationDto dto);
 
@@ -43,7 +48,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null)
         {
-            var stocks = await _repository.GetAllAsync(query => 
+            var stocks = await _repository.GetAllAsync(query =>
             {
                 return query.Include(x => x.Product)
                      .Include(x => x.Provider)
@@ -55,6 +60,23 @@ namespace GPA.Business.Services.Inventory
                 Count = await _repository.CountAsync(query => query, expression),
                 Data = _mapper.Map<IEnumerable<StockDto>>(stocks)
             };
+        }
+
+        public async Task<ResponseDto<RawProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
+        {
+            var productCatalog = await _repository.GetProductCatalogAsync(page, pageSize);
+            return new ResponseDto<RawProductCatalogDto>
+            {
+                Count = await _repository.GetProductCatalogCountAsync(),
+                Data = _mapper.Map<IEnumerable<RawProductCatalogDto>>(productCatalog)
+            };
+        }
+
+        public async Task<IEnumerable<StockDto>> AddManyAsync(IEnumerable<StockCreationDto> dtos)
+        {
+            var newStocks = _mapper.Map<IEnumerable<Stock>>(dtos);
+            var savedStocks = await _repository.AddManyAsync(newStocks);
+            return _mapper.Map<IEnumerable<StockDto>>(savedStocks);
         }
 
         public async Task<StockDto> AddAsync(StockCreationDto dto)

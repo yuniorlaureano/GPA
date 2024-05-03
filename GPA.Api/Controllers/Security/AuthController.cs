@@ -34,20 +34,22 @@ namespace GPA.Api.Controllers.Security
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user is null)
             {
-                return Unauthorized("El usaurio no es válido");
+                ModelState.AddModelError("usuario", "El usuario no existe");
+                return BadRequest(ModelState);
             }
 
             var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
 
             if (!resultd)
             {
-                return Unauthorized("El usaurio no es válido");
+                ModelState.AddModelError("usuario", "Usuario inválido");
+                return BadRequest(ModelState);
             }
 
             var roles = await _context.Roles.Include(r => r.RoleClaims)
@@ -71,7 +73,7 @@ namespace GPA.Api.Controllers.Security
                 Algorithm = SecurityAlgorithms.HmacSha256Signature,
                 Claims = claims.ToArray()
             });
-            return Ok(token);
+            return Ok(new { token = token });
         }
     }
 }

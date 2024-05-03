@@ -10,12 +10,13 @@
 
         public Guid ProductId { get; set; }
         public String ProductName { get; set; }
+        public String ProductCode { get; set; }
 
         public Guid? ProviderId { get; set; }
         public string? ProviderName { get; set; }
 
-        public Guid StoreId { get; set; }
-        public string StoreName { get; set; }
+        public Guid? StoreId { get; set; }
+        public string? StoreName { get; set; }
 
         public int ReasonId { get; set; }
         public string ReasonName { get; set; }

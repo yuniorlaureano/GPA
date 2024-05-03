@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs.Inventory;
+using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
+using GPA.Entities.Unmapped;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Inventory.Mappers
@@ -41,6 +43,9 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Store, StoreDto>();
             CreateMap<StoreDto, Store>();
+
+            CreateMap<RawProductCatalog, RawProductCatalogDto>();
+            CreateMap<RawProductCatalogDto, RawProductCatalog>();
         }
     }
 

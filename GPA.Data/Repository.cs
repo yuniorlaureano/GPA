@@ -44,6 +44,21 @@ namespace GPA.Data
             return await func(_entitySet).AsNoTracking().Where(expression).ToListAsync();
         }
 
+        public async Task<IEnumerable<TEntity>?> AddManyAsync(IEnumerable<TEntity> entities)
+        {
+            if (entities is not null && entities.Any())
+            {
+                _context.AddRange(entities);
+                await _context.SaveChangesAsync();
+                foreach (var entity in entities)
+                {
+                    _context.Entry(entity).State = EntityState.Detached;
+                }
+                return entities;
+            }
+            return null;
+        }
+
         public async Task<TEntity?> AddAsync(TEntity entity)
         {
             if (entity is not null)
