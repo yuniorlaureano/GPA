@@ -8,6 +8,7 @@ namespace GPA.Business.Invoice.Extensions
         public static void AddBusinessInvoiceServices(this IServiceCollection services)
         {
             services.AddTransient<IClientService, ClientService>();
+            services.AddTransient<IInvoiceService, InvoiceService>();
         }
     }
 }

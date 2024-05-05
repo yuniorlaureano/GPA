@@ -1,14 +1,12 @@
-﻿using GPA.Common.Entities.Invoice;
-
-namespace GPA.Data.Invoice
+﻿namespace GPA.Data.Invoice
 {
-    public interface IClientRepository : IRepository<Client>
+    public interface IInvoiceRepository : IRepository<GPA.Common.Entities.Invoice.Invoice>
     {
     }
 
-    public class ClientRepository : Repository<Client>, IClientRepository
+    public class InvoiceRepository : Repository<GPA.Common.Entities.Invoice.Invoice>, IInvoiceRepository
     {
-        public ClientRepository(GPADbContext _dbContext) : base(_dbContext)
+        public InvoiceRepository(GPADbContext _dbContext) : base(_dbContext)
         {
         }
     }

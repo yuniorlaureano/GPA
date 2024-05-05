@@ -9,11 +9,11 @@ namespace GPA.Common.Entities.Invoice
         public SaleType Type { get; set; }
         public DateTime? ExpirationDate { get; set; }
         public string? Note { get; set; }
-
         public Guid ClientId { get; set; }
         public Client Client { get; set; }
 
-        public ICollection<ClientPaymentsDetails> ClientPaymentsDetails { get; set; }
+        public ICollection<InvoiceDetails> InvoiceDetails { get; set; }
         public ICollection<InvoiceDelivery> InvoiceDeliveries { get; set; }
+        public ICollection<ClientPaymentsDetails> ClientPaymentsDetails { get; set; }
     }
 }

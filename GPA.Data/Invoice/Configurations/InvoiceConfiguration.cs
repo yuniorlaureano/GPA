@@ -24,6 +24,11 @@ namespace GPA.Data.Invoice.Configurations
                 .WithMany(x => x.Invoices)
                 .HasForeignKey(x => x.ClientId);
 
+            builder.HasMany(x => x.InvoiceDetails)
+                .WithOne(x => x.Invoice)
+                .HasForeignKey(x => x.InvoiceId)
+                .IsRequired();
+
         }
     }
 }
