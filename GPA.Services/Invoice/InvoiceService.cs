@@ -2,6 +2,7 @@
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.DTOs.Unmapped;
+using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using Microsoft.EntityFrameworkCore;
@@ -80,6 +81,8 @@ namespace GPA.Business.Services.Invoice
         public async Task<InvoiceDto> AddAsync(InvoiceDto dto)
         {
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
+            invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
+
             var savedInvoice = await _repository.AddAsync(invoice);
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
@@ -91,13 +94,19 @@ namespace GPA.Business.Services.Invoice
                 throw new ArgumentNullException();
             }
 
-            var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
-            newInvoice.Id = dto.Id.Value;
             var savedInvoice = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
-            await _repository.UpdateAsync(savedInvoice, newInvoice, (entityState, _) =>
+
+            if (savedInvoice is not null)
             {
-                entityState.Property(x => x.Id).IsModified = false;
-            });
+                var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
+                var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
+                foreach ( var detail in invoiceDetails )
+                {
+                    detail.InvoiceId = newInvoice.Id;
+                }
+
+                await _repository.UpdateAsync(newInvoice, invoiceDetails);                
+            }            
         }
 
         public async Task RemoveAsync(Guid id)

@@ -19,7 +19,8 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                 {
                     opt.PreCondition(src => src.ExpirationDate is not null);
                     opt.MapFrom(src => new DateTime(src.ExpirationDate.Year, src.ExpirationDate.Month, src.ExpirationDate.Day));
-                });
+                }).ForMember(x => x.InvoiceDetails, opt => opt.Ignore());
+
             CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceDto>()
                 .ForMember(dest => dest.ExpirationDate, opt =>
                 {
@@ -43,7 +44,9 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                     opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
                 });
 
-            CreateMap<InvoiceListDetailDto, InvoiceDetails>();
+            CreateMap<InvoiceListDetailDto, InvoiceDetails>()
+                .ForMember(x => x.Id, opt => opt.Ignore());
+
             CreateMap<InvoiceDetails, InvoiceListDetailDto>();
         }
     }
