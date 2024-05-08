@@ -1,16 +1,19 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
+using GPA.Common.DTOs.Unmapped;
+using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IInvoiceService
     {
-        public Task<InvoiceDto?> GetByIdAsync(Guid id);
+        public Task<InvoiceListDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<InvoiceDto>> GetAllAsync(SearchDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null);
+        public Task<ResponseDto<InvoiceListDto>> GetAllAsync(SearchDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null);
 
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
 
@@ -21,31 +24,56 @@ namespace GPA.Business.Services.Invoice
 
     public class InvoiceService : IInvoiceService
     {
+        private readonly IStockRepository _stockRepository;
         private readonly IInvoiceRepository _repository;
         private readonly IMapper _mapper;
 
-        public InvoiceService(IInvoiceRepository repository, IMapper mapper)
+        public InvoiceService(IInvoiceRepository repository, IStockRepository stockRepository, IMapper mapper)
         {
             _repository = repository;
+            _stockRepository = stockRepository;
             _mapper = mapper;
         }
 
-        public async Task<InvoiceDto?> GetByIdAsync(Guid id)
+        public async Task<InvoiceListDto?> GetByIdAsync(Guid id)
         {
-            var invoice = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<InvoiceDto>(invoice);
+            var savedInvoice = await _repository.GetByIdAsync(
+                query => query.Include(x => x.Client).Include(x => x.InvoiceDetails).ThenInclude(x => x.Product)
+                , x => x.Id == id);
+
+            var invoice = _mapper.Map<InvoiceListDto>(savedInvoice);
+
+            if (savedInvoice is { InvoiceDetails: { Count: > 0 } })
+            {
+                var productsId = savedInvoice.InvoiceDetails.Select(x => x.Product.Id).ToList();
+                if (productsId is not null)
+                {
+                    var stocks = (await _stockRepository.GetProductCatalogAsync(productsId.ToArray()))
+                            .ToDictionary(k => k.ProductId, v => v);
+
+                    foreach (var invoiceDetail in invoice.InvoiceDetails)
+                    {
+                        if (stocks.TryGetValue(invoiceDetail.ProductId, out var product))
+                        {
+                            invoiceDetail.StockProduct = _mapper.Map<RawProductCatalogDto>(product);
+                        }
+                    }
+                }
+            }
+
+            return invoice;
         }
 
-        public async Task<ResponseDto<InvoiceDto>> GetAllAsync(SearchDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null)
+        public async Task<ResponseDto<InvoiceListDto>> GetAllAsync(SearchDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null)
         {
             var categories = await _repository.GetAllAsync(query =>
             {
                 return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
-            return new ResponseDto<InvoiceDto>
+            return new ResponseDto<InvoiceListDto>
             {
                 Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<InvoiceDto>>(categories)
+                Data = _mapper.Map<IEnumerable<InvoiceListDto>>(categories)
             };
         }
 

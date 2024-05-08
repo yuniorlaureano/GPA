@@ -10,12 +10,12 @@ namespace GPA.Invoice.Api.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("invoice/[controller]")]
     [ApiController()]
-    public class InvoiceController : ControllerBase
+    public class InvoicesController : ControllerBase
     {
         private readonly IInvoiceService _invoiceService;
         private readonly IMapper _mapper;
 
-        public InvoiceController(IInvoiceService invoiceService, IMapper mapper)
+        public InvoicesController(IInvoiceService invoiceService, IMapper mapper)
         {
             _invoiceService = invoiceService;
             _mapper = mapper;

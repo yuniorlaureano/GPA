@@ -8,6 +8,7 @@ namespace GPA.Data.Inventory
     {
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
         Task<int> GetProductCatalogCountAsync();
+        Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds);
     }
 
     public class StockRepository : Repository<Stock>, IStockRepository
@@ -37,6 +38,25 @@ namespace GPA.Data.Inventory
         public async Task<int> GetProductCatalogCountAsync()
         {
             return await _context.Stocks.Select(x => x.ProductId).Distinct().CountAsync();
+        }
+
+        public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds)
+        {
+            var query = from s in _context.Stocks
+                        join p in _context.Products on s.ProductId equals p.Id
+                        group new { s, p } by new { s.ProductId, p.Name, p.Code, p.CategoryId } into g
+                        where productIds.Contains(g.Key.ProductId)
+                        select new RawProductCatalog
+                        {
+                            Quantity = g.Sum(x => x.s.TransactionType == Entities.Common.TransactionType.Output ? (x.s.Quantity * -1) : x.s.Quantity),
+                            Price = g.Max(x => x.p.Price),
+                            CategoryId = g.Key.CategoryId,
+                            ProductCode = g.Key.Code,
+                            ProductName = g.Key.Name,
+                            ProductId = g.Key.ProductId
+                        };
+
+            return await query.ToListAsync();
         }
     }
 }

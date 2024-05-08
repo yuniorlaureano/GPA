@@ -29,6 +29,22 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
 
             CreateMap<InvoiceDetailDto, InvoiceDetails>();
             CreateMap<InvoiceDetails, InvoiceDetailDto>();
+
+            CreateMap<InvoiceListDto, GPA.Common.Entities.Invoice.Invoice>()
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DateTime(src.ExpirationDate.Year, src.ExpirationDate.Month, src.ExpirationDate.Day));
+                });
+            CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceListDto>()
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                });
+
+            CreateMap<InvoiceListDetailDto, InvoiceDetails>();
+            CreateMap<InvoiceDetails, InvoiceListDetailDto>();
         }
     }
 
