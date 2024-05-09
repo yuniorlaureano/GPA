@@ -25,9 +25,9 @@ namespace GPA.Data.Inventory.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            builder.HasOne(x => x.Product)
-                .WithMany(x => x.Stocks)
-                .HasForeignKey(x => x.ProductId)
+            builder.HasMany(x => x.StockDetails)
+                .WithOne(x => x.Stock)
+                .HasForeignKey(x => x.StockId)
                 .IsRequired();
 
             builder.HasOne(x => x.Reason)

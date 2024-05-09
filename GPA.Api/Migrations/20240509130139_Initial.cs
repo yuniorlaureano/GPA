@@ -504,6 +504,49 @@ namespace GPA.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Stocks",
+                schema: "Inventory",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TransactionType = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProviderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ReasonId = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    Deleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Stocks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Stocks_Providers_ProviderId",
+                        column: x => x.ProviderId,
+                        principalSchema: "Inventory",
+                        principalTable: "Providers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Stocks_Reasons_ReasonId",
+                        column: x => x.ReasonId,
+                        principalSchema: "Inventory",
+                        principalTable: "Reasons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Stocks_Stores_StoreId",
+                        column: x => x.StoreId,
+                        principalSchema: "Inventory",
+                        principalTable: "Stores",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 schema: "Inventory",
                 columns: table => new
@@ -616,86 +659,6 @@ namespace GPA.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "InvoiceDetails",
-                schema: "Invoice",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_InvoiceDetails", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_InvoiceDetails_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalSchema: "Inventory",
-                        principalTable: "Products",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Stocks",
-                schema: "Inventory",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TransactionType = table.Column<int>(type: "int", nullable: false),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProviderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ReasonId = table.Column<int>(type: "int", nullable: false),
-                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Stocks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Stocks_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalSchema: "Inventory",
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Stocks_Providers_ProviderId",
-                        column: x => x.ProviderId,
-                        principalSchema: "Inventory",
-                        principalTable: "Providers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Stocks_Reasons_ReasonId",
-                        column: x => x.ReasonId,
-                        principalSchema: "Inventory",
-                        principalTable: "Reasons",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Stocks_Stores_StoreId",
-                        column: x => x.StoreId,
-                        principalSchema: "Inventory",
-                        principalTable: "Stores",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PurchaseDetails",
                 schema: "Invoice",
                 columns: table => new
@@ -730,27 +693,100 @@ namespace GPA.Api.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "InvoiceDetails",
+                schema: "Invoice",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    InvoiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    Deleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InvoiceDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_InvoiceDetails_Invoices_InvoiceId",
+                        column: x => x.InvoiceId,
+                        principalSchema: "Invoice",
+                        principalTable: "Invoices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_InvoiceDetails_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalSchema: "Inventory",
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StockDetails",
+                schema: "Inventory",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StockId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    Deleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StockDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StockDetails_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalSchema: "Inventory",
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StockDetails_Stocks_StockId",
+                        column: x => x.StockId,
+                        principalSchema: "Inventory",
+                        principalTable: "Stocks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 schema: "Inventory",
                 table: "Categories",
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Deleted", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("06b62f7c-b9f0-411f-81c1-eeb428df2280"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null },
-                    { new Guid("c9ca0a23-4749-46a4-bb6f-25414b8ebc7c"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null }
+                    { new Guid("265c424e-b327-4229-bafe-cd3050f30739"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null },
+                    { new Guid("38b83b29-6247-4b4d-b666-a23d5053f88d"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { new Guid("8211ac21-3192-429d-baaa-692129ca446c"), null, "admin", "ADMIN" });
+                values: new object[] { new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"), null, "admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Deleted", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { new Guid("7ed3677c-acc6-4cfd-a646-74f4f951cf90"), 0, "43af03bc-a456-429c-a1b7-9ea03e58dbaf", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEIeApPp26eM52CHdJwY1Z4ePQjyJiBalymQotg4Lpm2jTqdQThP9qZLjQjQ89wErZA==", null, false, null, false, "admin" });
+                values: new object[] { new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f"), 0, "87917a61-5b70-4b23-aed6-e1ac73334547", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEARbtypXHgjxtMwHgFDyTac6fbHvYyHJ4cX2z0qXUJTcnqBY66q7BeAFZpGiaKN75g==", null, false, null, false, "admin" });
 
             migrationBuilder.InsertData(
                 schema: "Inventory",
@@ -758,8 +794,8 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "Code", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("7d435507-cf41-4d1c-9aa7-4fb1a62cbbae"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null },
-                    { new Guid("c969f2b8-4906-4dcc-96b0-98a9f9a1203f"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null }
+                    { new Guid("7681285d-c623-4be5-9277-694541908cf7"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null },
+                    { new Guid("ee1e158f-c742-4ba9-b991-2b29e78cc279"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -779,13 +815,13 @@ namespace GPA.Api.Migrations
                 schema: "Security",
                 table: "GPARoleClaims",
                 columns: new[] { "Id", "ClaimType", "ClaimValue", "RoleId" },
-                values: new object[] { 1, "category", "c,r,u,d", new Guid("8211ac21-3192-429d-baaa-692129ca446c") });
+                values: new object[] { 1, "category", "c,r,u,d", new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af") });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUserRoles",
                 columns: new[] { "Id", "RoleId", "UserId" },
-                values: new object[] { new Guid("11ae27a7-cc72-4326-9514-2652959d67ff"), new Guid("8211ac21-3192-429d-baaa-692129ca446c"), new Guid("7ed3677c-acc6-4cfd-a646-74f4f951cf90") });
+                values: new object[] { new Guid("b154e543-9123-4187-bb82-7bec8ef65320"), new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"), new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f") });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ClientPaymentsDetails_InvoiceId",
@@ -870,6 +906,12 @@ namespace GPA.Api.Migrations
                 column: "InvoiceId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_InvoiceDetails_InvoiceId",
+                schema: "Invoice",
+                table: "InvoiceDetails",
+                column: "InvoiceId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_InvoiceDetails_ProductId",
                 schema: "Invoice",
                 table: "InvoiceDetails",
@@ -917,10 +959,16 @@ namespace GPA.Api.Migrations
                 column: "StockId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Stocks_ProductId",
+                name: "IX_StockDetails_ProductId",
                 schema: "Inventory",
-                table: "Stocks",
+                table: "StockDetails",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockDetails_StockId",
+                schema: "Inventory",
+                table: "StockDetails",
+                column: "StockId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stocks_ProviderId",
@@ -990,6 +1038,10 @@ namespace GPA.Api.Migrations
                 schema: "Invoice");
 
             migrationBuilder.DropTable(
+                name: "StockDetails",
+                schema: "Inventory");
+
+            migrationBuilder.DropTable(
                 name: "StorePaymentsDetails",
                 schema: "Invoice");
 
@@ -1004,6 +1056,10 @@ namespace GPA.Api.Migrations
             migrationBuilder.DropTable(
                 name: "Invoices",
                 schema: "Invoice");
+
+            migrationBuilder.DropTable(
+                name: "Products",
+                schema: "Inventory");
 
             migrationBuilder.DropTable(
                 name: "Stocks",
@@ -1022,8 +1078,16 @@ namespace GPA.Api.Migrations
                 schema: "Invoice");
 
             migrationBuilder.DropTable(
-                name: "Products",
+                name: "Categories",
                 schema: "Inventory");
+
+            migrationBuilder.DropTable(
+                name: "ProductLocations",
+                schema: "Inventory");
+
+            migrationBuilder.DropTable(
+                name: "Units",
+                schema: "common");
 
             migrationBuilder.DropTable(
                 name: "Providers",
@@ -1036,18 +1100,6 @@ namespace GPA.Api.Migrations
             migrationBuilder.DropTable(
                 name: "Stores",
                 schema: "Inventory");
-
-            migrationBuilder.DropTable(
-                name: "Categories",
-                schema: "Inventory");
-
-            migrationBuilder.DropTable(
-                name: "ProductLocations",
-                schema: "Inventory");
-
-            migrationBuilder.DropTable(
-                name: "Units",
-                schema: "common");
         }
     }
 }

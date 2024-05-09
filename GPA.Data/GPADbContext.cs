@@ -39,6 +39,7 @@ namespace GPA.Data
         public DbSet<ProviderAddress> ProviderAddresses { get; set; }
         public DbSet<Reason> Reasons { get; set; }
         public DbSet<Stock> Stocks { get; set; }
+        public DbSet<StockDetails> StockDetails { get; set; }
         public DbSet<Store> Store { get; set; }
 
         //INVOICE

@@ -32,11 +32,41 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<ProviderAddress, ProviderAddressDto>();
             CreateMap<ProviderAddressDto, ProviderAddress>();
 
-            CreateMap<Stock, StockDto>();
+            CreateMap<Stock, StockDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
+                });
+
             CreateMap<StockDto, Stock>();
 
-            CreateMap<Stock, StockCreationDto>();
-            CreateMap<StockCreationDto, Stock>();
+            CreateMap<Stock, StockCreationDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
+                });
+
+            CreateMap<StockCreationDto, Stock>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
+                });
+
+            CreateMap<Stock, StockWithDetailDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
+                });
+
+            CreateMap<StockDetails, StockDetailsDto>();
+            CreateMap<StockDetailsDto, StockDetails>();
+
+            CreateMap<StockDetails, StockCreationDetailDto>();
+            CreateMap<StockCreationDetailDto, StockDetails>();
 
             CreateMap<Reason, ReasonDto>();
             CreateMap<ReasonDto, Reason>();

@@ -51,18 +51,6 @@ namespace GPA.Inventory.Api.Controllers
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
-        [HttpPost("bulk")]
-        public async Task<IActionResult> Create(StockCreationCollectionDto model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            await _stockService.AddManyAsync(model.AsStockCreation());
-            return Created();
-        }
-
         [HttpPut()]
         public async Task<IActionResult> Update(StockCreationDto model)
         {

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GPA.Api.Migrations
 {
     [DbContext(typeof(GPADbContext))]
-    [Migration("20240503214539_Initial")]
+    [Migration("20240509130139_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -106,14 +106,14 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("06b62f7c-b9f0-411f-81c1-eeb428df2280"),
+                            Id = new Guid("38b83b29-6247-4b4d-b666-a23d5053f88d"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("c9ca0a23-4749-46a4-bb6f-25414b8ebc7c"),
+                            Id = new Guid("265c424e-b327-4229-bafe-cd3050f30739"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
@@ -244,7 +244,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("7d435507-cf41-4d1c-9aa7-4fb1a62cbbae"),
+                            Id = new Guid("7681285d-c623-4be5-9277-694541908cf7"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -252,7 +252,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("c969f2b8-4906-4dcc-96b0-98a9f9a1203f"),
+                            Id = new Guid("ee1e158f-c742-4ba9-b991-2b29e78cc279"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -514,14 +514,8 @@ namespace GPA.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid?>("ProviderId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
 
                     b.Property<int>("ReasonId")
                         .HasColumnType("int");
@@ -540,8 +534,6 @@ namespace GPA.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
-
                     b.HasIndex("ProviderId");
 
                     b.HasIndex("ReasonId");
@@ -549,6 +541,53 @@ namespace GPA.Api.Migrations
                     b.HasIndex("StoreId");
 
                     b.ToTable("Stocks", "Inventory");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.StockDetails", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockId");
+
+                    b.ToTable("StockDetails", "Inventory");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Store", b =>
@@ -830,10 +869,13 @@ namespace GPA.Api.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid?>("ProductId")
+                    b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Quantity")
@@ -846,6 +888,8 @@ namespace GPA.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
 
                     b.HasIndex("ProductId");
 
@@ -1010,7 +1054,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("8211ac21-3192-429d-baaa-692129ca446c"),
+                            Id = new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -1045,7 +1089,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("8211ac21-3192-429d-baaa-692129ca446c")
+                            RoleId = new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af")
                         });
                 });
 
@@ -1128,9 +1172,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("7ed3677c-acc6-4cfd-a646-74f4f951cf90"),
+                            Id = new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "43af03bc-a456-429c-a1b7-9ea03e58dbaf",
+                            ConcurrencyStamp = "87917a61-5b70-4b23-aed6-e1ac73334547",
                             Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
@@ -1138,7 +1182,7 @@ namespace GPA.Api.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIeApPp26eM52CHdJwY1Z4ePQjyJiBalymQotg4Lpm2jTqdQThP9qZLjQjQ89wErZA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEARbtypXHgjxtMwHgFDyTac6fbHvYyHJ4cX2z0qXUJTcnqBY66q7BeAFZpGiaKN75g==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -1217,9 +1261,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("11ae27a7-cc72-4326-9514-2652959d67ff"),
-                            RoleId = new Guid("8211ac21-3192-429d-baaa-692129ca446c"),
-                            UserId = new Guid("7ed3677c-acc6-4cfd-a646-74f4f951cf90")
+                            Id = new Guid("b154e543-9123-4187-bb82-7bec8ef65320"),
+                            RoleId = new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"),
+                            UserId = new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f")
                         });
                 });
 
@@ -1341,12 +1385,6 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Stock", b =>
                 {
-                    b.HasOne("GPA.Common.Entities.Inventory.Product", "Product")
-                        .WithMany("Stocks")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("GPA.Common.Entities.Inventory.Provider", "Provider")
                         .WithMany("Stocks")
                         .HasForeignKey("ProviderId")
@@ -1362,13 +1400,30 @@ namespace GPA.Api.Migrations
                         .WithMany()
                         .HasForeignKey("StoreId");
 
-                    b.Navigation("Product");
-
                     b.Navigation("Provider");
 
                     b.Navigation("Reason");
 
                     b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.StockDetails", b =>
+                {
+                    b.HasOne("GPA.Common.Entities.Inventory.Product", "Product")
+                        .WithMany("Stocks")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GPA.Common.Entities.Inventory.Stock", "Stock")
+                        .WithMany("StockDetails")
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.ClientPaymentsDetails", b =>
@@ -1414,9 +1469,19 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.InvoiceDetails", b =>
                 {
+                    b.HasOne("GPA.Common.Entities.Invoice.Invoice", "Invoice")
+                        .WithMany("InvoiceDetails")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("GPA.Common.Entities.Inventory.Product", "Product")
                         .WithMany()
-                        .HasForeignKey("ProductId");
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
 
                     b.Navigation("Product");
                 });
@@ -1540,6 +1605,11 @@ namespace GPA.Api.Migrations
                     b.Navigation("Stocks");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.Stock", b =>
+                {
+                    b.Navigation("StockDetails");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Client", b =>
                 {
                     b.Navigation("Invoices");
@@ -1550,6 +1620,8 @@ namespace GPA.Api.Migrations
                     b.Navigation("ClientPaymentsDetails");
 
                     b.Navigation("InvoiceDeliveries");
+
+                    b.Navigation("InvoiceDetails");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Purchase", b =>

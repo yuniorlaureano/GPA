@@ -33,7 +33,7 @@ namespace GPA.Data.Invoice
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw ex;
+                throw;
             }
         }
     }

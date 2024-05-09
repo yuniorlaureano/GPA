@@ -61,13 +61,19 @@ namespace GPA.Tests.Inventory.Service
 
             var stockDependencies = await StockCreationDependencies();
 
+            var stockDetails = _fixture
+                .Build<StockCreationDetailDto>()
+                .With(x => x.ProductId, dto.Id)
+                .Create();
+
             var stock = _fixture
                 .Build<StockCreationDto>()
                 .With(x => x.TransactionType, (int)TransactionType.Input)
                 .With(x => x.StoreId, stockDependencies.StoreId)
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.ProductId, dto.Id.Value)
+                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
+                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -96,6 +102,11 @@ namespace GPA.Tests.Inventory.Service
 
             var stockDependencies = await StockCreationDependencies();
 
+            var stockDetails = _fixture
+                .Build<StockCreationDetailDto>()
+                .With(x => x.ProductId, dto.Id)
+                .Create();
+
             for (int i = 0; i < 3; i++)
             {
                 var stock = _fixture
@@ -104,7 +115,8 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.StoreId, stockDependencies.StoreId)
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.ProductId, dto.Id.Value)
+                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
+                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -134,13 +146,19 @@ namespace GPA.Tests.Inventory.Service
 
             var stockDependencies = await StockCreationDependencies();
 
+            var stockDetails = _fixture
+                .Build<StockCreationDetailDto>()
+                .With(x => x.ProductId, dto.Id)
+                .Create();
+
             var stock = _fixture
                 .Build<StockCreationDto>()
                 .With(x => x.TransactionType, (int)TransactionType.Input)
                 .With(x => x.StoreId, stockDependencies.StoreId)
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.ProductId, dto.Id.Value)
+                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
+                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -168,13 +186,19 @@ namespace GPA.Tests.Inventory.Service
 
             var stockDependencies = await StockCreationDependencies();
 
+            var stockDetails = _fixture
+                .Build<StockCreationDetailDto>()
+                .With(x => x.ProductId, dto.Id)
+                .Create();
+
             var stock = _fixture
                 .Build<StockCreationDto>()
                 .With(x => x.TransactionType, (int)TransactionType.Input)
                 .With(x => x.StoreId, stockDependencies.StoreId)
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.ProductId, dto.Id.Value)
+                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
+                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -210,13 +234,19 @@ namespace GPA.Tests.Inventory.Service
 
             var stockDependencies = await StockCreationDependencies();
 
+            var stockDetails = _fixture
+                .Build<StockCreationDetailDto>()
+                .With(x => x.ProductId, dto.Id)
+                .Create();
+
             var stock = _fixture
                 .Build<StockCreationDto>()
                 .With(x => x.TransactionType, (int)TransactionType.Input)
                 .With(x => x.StoreId, stockDependencies.StoreId)
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.ProductId, dto.Id.Value)
+                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
+                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
