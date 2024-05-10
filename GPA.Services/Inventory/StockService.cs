@@ -39,7 +39,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<StockWithDetailDto?> GetByIdAsync(Guid id)
         {
-            var savedStock = await _repository.GetByIdAsync(query =>
+            var stock = await _repository.GetByIdAsync(query =>
             {
                 return query
                     .Include(x => x.Provider)
@@ -47,26 +47,6 @@ namespace GPA.Business.Services.Inventory
                     .Include(x => x.StockDetails)
                         .ThenInclude(x => x.Product);
             }, x => x.Id == id);
-
-            var stock = _mapper.Map<StockWithDetailDto>(savedStock);
-
-            if (stock is not null)
-            {
-                var productsId = stock.StockDetails.Select(x => x.ProductId).ToList();
-                if (productsId is not null)
-                {
-                    var stocks = (await _stockRepository.GetProductCatalogAsync(productsId.ToArray()))
-                            .ToDictionary(k => k.ProductId, v => v);
-
-                    foreach (var stockDetail in stock.StockDetails)
-                    {
-                        if (stocks.TryGetValue(stockDetail.ProductId, out var product))
-                        {
-                            stockDetail.StockProduct = _mapper.Map<RawProductCatalogDto>(product);
-                        }
-                    }
-                }
-            }
 
             return _mapper.Map<StockWithDetailDto>(stock);
         }
@@ -101,6 +81,7 @@ namespace GPA.Business.Services.Inventory
         public async Task<StockDto> AddAsync(StockCreationDto dto)
         {
             var newStock = _mapper.Map<Stock>(dto);
+            newStock.StockDetails = _mapper.Map<ICollection<StockDetails>>(dto.StockDetails);
             var savedStock = await _repository.AddAsync(newStock);
             return _mapper.Map<StockDto>(savedStock);
         }

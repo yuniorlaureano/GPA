@@ -53,7 +53,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                 {
                     opt.PreCondition(src => src.Date is not null);
                     opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+                }).ForMember(dest => dest.StockDetails, opt => opt.Ignore());
 
             CreateMap<Stock, StockWithDetailDto>()
                 .ForMember(dest => dest.Date, opt =>
