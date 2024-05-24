@@ -23,18 +23,18 @@ namespace GPA.Business.Services.Inventory
         public Task UpdateAsync(StockCreationDto dto);
 
         public Task RemoveAsync(Guid id);
+
+        Task CancelAsync(Guid id);
     }
 
     public class StockService : IStockService
     {
-        private readonly IStockRepository _stockRepository;
         private readonly IStockRepository _repository;
         private readonly IMapper _mapper;
 
-        public StockService(IStockRepository repository, IStockRepository stockRepository, IMapper mapper)
+        public StockService(IStockRepository repository, IMapper mapper)
         {
             _repository = repository;
-            _stockRepository = stockRepository;
             _mapper = mapper;
         }
 
@@ -59,6 +59,7 @@ namespace GPA.Business.Services.Inventory
                 return query
                      .Include(x => x.Provider)
                      .Include(x => x.Reason)
+                     .OrderByDescending(x => x.Id)
                      .Skip(search.PageSize * Math.Abs(search.Page - 1))
                      .Take(search.PageSize);
             }, expression);
@@ -79,7 +80,7 @@ namespace GPA.Business.Services.Inventory
             };
         }
 
-        public async Task<StockDto> AddAsync(StockCreationDto dto)
+        public async Task<StockDto?> AddAsync(StockCreationDto dto)
         {
             var newStock = _mapper.Map<Stock>(dto);
             newStock.StockDetails = _mapper.Map<ICollection<StockDetails>>(dto.StockDetails);
@@ -96,9 +97,12 @@ namespace GPA.Business.Services.Inventory
 
             var savedStock = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
 
-            var canEditStock = 
-                    savedStock is not null && 
-                    savedStock.TransactionType == TransactionType.Input;
+            var canEditStock =
+                    savedStock is not null &&
+                    savedStock.TransactionType == TransactionType.Input &&
+                    savedStock.Status == StockStatus.Draft &&
+                    savedStock.ReasonId != (int)ReasonTypes.Sale &&
+                    savedStock.ReasonId != (int)ReasonTypes.Return;
 
             if (canEditStock)
             {
@@ -118,6 +122,11 @@ namespace GPA.Business.Services.Inventory
         {
             var newStock = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(newStock);
+        }
+
+        public async Task CancelAsync(Guid id)
+        {
+            await _repository.CancelAsync(id);
         }
     }
 }

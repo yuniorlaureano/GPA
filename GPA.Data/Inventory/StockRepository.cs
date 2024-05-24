@@ -1,4 +1,5 @@
 ﻿using GPA.Common.Entities.Inventory;
+using GPA.Entities.Common;
 using GPA.Entities.Unmapped;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ namespace GPA.Data.Inventory
         Task<int> GetProductCatalogCountAsync();
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds);
         Task UpdateAsync(Stock model, IEnumerable<StockDetails> stockDetails);
+        Task CancelAsync(Guid id);
     }
 
     public class StockRepository : Repository<Stock>, IStockRepository
@@ -20,11 +22,16 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
         {
+            var sale = (int)ReasonTypes.Sale;
             var query = from p in _context.Products
                         join sd in _context.StockDetails on p.Id equals sd.ProductId into sd_jointable
                         from sd_row in sd_jointable.DefaultIfEmpty()
                         join s in _context.Stocks on sd_row.StockId equals s.Id into s_jointable
                         from s_row in s_jointable.DefaultIfEmpty()
+                        where 
+                            s_row.ReasonId != sale &&
+                            s_row.Status != StockStatus.Draft &&
+                            s_row.Status != StockStatus.Canceled
                         group new { s_row, sd_row, p } by new { p.Id, p.Name, p.Code, p.CategoryId } into g
                         select new RawProductCatalog
                         {
@@ -48,17 +55,21 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds)
         {
+            var sale = (int)ReasonTypes.Sale;            
             var query = from p in _context.Products
                         join sd in _context.StockDetails on p.Id equals sd.ProductId into sd_jointable
                         from sd_row in sd_jointable.DefaultIfEmpty()
                         join s in _context.Stocks on sd_row.StockId equals s.Id into s_jointable
                         from s_row in s_jointable.DefaultIfEmpty()
+                        where productIds.Contains(p.Id) &&
+                            s_row.ReasonId != sale &&
+                            s_row.Status != StockStatus.Draft &&
+                            s_row.Status != StockStatus.Canceled
                         group new { s_row, sd_row, p } by new { p.Id, p.Name, p.Code, p.CategoryId } into g
-                        where productIds.Contains(g.Key.Id)
                         select new RawProductCatalog
                         {
                             Quantity = g.Sum(x => x.sd_row == null ? 0 :
-                                                (x.s_row.TransactionType == Entities.Common.TransactionType.Output ?
+                                                (x.s_row.TransactionType == TransactionType.Output ?
                                                                         (x.sd_row.Quantity * -1) : x.sd_row.Quantity)),
                             Price = g.Max(x => x.p.Price),
                             CategoryId = g.Key.CategoryId,
@@ -89,6 +100,23 @@ namespace GPA.Data.Inventory
             {
                 await transaction.RollbackAsync();
                 throw;
+            }
+        }
+
+        public async Task CancelAsync(Guid id)
+        {
+            var stock = await _context.Stocks.FirstAsync(x => x.Id == id);
+            var canCancel = 
+                stock.ReasonId != (int)ReasonTypes.Sale &&
+                (stock.Status == StockStatus.Draft || stock.Status == StockStatus.Saved);
+            if (canCancel)
+            {
+                await _context.Stocks.Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(setter =>
+                        setter
+                            .SetProperty(x => x.Status, Entities.Common.StockStatus.Canceled)
+                            .SetProperty(x => x.UpdatedAt, DateTime.Now)
+                        );
             }
         }
     }

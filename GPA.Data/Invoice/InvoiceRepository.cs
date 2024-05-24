@@ -63,6 +63,7 @@ namespace GPA.Data.Invoice
                     Description = "Devolución de factura",
                     Date = DateTime.Now,
                     ReasonId = (int)ReasonTypes.Return,
+                    Status = StockStatus.Saved,
                     StockDetails = invoice.InvoiceDetails.Select(x => new StockDetails
                     {
                         Quantity = x.Quantity,

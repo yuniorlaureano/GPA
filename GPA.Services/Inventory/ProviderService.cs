@@ -42,7 +42,7 @@ namespace GPA.Business.Services.Inventory
         {
             var providers = await _repository.GetAllAsync(query => 
             {
-                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
+                return query.OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
             return new ResponseDto<ProviderDto>
             {

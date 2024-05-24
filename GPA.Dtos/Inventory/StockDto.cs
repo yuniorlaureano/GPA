@@ -6,6 +6,7 @@
         public string Description { get; set; }
         public DetailedDate Date { get; set; }
         public int TransactionType { get; set; }
+        public int Status { get; set; }
         public Guid? ProviderId { get; set; }
         public string? ProviderName { get; set; }
         public Guid? StoreId { get; set; }

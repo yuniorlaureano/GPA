@@ -69,5 +69,12 @@ namespace GPA.Inventory.Api.Controllers
             await _stockService.RemoveAsync(id);
             return NoContent();
         }
+
+        [HttpPut("{id}/cancel")]
+        public async Task<IActionResult> Cancel([FromRoute] Guid id)
+        {
+            await _stockService.CancelAsync(id);
+            return NoContent();
+        }
     }
 }

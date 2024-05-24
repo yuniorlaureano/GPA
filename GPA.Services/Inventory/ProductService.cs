@@ -47,6 +47,7 @@ namespace GPA.Business.Services.Inventory
             {
                 return query.Include(x => x.ProductLocation)
                      .Include(x => x.Category)
+                     .OrderByDescending(x => x.Id)
                      .Skip(search.PageSize * Math.Abs(search.Page - 1))
                      .Take(search.PageSize);
             }, expression);

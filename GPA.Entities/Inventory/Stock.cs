@@ -8,6 +8,7 @@ namespace GPA.Common.Entities.Inventory
         public TransactionType TransactionType { get; set; }
         public string Description { get; set; }
         public DateTime? Date { get; set; }
+        public StockStatus Status { get; set; }
         public Guid? ProviderId { get; set; }
         public Provider? Provider { get; set; }
         public Guid? StoreId { get; set; }
