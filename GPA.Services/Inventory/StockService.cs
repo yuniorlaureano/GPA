@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -93,9 +94,13 @@ namespace GPA.Business.Services.Inventory
                 throw new ArgumentNullException();
             }
 
-            var savedStock = _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            var savedStock = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
 
-            if (savedStock is not null)
+            var canEditStock = 
+                    savedStock is not null && 
+                    savedStock.TransactionType == TransactionType.Input;
+
+            if (canEditStock)
             {
                 var newStock = _mapper.Map<Stock>(dto);
                 var stockDetails = _mapper.Map<List<StockDetails>>(dto.StockDetails);

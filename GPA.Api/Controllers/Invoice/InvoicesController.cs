@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Business.Services.Invoice;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
@@ -14,10 +15,18 @@ namespace GPA.Invoice.Api.Controllers
     {
         private readonly IInvoiceService _invoiceService;
         private readonly IMapper _mapper;
+        private readonly IValidator<InvoiceUpdateDto> _updateValidator;
+        private readonly IValidator<InvoiceDto> _createValidator;
 
-        public InvoicesController(IInvoiceService invoiceService, IMapper mapper)
+        public InvoicesController(
+            IInvoiceService invoiceService,
+            IValidator<InvoiceUpdateDto> updateValidator,
+            IValidator<InvoiceDto> createValidator,
+            IMapper mapper)
         {
             _invoiceService = invoiceService;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
             _mapper = mapper;
         }
 
@@ -46,11 +55,12 @@ namespace GPA.Invoice.Api.Controllers
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Update(InvoiceDto invoice)
+        public async Task<IActionResult> Update(InvoiceUpdateDto invoice)
         {
-            if (!ModelState.IsValid)
+            var result = await _updateValidator.ValidateAsync(invoice);
+            if (!result.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(result.Errors);
             }
 
             await _invoiceService.UpdateAsync(invoice);
@@ -61,6 +71,13 @@ namespace GPA.Invoice.Api.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             await _invoiceService.RemoveAsync(id);
+            return NoContent();
+        }
+
+        [HttpPut("cancel/{id}")]
+        public async Task<IActionResult> Cancel(Guid id)
+        {
+            await _invoiceService.CancelAsync(id);
             return NoContent();
         }
     }

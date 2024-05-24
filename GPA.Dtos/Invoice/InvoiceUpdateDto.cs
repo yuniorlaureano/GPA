@@ -2,7 +2,7 @@
 
 namespace GPA.Common.DTOs.Invoices
 {
-    public class InvoiceDto
+    public class InvoiceUpdateDto
     {
         public Guid? Id { get; set; }
         public int Status { get; set; }
@@ -12,6 +12,6 @@ namespace GPA.Common.DTOs.Invoices
         public string? Note { get; set; }
         public Guid? ClientId { get; set; }
 
-        public ICollection<InvoiceDetailDto> InvoiceDetails { get; set; }
+        public ICollection<InvoiceDetailUpdateDto> InvoiceDetails { get; set; }
     }
 }

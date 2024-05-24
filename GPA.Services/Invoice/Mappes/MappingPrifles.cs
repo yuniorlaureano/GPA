@@ -15,33 +15,37 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
             CreateMap<ClientDto, Client>();
 
             CreateMap<InvoiceDto, GPA.Common.Entities.Invoice.Invoice>()
-                .ForMember(dest => dest.ExpirationDate, opt =>
+                .ForMember(dest => dest.Date, opt =>
                 {
-                    opt.PreCondition(src => src.ExpirationDate is not null);
-                    opt.MapFrom(src => new DateTime(src.ExpirationDate.Year, src.ExpirationDate.Month, src.ExpirationDate.Day));
+                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
                 }).ForMember(x => x.InvoiceDetails, opt => opt.Ignore());
 
             CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceDto>()
-                .ForMember(dest => dest.ExpirationDate, opt =>
+                .ForMember(dest => dest.Date, opt =>
                 {
-                    opt.PreCondition(src => src.ExpirationDate is not null);
-                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
                 });
+
+            CreateMap<InvoiceUpdateDto, GPA.Common.Entities.Invoice.Invoice>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
+                }).ForMember(x => x.InvoiceDetails, opt => opt.Ignore());
 
             CreateMap<InvoiceDetailDto, InvoiceDetails>();
             CreateMap<InvoiceDetails, InvoiceDetailDto>();
 
+            CreateMap<InvoiceDetailUpdateDto, InvoiceDetails>();
+
             CreateMap<InvoiceListDto, GPA.Common.Entities.Invoice.Invoice>()
-                .ForMember(dest => dest.ExpirationDate, opt =>
+                .ForMember(dest => dest.Date, opt =>
                 {
-                    opt.PreCondition(src => src.ExpirationDate is not null);
-                    opt.MapFrom(src => new DateTime(src.ExpirationDate.Year, src.ExpirationDate.Month, src.ExpirationDate.Day));
+                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
                 });
             CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceListDto>()
-                .ForMember(dest => dest.ExpirationDate, opt =>
+                .ForMember(dest => dest.Date, opt =>
                 {
-                    opt.PreCondition(src => src.ExpirationDate is not null);
-                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
                 });
 
             CreateMap<InvoiceListDetailDto, InvoiceDetails>()

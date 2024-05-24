@@ -270,9 +270,11 @@ namespace GPA.Api.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Payment = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PaymentStatus = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClientId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -511,6 +513,7 @@ namespace GPA.Api.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TransactionType = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ProviderId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     StoreId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ReasonId = table.Column<int>(type: "int", nullable: false),
@@ -601,7 +604,6 @@ namespace GPA.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Payment = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
                     InvoiceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -737,6 +739,7 @@ namespace GPA.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
+                    PurchasePrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     StockId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -772,21 +775,21 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Deleted", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("265c424e-b327-4229-bafe-cd3050f30739"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null },
-                    { new Guid("38b83b29-6247-4b4d-b666-a23d5053f88d"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null }
+                    { new Guid("2db1bbb2-cf90-454b-b191-6c1f67e658a7"), null, null, false, null, null, "Botellitas pequeñas", "Botellita", null, null },
+                    { new Guid("f731ddad-45a8-4568-af26-130dbf6a1b6a"), null, null, false, null, null, "Botellones de los grandes", "Botellon", null, null }
                 });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPARoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"), null, "admin", "ADMIN" });
+                values: new object[] { new Guid("c1f8a3f7-3786-4423-b23e-aa0d88eda097"), null, "admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Deleted", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f"), 0, "87917a61-5b70-4b23-aed6-e1ac73334547", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEARbtypXHgjxtMwHgFDyTac6fbHvYyHJ4cX2z0qXUJTcnqBY66q7BeAFZpGiaKN75g==", null, false, null, false, "admin" });
+                values: new object[] { new Guid("ba18e4f2-6b1c-48ac-8ac7-d1ef98673ef6"), 0, "c5fe3211-02e3-4e47-b096-7eed58f2b82a", false, "admin@gmail.com", false, "Admin", "Admin", false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEH1b+FjDIu7CIDBAYlKDy3zb2fT9BEYuVGhnUhg1hM9NWt8a9kB+Ozh2tyrCoeaYEw==", null, false, null, false, "admin" });
 
             migrationBuilder.InsertData(
                 schema: "Inventory",
@@ -794,8 +797,8 @@ namespace GPA.Api.Migrations
                 columns: new[] { "Id", "Code", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "Name", "UpdatedAt", "UpdatedBy" },
                 values: new object[,]
                 {
-                    { new Guid("7681285d-c623-4be5-9277-694541908cf7"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null },
-                    { new Guid("ee1e158f-c742-4ba9-b991-2b29e78cc279"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null }
+                    { new Guid("0ba33e28-d5ef-47f6-b3aa-993ed093ad7e"), "ST-2", null, null, null, null, "Estante 2", "Estante 2", null, null },
+                    { new Guid("69135765-e3f4-4460-9464-02c5518f7125"), "ST-1", null, null, null, null, "Estante 1", "Estante 1", null, null }
                 });
 
             migrationBuilder.InsertData(
@@ -815,13 +818,13 @@ namespace GPA.Api.Migrations
                 schema: "Security",
                 table: "GPARoleClaims",
                 columns: new[] { "Id", "ClaimType", "ClaimValue", "RoleId" },
-                values: new object[] { 1, "category", "c,r,u,d", new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af") });
+                values: new object[] { 1, "category", "c,r,u,d", new Guid("c1f8a3f7-3786-4423-b23e-aa0d88eda097") });
 
             migrationBuilder.InsertData(
                 schema: "Security",
                 table: "GPAUserRoles",
                 columns: new[] { "Id", "RoleId", "UserId" },
-                values: new object[] { new Guid("b154e543-9123-4187-bb82-7bec8ef65320"), new Guid("ecef2591-3672-45d1-8b04-ee0d62bec1af"), new Guid("12291dac-6ba8-4adc-b876-4ea2960b608f") });
+                values: new object[] { new Guid("7e790ddd-9f8e-4d28-88dc-1f1d3d8678d5"), new Guid("c1f8a3f7-3786-4423-b23e-aa0d88eda097"), new Guid("ba18e4f2-6b1c-48ac-8ac7-d1ef98673ef6") });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ClientPaymentsDetails_InvoiceId",

@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
+using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.DTOs.Unmapped;
+using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using GPA.Dtos;
+using GPA.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -18,21 +22,29 @@ namespace GPA.Business.Services.Invoice
 
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
 
-        public Task UpdateAsync(InvoiceDto invoiceDto);
+        public Task UpdateAsync(InvoiceUpdateDto invoiceDto);
 
         public Task RemoveAsync(Guid id);
+
+        Task CancelAsync(Guid id);
     }
 
     public class InvoiceService : IInvoiceService
     {
         private readonly IStockRepository _stockRepository;
+        private readonly IStockService _stockService;
         private readonly IInvoiceRepository _repository;
         private readonly IMapper _mapper;
 
-        public InvoiceService(IInvoiceRepository repository, IStockRepository stockRepository, IMapper mapper)
+        public InvoiceService(
+            IInvoiceRepository repository,
+            IStockRepository stockRepository,
+            IStockService stockService,
+            IMapper mapper)
         {
             _repository = repository;
             _stockRepository = stockRepository;
+            _stockService = stockService;
             _mapper = mapper;
         }
 
@@ -78,16 +90,20 @@ namespace GPA.Business.Services.Invoice
             };
         }
 
-        public async Task<InvoiceDto> AddAsync(InvoiceDto dto)
+        public async Task<InvoiceDto?> AddAsync(InvoiceDto dto)
         {
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
             invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
-
+            
+            invoice.PaymentStatus = GetPaymentStatus(invoice);
             var savedInvoice = await _repository.AddAsync(invoice);
+
+            await AddStock(invoice);
+
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
-        public async Task UpdateAsync(InvoiceDto dto)
+        public async Task UpdateAsync(InvoiceUpdateDto dto)
         {
             if (dto.Id is null)
             {
@@ -96,16 +112,21 @@ namespace GPA.Business.Services.Invoice
 
             var savedInvoice = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
 
-            if (savedInvoice is not null)
+            var canEditInvoice = 
+                    savedInvoice is not null &&
+                    savedInvoice.Status == InvoiceStatus.Draft;
+            if (canEditInvoice)
             {
                 var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
                 var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
-                foreach ( var detail in invoiceDetails )
+
+                foreach (var detail in invoiceDetails)
                 {
                     detail.InvoiceId = newInvoice.Id;
                 }
 
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);                
+                await AddStock(newInvoice);
             }            
         }
 
@@ -113,6 +134,47 @@ namespace GPA.Business.Services.Invoice
         {
             var savedInvoice = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedInvoice);
+        }
+
+        public async Task CancelAsync(Guid id)
+        {
+            await _repository.CancelAsync(id);
+        }
+
+        private Stock ToStock(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            return new Stock
+            {
+                TransactionType = TransactionType.Output,
+                Description = $"Venta {(invoice.Type == SaleType.Credit ? "a Crédito" : "al Contado")}",
+                Date = DateTime.Now,
+                ReasonId = (int)ReasonTypes.Sale,
+                CreatedAt = DateTime.Now,
+                StockDetails = invoice.InvoiceDetails.Select(x => new StockDetails
+                {
+                    Quantity = x.Quantity,
+                    ProductId = x.ProductId,
+                    CreatedAt = DateTime.Now
+                }).ToList()
+            };
+        }
+
+        private PaymentStatus GetPaymentStatus(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            if (invoice.Payment < invoice.InvoiceDetails.Sum(x => x.Quantity * x.Price))
+            {
+                return PaymentStatus.Pending;
+            }
+
+            return PaymentStatus.Payed;
+        }
+
+        private async Task AddStock(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            if (invoice.Status == InvoiceStatus.Saved)
+            {
+                await _stockRepository.AddAsync(ToStock(invoice));
+            }
         }
     }
 }
