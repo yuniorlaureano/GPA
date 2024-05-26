@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.DTOs.Unmapped;
@@ -7,7 +6,6 @@ using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
-using GPA.Dtos;
 using GPA.Entities.Common;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -32,19 +30,19 @@ namespace GPA.Business.Services.Invoice
     public class InvoiceService : IInvoiceService
     {
         private readonly IStockRepository _stockRepository;
-        private readonly IStockService _stockService;
         private readonly IInvoiceRepository _repository;
+        private readonly IReceivableAccountRepository _receivableAccountRepository;
         private readonly IMapper _mapper;
 
         public InvoiceService(
             IInvoiceRepository repository,
             IStockRepository stockRepository,
-            IStockService stockService,
+            IReceivableAccountRepository receivableAccountRepository,
             IMapper mapper)
         {
             _repository = repository;
             _stockRepository = stockRepository;
-            _stockService = stockService;
+            _receivableAccountRepository = receivableAccountRepository;
             _mapper = mapper;
         }
 
@@ -94,12 +92,12 @@ namespace GPA.Business.Services.Invoice
         {
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
             invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
-            
+
             invoice.PaymentStatus = GetPaymentStatus(invoice);
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(invoice);
-
+            await AddReceivableAccount(invoice);
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
@@ -112,7 +110,7 @@ namespace GPA.Business.Services.Invoice
 
             var savedInvoice = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
 
-            var canEditInvoice = 
+            var canEditInvoice =
                     savedInvoice is not null &&
                     savedInvoice.Status == InvoiceStatus.Draft;
             if (canEditInvoice)
@@ -125,9 +123,10 @@ namespace GPA.Business.Services.Invoice
                     detail.InvoiceId = newInvoice.Id;
                 }
 
-                await _repository.UpdateAsync(newInvoice, invoiceDetails);                
+                await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
-            }            
+                await AddReceivableAccount(newInvoice);
+            }
         }
 
         public async Task RemoveAsync(Guid id)
@@ -175,6 +174,23 @@ namespace GPA.Business.Services.Invoice
             if (invoice.Status == InvoiceStatus.Saved)
             {
                 await _stockRepository.AddAsync(ToStock(invoice));
+            }
+        }
+
+        private async Task AddReceivableAccount(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            if (invoice.Status == InvoiceStatus.Saved &&
+                invoice.PaymentStatus == PaymentStatus.Pending)
+            {
+                var payment = invoice.InvoiceDetails.Sum(x => x.Quantity * x.Price);
+                var paymentDetail = new ClientPaymentsDetails
+                {
+                    InvoiceId = invoice.Id,
+                    PendingPayment = payment - invoice.Payment,
+                    Date = DateTime.Now,
+                };
+
+                await _receivableAccountRepository.AddAsync(paymentDetail);
             }
         }
     }

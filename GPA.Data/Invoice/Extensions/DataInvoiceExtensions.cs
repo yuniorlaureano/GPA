@@ -8,6 +8,7 @@ namespace GPA.Data.Invoice.Extensions
         {
             services.AddTransient<IClientRepository, ClientRepository>();
             services.AddTransient<IInvoiceRepository, InvoiceRepository>();
+            services.AddTransient<IReceivableAccountRepository, ReceivableAccountRepository>();
         }
     }
 }

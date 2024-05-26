@@ -52,6 +52,10 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                 .ForMember(x => x.Id, opt => opt.Ignore());
 
             CreateMap<InvoiceDetails, InvoiceListDetailDto>();
+
+            CreateMap<ClientPaymentsDetails, ClientPaymentsDetailDto>();
+            CreateMap<ClientPaymentsDetailCreationDto, ClientPaymentsDetails>();
+            CreateMap<ClientPaymentsDetailDto, ClientPaymentsDetailCreationDto>();
         }
     }
 
