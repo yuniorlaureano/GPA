@@ -3,38 +3,66 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IReceivableAccountService
     {
-        public Task<ClientPaymentsDetailDto?> GetByIdAsync(Guid id);
+        Task<ClientPaymentsDetailDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(SearchDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
+        Task<InvoiceWithReceivableAccountsDto?> GetByInvoiceIdAsync(Guid id);
 
-        public Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto clientDto);
+        Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(SearchDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
 
-        public Task UpdateAsync(ClientPaymentsDetailCreationDto clientDto);
+        Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto clientDto);
 
-        public Task RemoveAsync(Guid id);
+        Task UpdateAsync(ClientPaymentsDetailCreationDto clientDto);
+
+        Task RemoveAsync(Guid id);
     }
 
     public class ReceivableAccountService : IReceivableAccountService
     {
         private readonly IReceivableAccountRepository _repository;
+        private readonly IInvoiceRepository _invoiceRepository;
         private readonly IMapper _mapper;
 
-        public ReceivableAccountService(IReceivableAccountRepository repository, IMapper mapper)
+        public ReceivableAccountService(IReceivableAccountRepository repository, IMapper mapper, IInvoiceRepository invoiceRepository)
         {
             _repository = repository;
             _mapper = mapper;
+            _invoiceRepository = invoiceRepository;
         }
 
         public async Task<ClientPaymentsDetailDto?> GetByIdAsync(Guid id)
         {
             var client = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             return _mapper.Map<ClientPaymentsDetailDto>(client);
+        }
+
+        public async Task<InvoiceWithReceivableAccountsDto?> GetByInvoiceIdAsync(Guid id)
+        {
+            var invoice = await _invoiceRepository.GetByIdAsync(
+                    query => query.Include(x => x.ClientPaymentsDetails)
+                                  .Include(x => x.Client),
+                    x => x.Id == id
+                );
+
+            var invoiceWithReceivableAccounts = _mapper.Map<InvoiceWithReceivableAccountsDto>(invoice);
+
+            if (invoice.ClientPaymentsDetails is { Count: > 0 })
+            {
+                invoiceWithReceivableAccounts.PendingPayment = _mapper.Map<ClientPaymentsDetailDto>(
+                    invoice.ClientPaymentsDetails.FirstOrDefault(
+                        x => x.PendingPayment != x.Payment && x.Payment == 0)
+                );
+            }
+
+            invoiceWithReceivableAccounts.ReceivableAccounts =
+                _mapper.Map<IEnumerable<ClientPaymentsDetailDto>>(invoice.ClientPaymentsDetails);
+            return invoiceWithReceivableAccounts;
         }
 
         public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(SearchDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
@@ -50,7 +78,7 @@ namespace GPA.Business.Services.Invoice
             };
         }
 
-        public async Task<ClientPaymentsDetailDto> AddAsync(ClientPaymentsDetailCreationDto dto)
+        public async Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto dto)
         {
             var payment = _mapper.Map<ClientPaymentsDetails>(dto);
             var savedClient = await _repository.AddAsync(payment);
@@ -64,19 +92,68 @@ namespace GPA.Business.Services.Invoice
                 throw new ArgumentNullException();
             }
 
-            var newClient = _mapper.Map<ClientPaymentsDetails>(dto);
-            newClient.Id = dto.Id.Value;
-            var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
-            await _repository.UpdateAsync(savedClient, newClient, (entityState, _) =>
+            if (dto.Payment <= 0)
             {
-                entityState.Property(x => x.Id).IsModified = false;
-            });
+                throw new ArgumentNullException();
+            }
+
+            var invoice = await _invoiceRepository.GetByIdAsync(query => query, x => x.Id == dto.InvoiceId);
+            var paymentDetail = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+
+            if (paymentDetail is not null && invoice is not null)
+            {
+                var (pendingPayment, hasMorePayments) = await MakePayment(paymentDetail, dto);
+
+                if (hasMorePayments)
+                {
+                    await CreateNextPayment(dto, pendingPayment);
+                }
+                else
+                {
+                    await MarkInvoiceAsPayed(invoice);
+                }
+            }
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedClient);
+        }
+
+        private async Task CreateNextPayment(ClientPaymentsDetailCreationDto dto, decimal pendingPayment)
+        {
+            var nextPayment = new ClientPaymentsDetailCreationDto
+            {
+                PendingPayment = pendingPayment,
+                InvoiceId = dto.InvoiceId,
+                Date = new GPA.Common.DTOs.Inventory.DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day),
+                Payment = 0.0M
+            };
+            await AddAsync(nextPayment);
+        }
+
+        private async Task MarkInvoiceAsPayed(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            invoice.PaymentStatus = Entities.Common.PaymentStatus.Payed;
+            await _invoiceRepository.UpdateAsync(invoice, invoice, (entityState, _) =>
+            {
+                entityState.Property(x => x.Id).IsModified = false;
+            });
+        }
+
+        private async Task<(decimal pendingPayment, bool hasMorePayments)> MakePayment(ClientPaymentsDetails paymentDetail, ClientPaymentsDetailCreationDto dto)
+        {
+            var pendingPayment = paymentDetail.PendingPayment - dto.Payment;
+            paymentDetail.Payment = dto.Payment;
+            paymentDetail.Date = new DateTime(dto.Date.Year, dto.Date.Month, dto.Date.Day);
+
+            await _repository.UpdateAsync(paymentDetail, paymentDetail, (entityState, _) =>
+            {
+                entityState.Property(x => x.Id).IsModified = false;
+            });
+
+            return (pendingPayment, pendingPayment > 0);
         }
     }
 }

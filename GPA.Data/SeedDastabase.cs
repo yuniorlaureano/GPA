@@ -1,5 +1,6 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Security;
+using GPA.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,8 +15,8 @@ namespace GPA.Data
                     new ProductLocation { Id = Guid.NewGuid(), Code = "ST-2", Name = "Estante 2", Description = "Estante 2" }
                 );
 
-            Guid cat1 = Guid.NewGuid();
-            Guid cat2 = Guid.NewGuid();
+            Guid cat1 = GuidHelper.NewSequentialGuid();
+            Guid cat2 = GuidHelper.NewSequentialGuid();
             modelBuilder.Entity<Category>().HasData(
                  new Category
                  {
@@ -32,8 +33,8 @@ namespace GPA.Data
              );
 
             var passwordHasher = new PasswordHasher<GPAUser>();
-            var userId = Guid.NewGuid();
-            var roleId = Guid.NewGuid();
+            var userId = GuidHelper.NewSequentialGuid();
+            var roleId = GuidHelper.NewSequentialGuid();
             var user = new GPAUser
             {
                 Id = userId,
@@ -87,6 +88,7 @@ namespace GPA.Data
             };
 
             modelBuilder.Entity<Reason>().HasData(reasons);
+
         }
     }
 }

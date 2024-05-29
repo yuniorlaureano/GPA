@@ -27,6 +27,12 @@ namespace GPA.Invoice.Api.Controllers
             return Ok(await _service.GetByIdAsync(id));
         }
 
+        [HttpGet("invoice/{id}")]
+        public async Task<IActionResult> GetByInvoiceIdAsync(Guid id)
+        {
+            return Ok(await _service.GetByInvoiceIdAsync(id));
+        }
+
         [HttpGet()]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
