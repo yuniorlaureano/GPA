@@ -39,6 +39,12 @@ namespace GPA.Invoice.Api.Controllers
             return Ok(await _service.GetAllAsync(search));
         }
 
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetReceivableSummary([FromQuery] SearchDto search)
+        {
+            return Ok(await _service.GetReceivableSummaryAsync(search));
+        }
+
         [HttpPost()]
         public async Task<IActionResult> Create(ClientPaymentsDetailCreationDto model)
         {
