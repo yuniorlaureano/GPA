@@ -18,10 +18,26 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Product, ProductDto>()
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => "Unidad"))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => "Category"))
-                .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"));
+                .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"))
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                });
+
             CreateMap<ProductDto, Product>();                
-            CreateMap<ProductCreationDto, Product>();
-            CreateMap<Product, ProductCreationDto>();
+            CreateMap<ProductCreationDto, Product>()
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DateTime(src.ExpirationDate.Year, src.ExpirationDate.Month, src.ExpirationDate.Day));
+                });
+            CreateMap<Product, ProductCreationDto>()
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                });
 
             CreateMap<ProductLocation, ProductLocationDto>();
             CreateMap<ProductLocationDto, ProductLocation>();

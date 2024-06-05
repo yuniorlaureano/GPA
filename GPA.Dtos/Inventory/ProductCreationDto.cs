@@ -9,7 +9,7 @@
         public decimal Price { get; set; }
         public string Description { get; set; }
         public string BarCode { get; set; }
-        public DateTime? ExpirationDate { get; set; }
+        public DetailedDate? ExpirationDate { get; set; }
         public Guid UnitId { get; set; }
         public Guid CategoryId { get; set; }
         public Guid? ProductLocationId { get; set; }
