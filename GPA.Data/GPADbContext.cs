@@ -36,11 +36,12 @@ namespace GPA.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductLocation> ProductLocations { get; set; }
         public DbSet<Provider> Providers { get; set; }
-        public DbSet<ProviderAddress> ProviderAddresses { get; set; }
         public DbSet<Reason> Reasons { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<StockDetails> StockDetails { get; set; }
         public DbSet<Store> Store { get; set; }
+        public DbSet<StockCycle> StockCycle { get; set; }
+        public DbSet<StockCycleDetail> StockCycleDetails { get; set; }
 
         //INVOICE
         public DbSet<Client> Client { get; set; }

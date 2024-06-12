@@ -10,6 +10,7 @@
         public string Description { get; set; }
         public string BarCode { get; set; }
         public DetailedDate? ExpirationDate { get; set; }
+        public byte Type { get; set; }
         public Guid UnitId { get; set; }
         public Guid CategoryId { get; set; }
         public Guid? ProductLocationId { get; set; }

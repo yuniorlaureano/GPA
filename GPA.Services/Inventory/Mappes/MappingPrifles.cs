@@ -45,9 +45,6 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Provider, ProviderDto>();
             CreateMap<ProviderDto, Provider>();
 
-            CreateMap<ProviderAddress, ProviderAddressDto>();
-            CreateMap<ProviderAddressDto, ProviderAddress>();
-
             CreateMap<Stock, StockDto>()
                 .ForMember(dest => dest.Date, opt =>
                 {
@@ -92,6 +89,42 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<RawProductCatalog, RawProductCatalogDto>();
             CreateMap<RawProductCatalogDto, RawProductCatalog>();
+
+            CreateMap<StockCycle, StockCycleDto>()
+                .ForMember(dest => dest.StartDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.StartDate.Year, src.StartDate.Month, src.StartDate.Day));
+                })
+                .ForMember(dest => dest.EndDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                });
+
+            CreateMap<StockCycle, StockCycleCreationDto>()
+                .ForMember(dest => dest.StartDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.StartDate.Year, src.StartDate.Month, src.StartDate.Day));
+                })
+                .ForMember(dest => dest.EndDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                });
+
+            CreateMap<StockCycleCreationDto, StockCycle>()
+                .ForMember(dest => dest.StartDate, opt =>
+                {
+                    opt.MapFrom(src => new DateTime(src.StartDate.Year, src.StartDate.Month, src.StartDate.Day));
+                })
+                .ForMember(dest => dest.EndDate, opt =>
+                {
+                    opt.MapFrom(src => new DateTime(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                }).ForMember(dest => dest.StockCycleDetails, opt => opt.Ignore());
+
+            CreateMap<StockCycleDetail, StockCycleDetailDto>();
+            CreateMap<StockCycleDetailDto, StockCycleDetail>();
+
+            CreateMap<StockCycleDetail, StockCycleCreationDetailDto>();
+            CreateMap<StockCycleCreationDetailDto, StockCycleDetail>();
         }
     }
 

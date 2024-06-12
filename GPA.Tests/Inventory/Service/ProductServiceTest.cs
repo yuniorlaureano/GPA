@@ -3,6 +3,7 @@ using GPA.Business.Services.Common;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs.Common;
 using GPA.Common.DTOs.Inventory;
+using GPA.Entities.Common;
 using GPA.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,6 +42,8 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
+                .With(x => x.Type, new Random().Next(1, 2))
+                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Create();
 
@@ -64,6 +67,8 @@ namespace GPA.Tests.Inventory.Service
                     .With(x => x.UnitId, productDependencies.UnitId)
                     .With(x => x.CategoryId, productDependencies.CategoryId)
                     .With(x => x.ProductLocationId, productDependencies.LocationId)
+                    .With(x => x.Type, new Random().Next(1, 2))
+                    .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                     .Without(x => x.Id)
                     .Create();
 
@@ -86,6 +91,8 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
+                .With(x => x.Type, new Random().Next(1, 2))
+                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Create();
 
@@ -105,6 +112,8 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
+                .With(x => x.Type, 2)
+                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Create();
 
@@ -132,6 +141,8 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
+                .With(x => x.Type, 2)
+                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Create();
 

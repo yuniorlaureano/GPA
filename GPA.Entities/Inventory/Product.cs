@@ -12,7 +12,7 @@ namespace GPA.Common.Entities.Inventory
         public string Description { get; set; }
         public string BarCode { get; set; }
         public DateTime? ExpirationDate { get; set; }
-
+        public ProductType Type { get; set; }
         public Guid UnitId { get; set; }
         public Unit Unit { get; set; }
 
