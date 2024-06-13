@@ -12,8 +12,8 @@ namespace GPA.Common.Entities.Inventory
         public int Stock { get; set; }
         public int Input { get; set; }
         public int Output { get; set; }
+        public CycleType Type { get; set; }
         public Guid StockCycleId { get; set; }
-
 
         public StockCycle StockCycle { get; set; }
     }

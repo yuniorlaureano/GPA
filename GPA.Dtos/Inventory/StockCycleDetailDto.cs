@@ -10,6 +10,7 @@
         public int Stock { get; set; }
         public int Input { get; set; }
         public int Output { get; set; }
+        public byte Type { get; set; }
         public Guid StockCycleId { get; set; }
     }
 }

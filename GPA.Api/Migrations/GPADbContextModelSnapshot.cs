@@ -103,14 +103,14 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("6abab557-63a7-4c32-b8fc-b18c01569634"),
+                            Id = new Guid("36fc4cfd-0f43-4e85-b8e6-b18d01362fc9"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("69605f69-311a-44ae-9860-b18c01569634"),
+                            Id = new Guid("6a8f5fd7-477c-4678-b382-b18d01362fc9"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
@@ -244,7 +244,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("7c29c750-d410-4d22-ab45-9a95cf8171c4"),
+                            Id = new Guid("15400814-51bb-4156-aff8-946064acb754"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -252,7 +252,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("139a5e91-76bc-47c8-8a67-bf98e48789c0"),
+                            Id = new Guid("09d50f22-1afd-4b78-8960-b4e969adaddd"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -517,12 +517,12 @@ namespace GPA.Api.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<bool>("IsClose")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
@@ -534,8 +534,6 @@ namespace GPA.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ParentId");
 
                     b.ToTable("StockCycles", "Inventory");
                 });
@@ -571,6 +569,9 @@ namespace GPA.Api.Migrations
 
                     b.Property<Guid>("StockCycleId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("tinyint");
 
                     b.HasKey("Id");
 
@@ -1101,7 +1102,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("983e0103-5b54-4a47-90ef-b18c01569634"),
+                            Id = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -1136,7 +1137,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("983e0103-5b54-4a47-90ef-b18c01569634")
+                            RoleId = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9")
                         });
                 });
 
@@ -1219,9 +1220,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("813d641e-3b2f-437d-8ea1-b18c01569634"),
+                            Id = new Guid("d71f03d4-ccd9-4003-b0b0-b18d01362fc9"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ea89517a-05ce-4bcc-871f-1e43762b495c",
+                            ConcurrencyStamp = "44752643-508e-4815-a4fa-e032c61c8737",
                             Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
@@ -1229,7 +1230,7 @@ namespace GPA.Api.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMYhgiaHEb6kJEpZTg7R6XKglNfTzri3KlZllzlPDpHgU14hfg06kMWutkIxhGkPBg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGEFBD7txMhoQQsyBLDcoYTo6EWw1/qs17sDmA6vZORdPe1XfAtZ7WsrX0MqEZB2Cw==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -1308,9 +1309,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("10470563-16f1-4203-abf4-57485a5d2284"),
-                            RoleId = new Guid("983e0103-5b54-4a47-90ef-b18c01569634"),
-                            UserId = new Guid("813d641e-3b2f-437d-8ea1-b18c01569634")
+                            Id = new Guid("80200dbc-cdff-4de7-bcf9-5909e3eb70f1"),
+                            RoleId = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9"),
+                            UserId = new Guid("d71f03d4-ccd9-4003-b0b0-b18d01362fc9")
                         });
                 });
 
@@ -1441,15 +1442,6 @@ namespace GPA.Api.Migrations
                     b.Navigation("Reason");
 
                     b.Navigation("Store");
-                });
-
-            modelBuilder.Entity("GPA.Common.Entities.Inventory.StockCycle", b =>
-                {
-                    b.HasOne("GPA.Common.Entities.Inventory.StockCycle", "Parent")
-                        .WithMany()
-                        .HasForeignKey("ParentId");
-
-                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.StockCycleDetail", b =>

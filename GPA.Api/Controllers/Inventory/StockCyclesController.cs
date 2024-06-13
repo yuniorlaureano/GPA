@@ -4,6 +4,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace GPA.Inventory.Api.Controllers
 {
@@ -21,7 +22,7 @@ namespace GPA.Inventory.Api.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetById")]
         public async Task<IActionResult> Get(Guid id)
         {
             return Ok(await _stockCycleService.GetByIdAsync(id));
@@ -33,7 +34,7 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockCycleService.GetAllAsync(search));
         }
 
-        [HttpPost()]
+        [HttpPost("open")]
         public async Task<IActionResult> Open(StockCycleCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -42,7 +43,7 @@ namespace GPA.Inventory.Api.Controllers
             }
 
             var cycleId = await _stockCycleService.OpenCycleAsync(model);
-            return Created(Url.Action(nameof(Get)), new { id = cycleId });
+            return CreatedAtAction(nameof(Get), new { id = cycleId }, cycleId);
         }
 
         [HttpDelete("{id}")]

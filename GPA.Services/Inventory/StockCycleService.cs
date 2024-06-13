@@ -10,7 +10,7 @@ namespace GPA.Business.Services.Inventory
 {
     public interface IStockCycleService
     {
-        public Task<InitialAndFinalStockCycleDto?> GetByIdAsync(Guid id);
+        public Task<StockCycleDto?> GetByIdAsync(Guid id);
 
         public Task<ResponseDto<StockCycleDto>> GetAllAsync(SearchDto search, Expression<Func<StockCycle, bool>>? expression = null);
 
@@ -30,15 +30,15 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<InitialAndFinalStockCycleDto?> GetByIdAsync(Guid id)
+        public async Task<StockCycleDto?> GetByIdAsync(Guid id)
         {
-            var cycle = await GetCycleById(id);
-            var cycles = new InitialAndFinalStockCycleDto();
+            var stockCycle = await _repository.GetByIdAsync(query =>
+            {
+                return query
+                    .Include(x => x.StockCycleDetails);
+            }, x => x.Id == id);
 
-            await MapInitialCycle(cycles, cycle);
-            await MapFinalCycle(cycles, cycle);
-            
-            return cycles;
+            return _mapper.Map<StockCycleDto>(stockCycle);
         }
 
         public async Task<ResponseDto<StockCycleDto>> GetAllAsync(SearchDto search, Expression<Func<StockCycle, bool>>? expression = null)
@@ -68,47 +68,6 @@ namespace GPA.Business.Services.Inventory
         {
             var newStockCycle = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(newStockCycle);
-        }
-
-        private async Task<StockCycle?> GetCycleById(Guid id)
-        {
-            return await _repository.GetByIdAsync(query =>
-            {
-                return query
-                    .Include(x => x.StockCycleDetails);
-            }, x => x.Id == id);
-        }
-
-        private async Task<StockCycle?> GetCycleByChildId(Guid childId)
-        {
-            return await _repository.GetByIdAsync(query =>
-            {
-                return query
-                    .Include(x => x.StockCycleDetails);
-            }, x => x.ChildCycleId == childId);
-        }
-
-        private async Task MapInitialCycle(InitialAndFinalStockCycleDto cycles, StockCycle cycle)
-        {
-            if (cycle?.Type == Entities.Common.CycleType.Initial)
-            {
-                cycles.Initial = _mapper.Map<StockCycleDto>(cycle);
-                if (cycle.ChildCycleId is not null)
-                {
-                    var initialCycle = await GetCycleById(cycle.ChildCycleId.Value);
-                    cycles.Initial = _mapper.Map<StockCycleDto>(initialCycle);
-                }
-            }
-        }
-
-        private async Task MapFinalCycle(InitialAndFinalStockCycleDto cycles, StockCycle cycle)
-        {
-            if (cycle?.Type == Entities.Common.CycleType.Final)
-            {
-                cycles.Final = _mapper.Map<StockCycleDto>(cycle);
-                var initialCycle = await GetCycleByChildId(cycle.Id);
-                cycles.Initial = _mapper.Map<StockCycleDto>(initialCycle);
-            }
         }
     }
 }

@@ -24,9 +24,9 @@ namespace GPA.Data.Inventory
             var insert = @"
                 DECLARE @OutputTable TABLE (Id uniqueidentifier); 
 
-                INSERT INTO [GPA].[Inventory].[StockCycles]([Note], [StartDate], [EndDate], [CreatedBy], [CreatedAt])
+                INSERT INTO [GPA].[Inventory].[StockCycles]([Note], [StartDate], [EndDate], [CreatedBy], [CreatedAt], [IsClose])
 	                OUTPUT INSERTED.Id INTO @OutputTable
-                VALUES(@Note, @StartDate, @EndDate, @CreatedBy, GETDATE())
+                VALUES(@Note, @StartDate, @EndDate, @CreatedBy, GETDATE(), 0)
 
                 SELECT @InsertedId=Id FROM @OutputTable
 
@@ -38,7 +38,8 @@ namespace GPA.Data.Inventory
                     ,[Stock]
                     ,[Input]
                     ,[Output]
-                    ,[StockCycleId])
+                    ,[StockCycleId]
+                    ,[Type])
                 SELECT 
 	                [p].[Id] AS [ProductId],
 	                MAX([p].[Price]) AS [Price],
@@ -57,7 +58,8 @@ namespace GPA.Data.Inventory
 			                WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                ELSE 0
 	                END) AS [Output],
-	                @InsertedId
+	                @InsertedId,
+                    @CycleType
                 FROM 
 	                [Inventory].[Products] AS [p]
 	                LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId] AND [t].[Deleted] = CAST(0 AS bit)
