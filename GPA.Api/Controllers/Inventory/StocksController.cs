@@ -39,6 +39,12 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockService.GetProductCatalogAsync(search.Page, search.PageSize));
         }
 
+        [HttpGet("existance")]
+        public async Task<IActionResult> GetExistance([FromQuery] SearchDto search)
+        {
+            return Ok(await _stockService.GetExistanceAsync(search.Page, search.PageSize));
+        }
+
         [HttpPost()]
         public async Task<IActionResult> Create(StockCreationDto model)
         {

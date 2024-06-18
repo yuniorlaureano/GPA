@@ -1,6 +1,6 @@
 ﻿namespace GPA.Common.DTOs.Unmapped
 {
-    public class RawProductCatalogDto
+    public class ExistanceDto
     {
         public int Stock { get; set; }
         public int Input { get; set; }

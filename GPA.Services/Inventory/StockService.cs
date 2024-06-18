@@ -16,7 +16,9 @@ namespace GPA.Business.Services.Inventory
 
         public Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null);
 
-        public Task<ResponseDto<RawProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
+        public Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
+
+        Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10);
 
         public Task<StockDto?> AddAsync(StockCreationDto dto);
 
@@ -70,13 +72,23 @@ namespace GPA.Business.Services.Inventory
             };
         }
 
-        public async Task<ResponseDto<RawProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
+        public async Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
         {
             var productCatalog = await _repository.GetProductCatalogAsync(page, pageSize);
-            return new ResponseDto<RawProductCatalogDto>
+            return new ResponseDto<ProductCatalogDto>
             {
                 Count = await _repository.GetProductCatalogCountAsync(),
-                Data = _mapper.Map<IEnumerable<RawProductCatalogDto>>(productCatalog)
+                Data = _mapper.Map<IEnumerable<ProductCatalogDto>>(productCatalog)
+            };
+        }
+
+        public async Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10)
+        {
+            var productCatalog = await _repository.GetExistenceAsync(page, pageSize);
+            return new ResponseDto<ExistanceDto>
+            {
+                Count = await _repository.GetExistenceCountAsync(),
+                Data = _mapper.Map<IEnumerable<ExistanceDto>>(productCatalog)
             };
         }
 

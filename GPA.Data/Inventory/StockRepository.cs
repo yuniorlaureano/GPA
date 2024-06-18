@@ -11,6 +11,8 @@ namespace GPA.Data.Inventory
         Task<int> GetProductCatalogCountAsync();
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds);
         Task UpdateAsync(Stock model, IEnumerable<StockDetails> stockDetails);
+        Task<IEnumerable<Existence>> GetExistenceAsync(int page = 1, int pageSize = 10);
+        Task<int> GetExistenceCountAsync();
         Task CancelAsync(Guid id);
     }
 
@@ -71,6 +73,58 @@ namespace GPA.Data.Inventory
         {
             return await _context.Products.Select(x => x.Id).CountAsync();
         }
+
+        public async Task<IEnumerable<Existence>> GetExistenceAsync(int page = 1, int pageSize = 10)
+        {
+            var sqlQuery = @"SELECT 
+	                            SUM(CASE
+			                            WHEN [t].[Id] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+			                            ELSE [t].[Quantity]
+	                            END) AS [Stock],
+	                            SUM(CASE
+			                            WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
+			                            ELSE 0
+	                            END) AS [Input],
+	                            SUM(CASE
+			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+			                            ELSE 0
+	                            END) AS [Output],
+	                            MAX([p].[Price]) AS [Price],
+	                            MAX([P].[Type]) AS [ProductType],
+	                            [p].[CategoryId],
+	                            [p].[Code] AS [ProductCode],
+	                            [p].[Name] AS [ProductName],
+	                            [p].[Id] AS [ProductId]
+                            FROM 
+	                            [Inventory].[Products] AS [p]
+	                            LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId] AND [t].[Deleted] = CAST(0 AS bit)
+	                            LEFT JOIN [Inventory].[Stocks] AS [t0] 
+		                            ON [t].[StockId] = [t0].[Id] AND 
+		                                [t0].[Deleted] = CAST(0 AS bit) AND 
+		                                ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) 
+                            WHERE 
+	                            [p].[Deleted] = CAST(0 AS bit) 
+                            GROUP BY 
+	                            [p].[Id], 
+	                            [p].[Name], 
+	                            [p].[Code], 
+	                            [p].[CategoryId]
+                            ORDER BY 
+	                            [p].[Name]
+                            OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY";
+            return await _context.Database.SqlQueryRaw<Existence>(
+                    sqlQuery,
+                    pageSize * Math.Abs(page - 1),
+                    pageSize
+                ).ToListAsync();
+        }
+
+        public async Task<int> GetExistenceCountAsync()
+        {
+            return await _context.Products.Select(x => x.Id).CountAsync();
+        }
+
 
         public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds)
         {

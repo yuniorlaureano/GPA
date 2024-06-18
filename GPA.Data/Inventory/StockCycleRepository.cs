@@ -8,6 +8,7 @@ namespace GPA.Data.Inventory
     public interface IStockCycleRepository : IRepository<StockCycle>
     {
         Task<Guid> OpenCycleAsync(StockCycle model);
+		Task CloseCycleAsync(Guid id);
     }
 
     public class StockCycleRepository : Repository<StockCycle>, IStockCycleRepository
@@ -97,6 +98,76 @@ namespace GPA.Data.Inventory
             var insertedCycleId = (Guid)insertedId.Value;
             await _context.Database.CloseConnectionAsync();
             return insertedCycleId;
+        }
+
+        public async Task CloseCycleAsync(Guid id)
+        {
+            await _context.Database.OpenConnectionAsync();
+            using var command = _context.Database.GetDbConnection().CreateCommand();
+
+            var insert = @"
+                IF EXISTS (SELECT 1 FROM [GPA].[Inventory].[StockCycles] WHERE Id = @CycleId AND IsClose = 0)
+                BEGIN
+	                UPDATE [GPA].[Inventory].[StockCycles]
+	                SET [IsClose] = 1
+	                WHERE Id = @CycleId
+
+	                INSERT INTO [GPA].[Inventory].[StockCycleDetails](
+		                 [ProductId]
+		                ,[ProductPrice]
+		                ,[ProductName]
+		                ,[ProductType]
+		                ,[Stock]
+		                ,[Input]
+		                ,[Output]
+		                ,[StockCycleId]
+		                ,[Type])
+	                SELECT 
+		                [p].[Id] AS [ProductId],
+		                MAX([p].[Price]) AS [Price],
+		                [p].[Name] AS [ProductName],
+		                MAX([P].[Type]) AS [ProductType],
+		                SUM(CASE
+				                WHEN [t].[Id] IS NULL THEN 0
+				                WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+				                ELSE [t].[Quantity]
+		                END) AS [Stock],
+		                SUM(CASE
+				                WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
+				                ELSE 0
+		                END) AS [Input],
+		                SUM(CASE
+				                WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+				                ELSE 0
+		                END) AS [Output],
+		                @CycleId,
+		                @CycleType
+	                FROM 
+		                [Inventory].[Products] AS [p]
+		                LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId] AND [t].[Deleted] = CAST(0 AS bit)
+		                LEFT JOIN [Inventory].[Stocks] AS [t0] 
+			                ON [t].[StockId] = [t0].[Id] AND 
+				                [t0].[Deleted] = CAST(0 AS bit) AND 
+				                ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) AND 
+				                ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
+	                WHERE 
+		                [p].[Deleted] = CAST(0 AS bit) 
+	                GROUP BY 
+		                [p].[Id], 
+		                [p].[Name]
+                END
+                ";
+
+            command.CommandText = insert;
+            command.Parameters.AddRange(new SqlParameter[]
+                   {
+                        new ("@CycleId", System.Data.SqlDbType.UniqueIdentifier) { Value = id },
+                        new ("@CycleType", System.Data.SqlDbType.TinyInt) { Value = (byte)CycleType.Final }                        
+                   }
+                );
+
+            await command.ExecuteNonQueryAsync();
+            await _context.Database.CloseConnectionAsync();
         }
     }
 }

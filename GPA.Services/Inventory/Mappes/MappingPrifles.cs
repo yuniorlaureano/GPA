@@ -87,8 +87,11 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Store, StoreDto>();
             CreateMap<StoreDto, Store>();
 
-            CreateMap<RawProductCatalog, RawProductCatalogDto>();
-            CreateMap<RawProductCatalogDto, RawProductCatalog>();
+            CreateMap<RawProductCatalog, ProductCatalogDto>();
+            CreateMap<ProductCatalogDto, RawProductCatalog>();
+
+            CreateMap<Existence, ExistanceDto>();
+            CreateMap<ExistanceDto, Existence>();
 
             CreateMap<StockCycle, StockCycleDto>()
                 .ForMember(dest => dest.StartDate, opt =>

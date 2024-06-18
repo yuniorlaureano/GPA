@@ -46,6 +46,18 @@ namespace GPA.Inventory.Api.Controllers
             return CreatedAtAction(nameof(Get), new { id = cycleId }, cycleId);
         }
 
+        [HttpPut("close/{id}")]
+        public async Task<IActionResult> Close([FromRoute]Guid id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _stockCycleService.CloseCycleAsync(id);
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

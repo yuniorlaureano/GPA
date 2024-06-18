@@ -11,6 +11,6 @@ namespace GPA.Common.DTOs.Invoices
         public Guid ProductId { get; set; }
 
         public ProductDto Product { get; set; }
-        public RawProductCatalogDto StockProduct { get; set; }
+        public ProductCatalogDto StockProduct { get; set; }
     }
 }

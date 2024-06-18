@@ -66,7 +66,7 @@ namespace GPA.Business.Services.Invoice
                     {
                         if (stocks.TryGetValue(invoiceDetail.ProductId, out var product))
                         {
-                            invoiceDetail.StockProduct = _mapper.Map<RawProductCatalogDto>(product);
+                            invoiceDetail.StockProduct = _mapper.Map<ProductCatalogDto>(product);
                         }
                     }
                 }
