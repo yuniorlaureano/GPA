@@ -14,5 +14,6 @@
         public Guid UnitId { get; set; }
         public Guid CategoryId { get; set; }
         public Guid? ProductLocationId { get; set; }
+        public Guid[]? Addons { get; set; }
     }
 }

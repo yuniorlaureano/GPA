@@ -14,6 +14,9 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
             CreateMap<Client, ClientDto>();
             CreateMap<ClientDto, Client>();
 
+            CreateMap<ClientCreditDto, ClientCredit>();
+            CreateMap<ClientCredit, ClientCreditDto>();
+
             CreateMap<InvoiceDto, GPA.Common.Entities.Invoice.Invoice>()
                 .ForMember(dest => dest.Date, opt =>
                 {

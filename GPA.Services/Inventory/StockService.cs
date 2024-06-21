@@ -32,11 +32,13 @@ namespace GPA.Business.Services.Inventory
 
     public class StockService : IStockService
     {
+        private readonly IAddonRepository _addonRepository;
         private readonly IStockRepository _repository;
         private readonly IMapper _mapper;
 
-        public StockService(IStockRepository repository, IMapper mapper)
+        public StockService(IAddonRepository addonRepository, IStockRepository repository, IMapper mapper)
         {
+            _addonRepository = addonRepository;
             _repository = repository;
             _mapper = mapper;
         }
@@ -76,11 +78,15 @@ namespace GPA.Business.Services.Inventory
         public async Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
         {
             var productCatalog = await _repository.GetProductCatalogAsync(page, pageSize);
-            return new ResponseDto<ProductCatalogDto>
+            var productCatalogDto =  new ResponseDto<ProductCatalogDto>
             {
                 Count = await _repository.GetProductCatalogCountAsync(),
                 Data = _mapper.Map<IEnumerable<ProductCatalogDto>>(productCatalog)
             };
+
+            await MapAddonsToProduct(productCatalogDto.Data);
+
+            return productCatalogDto;
         }
 
         public async Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10)
@@ -173,6 +179,39 @@ namespace GPA.Business.Services.Inventory
         public async Task CancelAsync(Guid id)
         {
             await _repository.CancelAsync(id);
+        }
+
+        private async Task MapAddonsToProduct(IEnumerable<ProductCatalogDto> products)
+        {
+            if (products is not null)
+            {
+                var addons = await _addonRepository.GetAddonsByProductId(products.Select(x => x.ProductId).ToList());
+                Dictionary<Guid, List<AddonDto>> mappedAddons = new();
+                foreach (var addon in addons)
+                {
+                    if (!mappedAddons.ContainsKey(addon.ProductId))
+                    {
+                        mappedAddons.Add(addon.ProductId, new List<AddonDto>());
+                    }
+
+                    mappedAddons[addon.ProductId].Add(new AddonDto
+                    {
+                        Id = addon.Id,
+                        Concept = addon.Concept,
+                        IsDiscount = addon.IsDiscount,
+                        Type = addon.Type,
+                        Value = addon.Value
+                    });
+                }
+
+                foreach (var product in products)
+                {
+                    if (mappedAddons.ContainsKey(product.ProductId))
+                    {
+                        product.Addons = mappedAddons[product.ProductId].ToArray();
+                    }
+                }
+            }
         }
     }
 }

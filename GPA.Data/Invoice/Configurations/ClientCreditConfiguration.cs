@@ -5,17 +5,20 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GPA.Data.Invoice.Configurations
 {
-    public class InvoiceDetailsConfiguration : IEntityTypeConfiguration<InvoiceDetails>
+    public class ClientCreditConfiguration : IEntityTypeConfiguration<ClientCredit>
     {
-        public void Configure(EntityTypeBuilder<InvoiceDetails> builder)
+        public void Configure(EntityTypeBuilder<ClientCredit> builder)
         {
             builder.HasQueryFilter(x => !x.Deleted);
 
-            builder.ToTable("InvoiceDetails", GPASchema.INVOICE);
+            builder.ToTable("ClientCredits", GPASchema.INVOICE);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
+            builder.HasOne(x => x.Client)
+                .WithMany(x => x.Credits)
+                .HasForeignKey(x => x.ClientId);
         }
     }
 }

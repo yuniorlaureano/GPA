@@ -1,7 +1,6 @@
 ﻿using GPA.Common.Entities.Security;
 using GPA.Data.Schemas;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 namespace GPA.Data.Security.Configurations
 {
@@ -13,7 +12,7 @@ namespace GPA.Data.Security.Configurations
             {
                 b.ToTable("GPAUsers", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
-                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasMany(p => p.UserRoles)
                     .WithOne(p => p.User)
                     .HasForeignKey(p => p.UserId);
@@ -30,7 +29,7 @@ namespace GPA.Data.Security.Configurations
             {
                 b.ToTable("GPAUserLogin", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
-                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
                     .WithMany(p => p.UserLogins)
                     .HasForeignKey(p => p.UserId);
@@ -40,7 +39,7 @@ namespace GPA.Data.Security.Configurations
             {
                 b.ToTable("GPAUserToken", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
-                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
                     .WithMany(p => p.UserTokens)
                     .HasForeignKey(p => p.UserId);
@@ -50,7 +49,7 @@ namespace GPA.Data.Security.Configurations
             {
                 b.ToTable("GPARoles", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
-                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasMany(p => p.UserRoles)
                     .WithOne(p => p.Role)
                     .HasForeignKey(p => p.RoleId);
@@ -77,7 +76,7 @@ namespace GPA.Data.Security.Configurations
             {
                 b.ToTable("GPAUserRoles", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
-                b.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 //b.HasOne(p => p.Role)
                 //   .WithMany(p => p.UserRoles)
                 //   .HasForeignKey(p => p.RoleId);

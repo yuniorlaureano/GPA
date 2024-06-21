@@ -2,7 +2,6 @@
 using GPA.Data.Schemas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 namespace GPA.Data.Inventory.Configurations
 {
@@ -15,7 +14,7 @@ namespace GPA.Data.Inventory.Configurations
             builder.ToTable("Products", GPASchema.INVENTORY);
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>();
+            builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.Property(x => x.Code).HasMaxLength(50);
             builder.Property(x => x.Photo).HasMaxLength(300);
             builder.Property(x => x.Description).HasMaxLength(300);
@@ -29,6 +28,11 @@ namespace GPA.Data.Inventory.Configurations
                 .WithMany(x => x.Products)
                 .HasForeignKey(x => x.ProductLocationId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasMany(x => x.ProductAddons)
+                .WithOne(x => x.Product)
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

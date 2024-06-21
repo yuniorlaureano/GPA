@@ -20,5 +20,6 @@
 
         public Guid? ProductLocationId { get; set; }
         public string ProductLocation { get; set; }
+        public AddonDto[]? Addons { get; set; }
     }
 }

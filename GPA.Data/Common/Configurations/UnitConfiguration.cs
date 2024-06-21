@@ -14,7 +14,7 @@ namespace GPA.Data.Common.Configurations
 
             builder.ToTable("Units", GPASchema.COMMON);
             builder.HasKey(x => x.Id);
-            builder.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>()
+            builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
         }
     }

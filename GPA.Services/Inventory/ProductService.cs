@@ -25,20 +25,33 @@ namespace GPA.Business.Services.Inventory
     {
         private readonly IProductRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IAddonRepository _addonRepository;
 
-        public ProductService(IProductRepository repository, IMapper mapper)
+        public ProductService(
+            IProductRepository repository,
+            IMapper mapper,
+            IAddonRepository addonRepository)
         {
             _repository = repository;
             _mapper = mapper;
+            _addonRepository = addonRepository;
         }
 
         public async Task<ProductDto?> GetByIdAsync(Guid id)
         {
-            var Product = await _repository.GetByIdAsync(query =>
+            var product = await _repository.GetByIdAsync(query =>
             {
                 return query.Include(x => x.ProductLocation).Include(x => x.Category);
             }, x => x.Id == id);
-            return _mapper.Map<ProductDto>(Product);
+
+            var productDto = _mapper.Map<ProductDto>(product);
+            if (product is not null)
+            {
+                var addons = await _addonRepository.GetAddonsByProductId(product.Id);
+                productDto.Addons = _mapper.Map<AddonDto[]>(addons);
+            }
+
+            return productDto;
         }
 
         public async Task<ResponseDto<ProductDto>> GetAllAsync(SearchDto search, Expression<Func<Product, bool>>? expression = null)
@@ -51,6 +64,7 @@ namespace GPA.Business.Services.Inventory
                      .Skip(search.PageSize * Math.Abs(search.Page - 1))
                      .Take(search.PageSize);
             }, expression);
+
             return new ResponseDto<ProductDto>
             {
                 Count = await _repository.CountAsync(query => query, expression),
@@ -61,6 +75,10 @@ namespace GPA.Business.Services.Inventory
         public async Task<ProductDto> AddAsync(ProductCreationDto dto)
         {
             var newProduct = _mapper.Map<Product>(dto);
+            if (dto.Addons is { Length: > 0 })
+            {
+                newProduct.ProductAddons = dto.Addons.Select(addon => new ProductAddon { AddonId = addon }).ToList();
+            }
             var savedProduct = await _repository.AddAsync(newProduct);
             return _mapper.Map<ProductDto>(savedProduct);
         }
@@ -75,6 +93,15 @@ namespace GPA.Business.Services.Inventory
             var newProduct = _mapper.Map<Product>(dto);
             newProduct.Id = dto.Id.Value;
             var savedProduct = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            
+            await _addonRepository.DeleteAddonsByProductId(dto.Id.Value);
+
+            if (dto.Addons is { Length: > 0 })
+            {
+                newProduct.ProductAddons = dto.Addons.Select(
+                    addon => new ProductAddon { AddonId = addon }).ToList();
+            }
+
             await _repository.UpdateAsync(savedProduct, newProduct, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

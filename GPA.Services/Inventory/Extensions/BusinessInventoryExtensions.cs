@@ -15,6 +15,7 @@ namespace GPA.Business.Inventory.Extensions
             services.AddTransient<IStoreService, StoreService>();
             services.AddTransient<IReasonService, ReasonService>();
             services.AddTransient<IStockCycleService, StockCycleService>();
+            services.AddTransient<IAddonService, AddonService>();
 
         }
     }

@@ -216,7 +216,7 @@ namespace GPA.Tests.Inventory.Service
             stock.Id = added.Id.Value;
             stock.Description = "Modified Description";
 
-            await _stockService.UpdateAsync(stock);
+            await _stockService.UpdateInputAsync(stock);
 
             var updated = await _stockService.GetByIdAsync(added.Id.Value);
 

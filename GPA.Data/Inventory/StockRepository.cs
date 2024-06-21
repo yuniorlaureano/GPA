@@ -63,12 +63,14 @@ namespace GPA.Data.Inventory
                             ORDER BY 
 	                            [p].[Name]
                             OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY";
-            return await _context.Database.SqlQueryRaw<RawProductCatalog>(
+            var productCatalog =  await _context.Database.SqlQueryRaw<RawProductCatalog>(
                     sqlQuery,
                     pageSize * Math.Abs(page - 1),
                     pageSize,
                     (byte)ProductType.FinishedProduct
                 ).ToListAsync();
+
+            return productCatalog;
         }
 
         public async Task<int> GetProductCatalogCountAsync()

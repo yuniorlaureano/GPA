@@ -14,6 +14,12 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Category, CategoryDto>();
             CreateMap<CategoryDto, Category>();
 
+            CreateMap<Addon, AddonDto>();
+            CreateMap<AddonDto, Addon>();
+
+            CreateMap<ProductAddon, ProductAddonDto>();
+            CreateMap<ProductAddonDto, ProductAddon>();
+
             //ToDo: Obtener estas descripciones desde la base de datos mediante un include
             CreateMap<Product, ProductDto>()
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => "Unidad"))

@@ -21,5 +21,6 @@ namespace GPA.Common.Entities.Invoice
 
 
         public ICollection<Invoice> Invoices { get; set; }
+        public ICollection<ClientCredit> Credits { get; set; }
     }
 }

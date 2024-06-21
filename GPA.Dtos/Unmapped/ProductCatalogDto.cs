@@ -1,4 +1,6 @@
-﻿namespace GPA.Common.DTOs.Unmapped
+﻿using GPA.Common.DTOs.Inventory;
+
+namespace GPA.Common.DTOs.Unmapped
 {
     public class ProductCatalogDto
     {
@@ -11,5 +13,6 @@
         public String ProductName { get; set; }
         public String ProductCode { get; set; }
         public Guid CategoryId { get; set; }
+        public AddonDto []Addons { get; set; }
     }
 }

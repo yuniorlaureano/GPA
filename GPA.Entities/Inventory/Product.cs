@@ -11,6 +11,7 @@ namespace GPA.Common.Entities.Inventory
         public decimal Price { get; set; }
         public string Description { get; set; }
         public string BarCode { get; set; }
+        public float? ITBIS { get; set; }
         public DateTime? ExpirationDate { get; set; }
         public ProductType Type { get; set; }
         public Guid UnitId { get; set; }
@@ -23,5 +24,6 @@ namespace GPA.Common.Entities.Inventory
         public ProductLocation? ProductLocation { get; set; }
 
         public ICollection<StockDetails> Stocks { get; set; }
+        public ICollection<ProductAddon> ProductAddons { get; set; }
     }
 }
