@@ -22,7 +22,8 @@ namespace GPA.Business.Services.Inventory
 
         public Task<StockDto?> AddAsync(StockCreationDto dto);
 
-        public Task UpdateAsync(StockCreationDto dto);
+        public Task UpdateInputAsync(StockCreationDto dto);
+        public Task UpdateOutputAsync(StockCreationDto dto);
 
         public Task RemoveAsync(Guid id);
 
@@ -100,7 +101,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<StockDto>(savedStock);
         }
 
-        public async Task UpdateAsync(StockCreationDto dto)
+        public async Task UpdateInputAsync(StockCreationDto dto)
         {
             if (dto.Id is null)
             {
@@ -115,6 +116,39 @@ namespace GPA.Business.Services.Inventory
                     savedStock.Status == StockStatus.Draft &&
                     savedStock.ReasonId != (int)ReasonTypes.Sale &&
                     savedStock.ReasonId != (int)ReasonTypes.Return;
+
+            if (canEditStock)
+            {
+                var newStock = _mapper.Map<Stock>(dto);
+                var stockDetails = _mapper.Map<List<StockDetails>>(dto.StockDetails);
+
+                foreach (var detail in stockDetails)
+                {
+                    detail.StockId = newStock.Id;
+                }
+
+                await _repository.UpdateAsync(newStock, stockDetails);
+            }
+        }
+
+        public async Task UpdateOutputAsync(StockCreationDto dto)
+        {
+            if (dto.Id is null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            var savedStock = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+
+            var canEditStock =
+                    savedStock is not null &&
+                    savedStock.TransactionType == TransactionType.Output &&
+                    savedStock.Status == StockStatus.Draft &&
+                    (
+                        savedStock.ReasonId == (int)ReasonTypes.DamagedProduct ||
+                        savedStock.ReasonId != (int)ReasonTypes.ExpiredProduct ||
+                        savedStock.ReasonId != (int)ReasonTypes.RawMaterial
+                    );
 
             if (canEditStock)
             {

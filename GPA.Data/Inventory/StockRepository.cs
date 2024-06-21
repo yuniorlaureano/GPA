@@ -53,7 +53,8 @@ namespace GPA.Data.Inventory
 		                               ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) AND 
 		                               ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                             WHERE 
-	                            [p].[Deleted] = CAST(0 AS bit) 
+	                            [p].[Deleted] = CAST(0 AS bit) AND
+	                            [p].[Type] = {2} 
                             GROUP BY 
 	                            [p].[Id], 
 	                            [p].[Name], 
@@ -65,13 +66,14 @@ namespace GPA.Data.Inventory
             return await _context.Database.SqlQueryRaw<RawProductCatalog>(
                     sqlQuery,
                     pageSize * Math.Abs(page - 1),
-                    pageSize
+                    pageSize,
+                    (byte)ProductType.FinishedProduct
                 ).ToListAsync();
         }
 
         public async Task<int> GetProductCatalogCountAsync()
         {
-            return await _context.Products.Select(x => x.Id).CountAsync();
+            return await _context.Products.Where(x => x.Type == ProductType.FinishedProduct).CountAsync();
         }
 
         public async Task<IEnumerable<Existence>> GetExistenceAsync(int page = 1, int pageSize = 10)
@@ -102,7 +104,8 @@ namespace GPA.Data.Inventory
 	                            LEFT JOIN [Inventory].[Stocks] AS [t0] 
 		                            ON [t].[StockId] = [t0].[Id] AND 
 		                                [t0].[Deleted] = CAST(0 AS bit) AND 
-		                                ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) 
+		                                ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) AND 
+		                                ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                             WHERE 
 	                            [p].[Deleted] = CAST(0 AS bit) 
                             GROUP BY 

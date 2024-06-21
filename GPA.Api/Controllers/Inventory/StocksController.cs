@@ -45,8 +45,8 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockService.GetExistanceAsync(search.Page, search.PageSize));
         }
 
-        [HttpPost()]
-        public async Task<IActionResult> Create(StockCreationDto model)
+        [HttpPost("input")]
+        public async Task<IActionResult> RegisterInput(StockCreationDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -57,15 +57,39 @@ namespace GPA.Inventory.Api.Controllers
             return Created(Url.Action(nameof(Get)), new { id = entity.Id });
         }
 
-        [HttpPut()]
-        public async Task<IActionResult> Update(StockCreationDto model)
+        [HttpPost("output")]
+        public async Task<IActionResult> RegisterOutput(OutputCreationDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _stockService.UpdateAsync(model);
+            var entity = await _stockService.AddAsync(model.AsStoCreationDto);
+            return Created(Url.Action(nameof(Get)), new { id = entity.Id });
+        }
+
+        [HttpPut("input")]
+        public async Task<IActionResult> UpdateInput(StockCreationDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _stockService.UpdateInputAsync(model);
+            return NoContent();
+        }
+
+        [HttpPut("output")]
+        public async Task<IActionResult> UpdateOutput(OutputCreationDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _stockService.UpdateOutputAsync(model.AsStoCreationDto);
             return NoContent();
         }
 

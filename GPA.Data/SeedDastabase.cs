@@ -1,5 +1,6 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Security;
+using GPA.Entities.Common;
 using GPA.Utils;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -80,11 +81,13 @@ namespace GPA.Data
 
             var reasons = new Reason[] 
             {
-                new Reason { Id = 1, Name = "Purchase" , Description = "Purchase" },
-                new Reason { Id = 2, Name = "Sale" , Description = "Sale" },
-                new Reason { Id = 3, Name = "Return" , Description = "Return" },
-                new Reason { Id = 4, Name = "Adjustment" , Description = "Adjustment" },
-                new Reason { Id = 5, Name = "Manufactured" , Description = "Adjustment" },
+                new Reason { Id = 1, NormalizedName = "Purchase", Name = "Compra" , Description = "Compra", TransactionType = TransactionType.Input },
+                new Reason { Id = 2, NormalizedName = "Sale", Name = "Venta" , Description = "Venta", TransactionType = TransactionType.Output },
+                new Reason { Id = 3, NormalizedName = "Return", Name = "Devolución" , Description = "Devolución", TransactionType = TransactionType.Input },
+                new Reason { Id = 4, NormalizedName = "Manufactured", Name = "Manufacturado" , Description = "Manufacturado", TransactionType = TransactionType.Input },
+                new Reason { Id = 5, NormalizedName = "DamagedProduct", Name = "Producto defectuoso" , Description = "Producto defectuoso", TransactionType = TransactionType.Output },
+                new Reason { Id = 6, NormalizedName = "ExpiredProduct", Name = "Producto expirado" , Description = "Producto expirado", TransactionType = TransactionType.Output },
+                new Reason { Id = 7, NormalizedName = "RawMaterial", Name = "Materia prima" , Description = "Materia prima", TransactionType = TransactionType.Output },
             };
 
             modelBuilder.Entity<Reason>().HasData(reasons);
