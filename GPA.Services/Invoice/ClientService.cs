@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Invoice
@@ -24,30 +25,41 @@ namespace GPA.Business.Services.Invoice
     {
         private readonly IClientRepository _repository;
         private readonly IMapper _mapper;
+        private readonly IReceivableAccountRepository _receivableAccountRepository;
 
-        public ClientService(IClientRepository repository, IMapper mapper)
+        public ClientService(IClientRepository repository, IMapper mapper, IReceivableAccountRepository receivableAccountRepository)
         {
             _repository = repository;
             _mapper = mapper;
+            _receivableAccountRepository = receivableAccountRepository;
         }
 
         public async Task<ClientDto?> GetByIdAsync(Guid id)
         {
-            var client = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<ClientDto>(client);
+            var client = await _repository.GetByIdAsync(query => query.Include(x => x.Credits), x => x.Id == id);
+            var penddingPayments = await _receivableAccountRepository.GetPenddingPaymentByClientId(id);
+
+            var clientDto = _mapper.Map<ClientDto>(client);
+            clientDto.Debits = _mapper.Map<ClientDebitDto[]>(penddingPayments);
+            return clientDto;
         }
 
         public async Task<ResponseDto<ClientDto>> GetAllAsync(SearchDto search, Expression<Func<Client, bool>>? expression = null)
         {
-            var categories = await _repository.GetAllAsync(query =>
+            var clients = await _repository.GetAllAsync(query =>
             {
-                return query.OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
+                return query
+                    .Include(x => x.Credits)
+                    .OrderByDescending(x => x.Id)
+                    .Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
-            return new ResponseDto<ClientDto>
+            var clientsDto = new ResponseDto<ClientDto>
             {
                 Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<ClientDto>>(categories)
+                Data = _mapper.Map<IEnumerable<ClientDto>>(clients)
             };
+
+            return clientsDto;
         }
 
         public async Task<ClientDto> AddAsync(ClientDto dto)
@@ -65,12 +77,8 @@ namespace GPA.Business.Services.Invoice
             }
 
             var newClient = _mapper.Map<Client>(dto);
-            newClient.Id = dto.Id.Value;
-            var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
-            await _repository.UpdateAsync(savedClient, newClient, (entityState, _) =>
-            {
-                entityState.Property(x => x.Id).IsModified = false;
-            });
+            newClient.Id = dto.Id.Value;            
+            await _repository.UpdateAsync(newClient);
         }
 
         public async Task RemoveAsync(Guid id)

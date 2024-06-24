@@ -57,6 +57,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.Type, new Random().Next(1, 2))
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Addons)
                 .Create();
 
             var dto = await _productService.AddAsync(product);
@@ -100,6 +101,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.Type, new Random().Next(1, 2))
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Addons)
                 .Create();
 
             var dto = await _productService.AddAsync(product);
@@ -146,6 +148,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.Type, new Random().Next(1, 2))
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Addons)
                 .Create();
 
             var dto = await _productService.AddAsync(product);
@@ -188,6 +191,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.Type, new Random().Next(1, 2))
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Addons)
                 .Create();
 
             var dto = await _productService.AddAsync(product);
@@ -240,6 +244,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.Type, new Random().Next(1, 2))
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Addons)
                 .Create();
 
             var dto = await _productService.AddAsync(product);

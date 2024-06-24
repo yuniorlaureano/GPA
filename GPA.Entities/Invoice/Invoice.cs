@@ -1,4 +1,5 @@
-﻿using GPA.Entities;
+﻿using GPA.Common.Entities.Inventory;
+using GPA.Entities;
 using GPA.Entities.Common;
 
 namespace GPA.Common.Entities.Invoice
@@ -13,6 +14,7 @@ namespace GPA.Common.Entities.Invoice
         public string? Note { get; set; }
         public Guid ClientId { get; set; }
         public required Client Client { get; set; }
+        public Stock Stock { get; set; }
 
         public required ICollection<InvoiceDetails> InvoiceDetails { get; set; }
         public ICollection<InvoiceDelivery>? InvoiceDeliveries { get; set; }

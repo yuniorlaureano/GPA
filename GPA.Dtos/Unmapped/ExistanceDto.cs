@@ -1,4 +1,6 @@
-﻿namespace GPA.Common.DTOs.Unmapped
+﻿using GPA.Common.DTOs.Inventory;
+
+namespace GPA.Common.DTOs.Unmapped
 {
     public class ExistanceDto
     {
@@ -11,5 +13,8 @@
         public String ProductName { get; set; }
         public String ProductCode { get; set; }
         public Guid CategoryId { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+        public AddonDto[] Addons { get; set; }
     }
 }

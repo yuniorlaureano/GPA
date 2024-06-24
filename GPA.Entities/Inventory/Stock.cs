@@ -15,6 +15,8 @@ namespace GPA.Common.Entities.Inventory
         public Store? Store { get; set; }
         public int ReasonId { get; set; }
         public Reason Reason { get; set; }
+        public Guid? InvoiceId { get; set; }
+        public Invoice.Invoice? Invoice { get; set; }
 
         public ICollection<StockDetails> StockDetails { get; set; }
     }

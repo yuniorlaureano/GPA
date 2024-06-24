@@ -5,7 +5,9 @@ using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Entities.Common;
+using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -92,11 +94,14 @@ namespace GPA.Business.Services.Inventory
         public async Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10)
         {
             var productCatalog = await _repository.GetExistenceAsync(page, pageSize);
-            return new ResponseDto<ExistanceDto>
+            var productCatalogDto =  new ResponseDto<ExistanceDto>
             {
                 Count = await _repository.GetExistenceCountAsync(),
                 Data = _mapper.Map<IEnumerable<ExistanceDto>>(productCatalog)
             };
+
+            await MapAddonsToProduct(productCatalogDto.Data);
+            return productCatalogDto;
         }
 
         public async Task<StockDto?> AddAsync(StockCreationDto dto)
@@ -183,32 +188,39 @@ namespace GPA.Business.Services.Inventory
 
         private async Task MapAddonsToProduct(IEnumerable<ProductCatalogDto> products)
         {
-            if (products is not null)
+            if (products is not null && products.Any())
             {
-                var addons = await _addonRepository.GetAddonsByProductId(products.Select(x => x.ProductId).ToList());
-                Dictionary<Guid, List<AddonDto>> mappedAddons = new();
-                foreach (var addon in addons)
-                {
-                    if (!mappedAddons.ContainsKey(addon.ProductId))
-                    {
-                        mappedAddons.Add(addon.ProductId, new List<AddonDto>());
-                    }
-
-                    mappedAddons[addon.ProductId].Add(new AddonDto
-                    {
-                        Id = addon.Id,
-                        Concept = addon.Concept,
-                        IsDiscount = addon.IsDiscount,
-                        Type = addon.Type,
-                        Value = addon.Value
-                    });
-                }
+                var mappedAddons = await _addonRepository
+                    .GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());
 
                 foreach (var product in products)
                 {
                     if (mappedAddons.ContainsKey(product.ProductId))
                     {
-                        product.Addons = mappedAddons[product.ProductId].ToArray();
+                        product.Addons = _mapper.Map<AddonDto[]>(mappedAddons[product.ProductId]);
+                        var (debit,credit) = AddonCalculator.CalculateAddon(product.Price, product.Addons);
+                        product.Debit = debit;
+                        product.Credit = credit;
+                    }
+                }
+            }
+        }
+
+        private async Task MapAddonsToProduct(IEnumerable<ExistanceDto> products)
+        {
+            if (products is not null)
+            {
+                var mappedAddons = await _addonRepository
+                    .GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());
+
+                foreach (var product in products)
+                {
+                    if (mappedAddons.ContainsKey(product.ProductId))
+                    {
+                        product.Addons = _mapper.Map<AddonDto[]>(mappedAddons[product.ProductId]);
+                        var (debit, credit) = AddonCalculator.CalculateAddon(product.Price, product.Addons);
+                        product.Debit = debit;
+                        product.Credit = credit;
                     }
                 }
             }

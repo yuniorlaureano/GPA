@@ -3,6 +3,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.Entities.Invoice;
+using GPA.Entities.Unmapped;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Invoice.Mappers
@@ -16,6 +17,8 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
 
             CreateMap<ClientCreditDto, ClientCredit>();
             CreateMap<ClientCredit, ClientCreditDto>();
+
+            CreateMap<RawPenddingPayment, ClientDebitDto>();
 
             CreateMap<InvoiceDto, GPA.Common.Entities.Invoice.Invoice>()
                 .ForMember(dest => dest.Date, opt =>

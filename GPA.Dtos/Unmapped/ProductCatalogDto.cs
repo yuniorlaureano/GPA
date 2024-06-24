@@ -13,6 +13,8 @@ namespace GPA.Common.DTOs.Unmapped
         public String ProductName { get; set; }
         public String ProductCode { get; set; }
         public Guid CategoryId { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
         public AddonDto []Addons { get; set; }
     }
 }

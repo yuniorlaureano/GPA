@@ -17,5 +17,7 @@
         public string? State { get; set; }
         public string? Country { get; set; }
         public string? PostalCode { get; set; }
+        public ClientCreditDto[]? Credits { get; set; }
+        public ClientDebitDto[]? Debits { get; set; }
     }
 }

@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GPA.Dtos\GPA.Dtos.csproj" />
+    <ProjectReference Include="..\GPA.Entities\GPA.Entities.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
+using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
@@ -7,6 +8,7 @@ using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.Common;
+using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -30,26 +32,32 @@ namespace GPA.Business.Services.Invoice
     public class InvoiceService : IInvoiceService
     {
         private readonly IStockRepository _stockRepository;
+        private readonly IClientService _clientService;
         private readonly IInvoiceRepository _repository;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
+        private readonly IAddonRepository _addonRepository;
         private readonly IMapper _mapper;
 
         public InvoiceService(
+            IClientService clientService,
             IInvoiceRepository repository,
             IStockRepository stockRepository,
             IReceivableAccountRepository receivableAccountRepository,
+            IAddonRepository addonRepository,
             IMapper mapper)
         {
+            _clientService = clientService;
             _repository = repository;
             _stockRepository = stockRepository;
             _receivableAccountRepository = receivableAccountRepository;
+            _addonRepository = addonRepository;
             _mapper = mapper;
         }
 
         public async Task<InvoiceListDto?> GetByIdAsync(Guid id)
         {
             var savedInvoice = await _repository.GetByIdAsync(
-                query => query.Include(x => x.Client).Include(x => x.InvoiceDetails).ThenInclude(x => x.Product)
+                query => query.Include(x => x.InvoiceDetails).ThenInclude(x => x.Product)
                 , x => x.Id == id);
 
             var invoice = _mapper.Map<InvoiceListDto>(savedInvoice);
@@ -69,6 +77,8 @@ namespace GPA.Business.Services.Invoice
                             invoiceDetail.StockProduct = _mapper.Map<ProductCatalogDto>(product);
                         }
                     }
+                    invoice.Client = await _clientService.GetByIdAsync(savedInvoice.ClientId);
+                    await MapAddonsToProduct(invoice.InvoiceDetails);
                 }
             }
 
@@ -79,7 +89,7 @@ namespace GPA.Business.Services.Invoice
         {
             var categories = await _repository.GetAllAsync(query =>
             {
-                return query.OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
+                return query.Include(x => x.Client).OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
             return new ResponseDto<InvoiceListDto>
             {
@@ -93,10 +103,14 @@ namespace GPA.Business.Services.Invoice
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
             invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
 
+            await UpdatePricesByAddons(dto.InvoiceDetails.ToList());
+
+            //ToDo: calcular el credito y debito, y comparar con el pago, para verificar si puede proceder
+
             invoice.PaymentStatus = GetPaymentStatus(invoice);
             var savedInvoice = await _repository.AddAsync(invoice);
 
-            await AddStock(invoice);
+            await AddStock(savedInvoice);
             await AddReceivableAccount(invoice);
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
@@ -115,6 +129,10 @@ namespace GPA.Business.Services.Invoice
                     savedInvoice.Status == InvoiceStatus.Draft;
             if (canEditInvoice)
             {
+                await UpdatePricesByAddons(dto.InvoiceDetails.ToList());
+
+                //ToDo: calcular el credito y debito, y comparar con el pago, para verificar si puede proceder
+
                 var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
                 var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
 
@@ -122,6 +140,8 @@ namespace GPA.Business.Services.Invoice
                 {
                     detail.InvoiceId = newInvoice.Id;
                 }
+
+                newInvoice.PaymentStatus = GetPaymentStatus(newInvoice, invoiceDetails);
 
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
@@ -150,6 +170,7 @@ namespace GPA.Business.Services.Invoice
                 ReasonId = (int)ReasonTypes.Sale,
                 CreatedAt = DateTime.Now,
                 Status = StockStatus.Saved,
+                InvoiceId = invoice.Id,
                 StockDetails = invoice.InvoiceDetails.Select(x => new StockDetails
                 {
                     Quantity = x.Quantity,
@@ -162,6 +183,18 @@ namespace GPA.Business.Services.Invoice
         private PaymentStatus GetPaymentStatus(GPA.Common.Entities.Invoice.Invoice invoice)
         {
             if (invoice.Payment < invoice.InvoiceDetails.Sum(x => x.Quantity * x.Price))
+            {
+                return PaymentStatus.Pending;
+            }
+
+            return PaymentStatus.Payed;
+        }
+
+        private PaymentStatus GetPaymentStatus(
+            GPA.Common.Entities.Invoice.Invoice invoice,
+            List<InvoiceDetails> invoiceDetails)
+        {
+            if (invoice.Payment < invoiceDetails.Sum(x => x.Quantity * x.Price))
             {
                 return PaymentStatus.Pending;
             }
@@ -191,6 +224,56 @@ namespace GPA.Business.Services.Invoice
                 };
 
                 await _receivableAccountRepository.AddAsync(paymentDetail);
+            }
+        }
+
+        private async Task UpdatePricesByAddons(List<InvoiceDetailUpdateDto> invoiceDetail)
+        {
+            var addons = await _addonRepository
+                   .GetAddonsByProductIdAsDictionary(invoiceDetail.Select(x => x.ProductId).ToList());
+
+            foreach (var detail in invoiceDetail)
+            {
+                if (addons.ContainsKey(detail.ProductId))
+                {
+                    var (debit, credit) = AddonCalculator.CalculateAddon(detail.Price, addons[detail.ProductId]);
+                    detail.Price = detail.Price - debit + credit;
+                }
+            }
+        }
+
+        private async Task UpdatePricesByAddons(List<InvoiceDetailDto> invoiceDetail)
+        {
+            var addons = await _addonRepository
+                   .GetAddonsByProductIdAsDictionary(invoiceDetail.Select(x => x.ProductId).ToList());
+
+            foreach (var detail in invoiceDetail)
+            {
+                if (addons.ContainsKey(detail.ProductId))
+                {
+                    var (debit, credit) = AddonCalculator.CalculateAddon(detail.Price, addons[detail.ProductId]);
+                    detail.Price = detail.Price - debit + credit;
+                }
+            }
+        }
+
+        private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products)
+        {
+            if (products is not null)
+            {
+                var mappedAddons = await _addonRepository
+                    .GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());
+
+                foreach (var product in products)
+                {
+                    if (mappedAddons.ContainsKey(product.ProductId))
+                    {
+                        product.StockProduct.Addons = _mapper.Map<AddonDto[]>(mappedAddons[product.ProductId]);
+                        var (debit, credit) = AddonCalculator.CalculateAddon(product.StockProduct.Price, product.StockProduct.Addons);
+                        product.StockProduct.Debit = debit;
+                        product.StockProduct.Credit = credit;
+                    }
+                }
             }
         }
     }

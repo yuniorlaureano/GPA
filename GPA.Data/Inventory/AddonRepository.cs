@@ -1,4 +1,5 @@
-﻿using GPA.Common.Entities.Inventory;
+﻿using GPA.Common.DTOs.Inventory;
+using GPA.Common.Entities.Inventory;
 using GPA.Entities.Unmapped;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace GPA.Data.Inventory
     {
         Task<List<Addon>> GetAddonsByProductId(Guid productId);
         Task<List<RawAddons>> GetAddonsByProductId(List<Guid> productIds);
+        Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByProductIdAsDictionary(List<Guid> productIds);
         Task DeleteAddonsByProductId(Guid productId);
     }
 
@@ -49,6 +51,31 @@ namespace GPA.Data.Inventory
 	                        JOIN [GPA].[Inventory].[ProductAddons] PAD ON PAD.AddonId = AD.Id
                             WHERE PAD.ProductId in ({string.Join(",", productIds.Select(id => $"'{id}'"))})
                     ").ToListAsync();
+        }
+
+        public async Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByProductIdAsDictionary(List<Guid> productIds)
+        {
+#pragma warning disable EF1002 // Possible SQL injection vulnerability.
+            
+            var addons = await GetAddonsByProductId(productIds);
+            Dictionary<Guid, List<RawAddons>> mappedAddons = new();
+            foreach (var addon in addons)
+            {
+                if (!mappedAddons.ContainsKey(addon.ProductId))
+                {
+                    mappedAddons.Add(addon.ProductId, new List<RawAddons>());
+                }
+
+                mappedAddons[addon.ProductId].Add(new RawAddons
+                {
+                    Id = addon.Id,
+                    Concept = addon.Concept,
+                    IsDiscount = addon.IsDiscount,
+                    Type = addon.Type,
+                    Value = addon.Value
+                });
+            }
+            return mappedAddons;
         }
 
         public async Task DeleteAddonsByProductId(Guid productId)
