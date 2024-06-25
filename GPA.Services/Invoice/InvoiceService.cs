@@ -122,7 +122,7 @@ namespace GPA.Business.Services.Invoice
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(savedInvoice);
-            await AddReceivableAccount(invoice);
+            await AddReceivableAccount(invoice, addons);
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
@@ -163,7 +163,7 @@ namespace GPA.Business.Services.Invoice
 
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
-                await AddReceivableAccount(newInvoice);
+                await AddReceivableAccount(newInvoice, addons);
             }
         }
 
@@ -228,12 +228,12 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task AddReceivableAccount(GPA.Common.Entities.Invoice.Invoice invoice)
+        private async Task AddReceivableAccount(GPA.Common.Entities.Invoice.Invoice invoice, Dictionary<Guid, List<RawAddons>> addons)
         {
             if (invoice.Status == InvoiceStatus.Saved &&
                 invoice.PaymentStatus == PaymentStatus.Pending)
             {
-                var payment = invoice.InvoiceDetails.Sum(x => x.Quantity * x.Price);
+                var payment = invoice.InvoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
                 var paymentDetail = new ClientPaymentsDetails
                 {
                     InvoiceId = invoice.Id,
