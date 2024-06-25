@@ -54,6 +54,7 @@ namespace GPA.Data
         public DbSet<InvoiceDetails> InvoiceDetails { get; set; }
         public DbSet<StorePaymentsDetails> StorePaymentsDetails { get; set; }
         public DbSet<ClientCredit> ClientCredits { get; set; }
+        public DbSet<InvoiceDetailsAddon> InvoiceDetailsAddons { get; set; }
 
         //SECURITY ADDED DINAMICALLY BY EF-CORE
 

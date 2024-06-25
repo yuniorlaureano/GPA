@@ -8,6 +8,7 @@ using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.Common;
+using GPA.Entities.Unmapped;
 using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -106,13 +107,16 @@ namespace GPA.Business.Services.Invoice
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
             invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
 
-            await UpdatePricesByAddons(invoice.InvoiceDetails.ToList());
+            var addons = await _addonRepository
+                   .GetAddonsByProductIdAsDictionary(invoice.InvoiceDetails.Select(x => x.ProductId).ToList());
 
             var isCheckCredits = invoice.Status != InvoiceStatus.Draft;
             if (isCheckCredits)
             {
-                await CheckIfClientHasEnoughtCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails);
+                await CheckIfClientHasEnoughtCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails, addons);
             }
+
+            InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
 
             invoice.PaymentStatus = GetPaymentStatus(invoice);
             var savedInvoice = await _repository.AddAsync(invoice);
@@ -136,7 +140,8 @@ namespace GPA.Business.Services.Invoice
                     savedInvoice.Status == InvoiceStatus.Draft;
             if (canEditInvoice)
             {
-                await UpdatePricesByAddons(dto.InvoiceDetails.ToList());
+                var addons = await _addonRepository
+                   .GetAddonsByProductIdAsDictionary(dto.InvoiceDetails.Select(x => x.ProductId).ToList());
 
                 var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
                 var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
@@ -144,7 +149,7 @@ namespace GPA.Business.Services.Invoice
                 var isCheckCredits = newInvoice.Status != InvoiceStatus.Draft;
                 if (isCheckCredits)
                 {
-                    await CheckIfClientHasEnoughtCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails);
+                    await CheckIfClientHasEnoughtCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails, addons);
                 }
 
                 foreach (var detail in invoiceDetails)
@@ -153,6 +158,8 @@ namespace GPA.Business.Services.Invoice
                 }
 
                 newInvoice.PaymentStatus = GetPaymentStatus(newInvoice, invoiceDetails);
+
+                InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
 
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
@@ -238,11 +245,8 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task UpdatePricesByAddons(List<InvoiceDetailUpdateDto> invoiceDetail)
+        private async Task UpdatePricesByAddons(List<InvoiceDetailUpdateDto> invoiceDetail, Dictionary<Guid, List<RawAddons>> addons)
         {
-            var addons = await _addonRepository
-                   .GetAddonsByProductIdAsDictionary(invoiceDetail.Select(x => x.ProductId).ToList());
-
             foreach (var detail in invoiceDetail)
             {
                 if (addons.ContainsKey(detail.ProductId))
@@ -253,11 +257,8 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task UpdatePricesByAddons(List<InvoiceDetails> invoiceDetail)
+        private void UpdatePricesByAddons(List<InvoiceDetails> invoiceDetail, Dictionary<Guid, List<RawAddons>> addons)
         {
-            var addons = await _addonRepository
-                   .GetAddonsByProductIdAsDictionary(invoiceDetail.Select(x => x.ProductId).ToList());
-
             foreach (var detail in invoiceDetail)
             {
                 if (addons.ContainsKey(detail.ProductId))
@@ -266,6 +267,16 @@ namespace GPA.Business.Services.Invoice
                     detail.Price = detail.Price - debit + credit;
                 }
             }
+        }
+
+        private decimal GetNetPrice(InvoiceDetails detail, Dictionary<Guid, List<RawAddons>> addons)
+        {
+            if (addons.ContainsKey(detail.ProductId))
+            {
+                var (debit, credit) = AddonCalculator.CalculateAddon(detail.Price, addons[detail.ProductId]);
+                return detail.Price - debit + credit;
+            }
+            return detail.Price;
         }
 
         private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products)
@@ -288,19 +299,36 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task CheckIfClientHasEnoughtCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails)
+        private async Task CheckIfClientHasEnoughtCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
         {
             var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(clientId);
             var credits = await _clientRepository.GetCredits(clientId);
 
             var debit = debits.Sum(x => x.PendingPayment);
             var credit = credits.Sum(x => x.Credit);
-            var toPay = invoiceDetails.Sum(x => x.Quantity * x.Price);
+            var toPay = invoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
             var duePayment = toPay - payment;
 
             if (duePayment > (credit - debit))
             {
                 throw new InvalidOperationException("No se puede proceder con la venta, el cliente no tiene suficiente credito");
+            }
+        }
+
+        private void InitializeInvoiceDetailWithAddons(ICollection<InvoiceDetails> invoiceDetail, Dictionary<Guid, List<RawAddons>> addons)
+        {
+            foreach (var detail in invoiceDetail)
+            {
+                if (addons.ContainsKey(detail.ProductId))
+                {
+                    detail.InvoiceDetailsAddons = addons[detail.ProductId].Select(x => new InvoiceDetailsAddon
+                    {
+                        Concept = x.Concept,
+                        IsDiscount = x.IsDiscount,
+                        Type = x.Type,
+                        Value = x.Value
+                    }).ToList();
+                }
             }
         }
     }

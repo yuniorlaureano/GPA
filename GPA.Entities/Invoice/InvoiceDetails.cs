@@ -12,5 +12,6 @@ namespace GPA.Common.Entities.Invoice
 
         public Guid InvoiceId { get; set; }
         public Invoice Invoice { get; set; }
+        public ICollection<InvoiceDetailsAddon> InvoiceDetailsAddons { get; set; }
     }
 }
