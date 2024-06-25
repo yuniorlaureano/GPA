@@ -19,6 +19,8 @@ namespace GPA.Business.Services.Invoice
         public Task UpdateAsync(ClientDto clientDto);
 
         public Task RemoveAsync(Guid id);
+
+        Task<List<ClientCreditDto>> GetCredits(Guid clientId);
     }
 
     public class ClientService : IClientService
@@ -40,7 +42,11 @@ namespace GPA.Business.Services.Invoice
             var penddingPayments = await _receivableAccountRepository.GetPenddingPaymentByClientId(id);
 
             var clientDto = _mapper.Map<ClientDto>(client);
-            clientDto.Debits = _mapper.Map<ClientDebitDto[]>(penddingPayments);
+            if (client is not null)
+            {                
+                clientDto.Debits = _mapper.Map<ClientDebitDto[]>(penddingPayments);
+            }
+
             return clientDto;
         }
 
@@ -85,6 +91,12 @@ namespace GPA.Business.Services.Invoice
         {
             var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedClient);
+        }
+
+        public async Task<List<ClientCreditDto>> GetCredits(Guid clientId)
+        {
+            var credits = await _repository.GetCredits(clientId);
+            return _mapper.Map<List<ClientCreditDto>>(credits);
         }
     }
 }

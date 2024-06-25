@@ -3,7 +3,6 @@ using GPA.Business.Services.Common;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs.Common;
 using GPA.Common.DTOs.Inventory;
-using GPA.Entities.Common;
 using GPA.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,7 +36,8 @@ namespace GPA.Tests.Inventory.Service
 
             var product = _fixture
                 .Build<ProductCreationDto>()
-                .With(x => x.Code)
+                .With(x => x.Name, "Botellon")
+                .With(x => x.Code, "PROD-BTN")
                 .With(x => x.Photo)
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
@@ -58,12 +58,13 @@ namespace GPA.Tests.Inventory.Service
         public async Task ShouldGetAll()
         {
             var productDependencies = await CreateDependencies();
-            
+
             for (int i = 0; i < 3; i++)
             {
                 var product = _fixture
                     .Build<ProductCreationDto>()
-                    .With(x => x.Code)
+                    .With(x => x.Name, $"Producto {i}")
+                    .With(x => x.Code, $"RPODT-{i}")
                     .With(x => x.Photo)
                     .With(x => x.UnitId, productDependencies.UnitId)
                     .With(x => x.CategoryId, productDependencies.CategoryId)
@@ -88,7 +89,8 @@ namespace GPA.Tests.Inventory.Service
 
             var product = _fixture
                 .Build<ProductCreationDto>()
-                .With(x => x.Code)
+                .With(x => x.Name, "Camion de agua")
+                .With(x => x.Code, "PROD-CMNIO")
                 .With(x => x.Photo)
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
@@ -110,7 +112,8 @@ namespace GPA.Tests.Inventory.Service
 
             var product = _fixture
                 .Build<ProductCreationDto>()
-                .With(x => x.Code)
+                .With(x => x.Name, "Faldo de botellitas")
+                .With(x => x.Code, "RPOD-FDB")
                 .With(x => x.Photo)
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)

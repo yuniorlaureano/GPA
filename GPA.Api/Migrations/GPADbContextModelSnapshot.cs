@@ -26,7 +26,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -59,11 +60,60 @@ namespace GPA.Api.Migrations
                     b.ToTable("Deliveries", "common");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.Addon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<string>("Concept")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDiscount")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Addons", "Inventory");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -103,14 +153,14 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("36fc4cfd-0f43-4e85-b8e6-b18d01362fc9"),
+                            Id = new Guid("e0c68403-b723-4f5b-87bd-b199007e8a2e"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("6a8f5fd7-477c-4678-b382-b18d01362fc9"),
+                            Id = new Guid("bed5149c-5eee-4d6d-b88d-b199007e8a2e"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
@@ -121,7 +171,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("BarCode")
                         .IsRequired()
@@ -158,6 +209,9 @@ namespace GPA.Api.Migrations
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<float?>("ITBIS")
+                        .HasColumnType("real");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -193,6 +247,49 @@ namespace GPA.Api.Migrations
                     b.HasIndex("UnitId");
 
                     b.ToTable("Products", "Inventory");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.ProductAddon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<Guid>("AddonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddonId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductAddons", "Inventory");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.ProductLocation", b =>
@@ -244,7 +341,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("15400814-51bb-4156-aff8-946064acb754"),
+                            Id = new Guid("2126b893-22b2-4a0a-b837-939a0fdf209b"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -252,7 +349,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("09d50f22-1afd-4b78-8960-b4e969adaddd"),
+                            Id = new Guid("8ed4f979-d1f7-480a-8338-3887c7aed41f"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -380,6 +477,13 @@ namespace GPA.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -395,36 +499,64 @@ namespace GPA.Api.Migrations
                         {
                             Id = 1,
                             Deleted = false,
-                            Description = "Purchase",
-                            Name = "Purchase"
+                            Description = "Compra",
+                            Name = "Compra",
+                            NormalizedName = "Purchase",
+                            TransactionType = 0
                         },
                         new
                         {
                             Id = 2,
                             Deleted = false,
-                            Description = "Sale",
-                            Name = "Sale"
+                            Description = "Venta",
+                            Name = "Venta",
+                            NormalizedName = "Sale",
+                            TransactionType = 1
                         },
                         new
                         {
                             Id = 3,
                             Deleted = false,
-                            Description = "Return",
-                            Name = "Return"
+                            Description = "Devolución",
+                            Name = "Devolución",
+                            NormalizedName = "Return",
+                            TransactionType = 0
                         },
                         new
                         {
                             Id = 4,
                             Deleted = false,
-                            Description = "Adjustment",
-                            Name = "Adjustment"
+                            Description = "Manufacturado",
+                            Name = "Manufacturado",
+                            NormalizedName = "Manufactured",
+                            TransactionType = 0
                         },
                         new
                         {
                             Id = 5,
                             Deleted = false,
-                            Description = "Adjustment",
-                            Name = "Manufactured"
+                            Description = "Producto defectuoso",
+                            Name = "Producto defectuoso",
+                            NormalizedName = "DamagedProduct",
+                            TransactionType = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Deleted = false,
+                            Description = "Producto expirado",
+                            Name = "Producto expirado",
+                            NormalizedName = "ExpiredProduct",
+                            TransactionType = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Deleted = false,
+                            Description = "Materia prima",
+                            Name = "Materia prima",
+                            NormalizedName = "RawMaterial",
+                            TransactionType = 1
                         });
                 });
 
@@ -432,7 +564,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -458,6 +591,9 @@ namespace GPA.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("ProviderId")
                         .HasColumnType("uniqueidentifier");
 
@@ -480,6 +616,10 @@ namespace GPA.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId")
+                        .IsUnique()
+                        .HasFilter("[InvoiceId] IS NOT NULL");
 
                     b.HasIndex("ProviderId");
 
@@ -584,7 +724,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -634,7 +775,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -685,7 +827,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<decimal?>("AvailableCredit")
                         .HasColumnType("decimal(18,2)");
@@ -753,11 +896,57 @@ namespace GPA.Api.Migrations
                     b.ToTable("Clients", "Invoice");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Invoice.ClientCredit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Concept")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Credit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("ClientCredits", "Invoice");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Invoice.ClientPaymentsDetails", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -803,7 +992,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uniqueidentifier");
@@ -858,7 +1048,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -900,7 +1091,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -948,7 +1140,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -988,7 +1181,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1033,7 +1227,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1076,7 +1271,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -1102,7 +1298,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9"),
+                            Id = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -1137,7 +1333,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9")
+                            RoleId = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e")
                         });
                 });
 
@@ -1145,7 +1341,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -1220,9 +1417,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("d71f03d4-ccd9-4003-b0b0-b18d01362fc9"),
+                            Id = new Guid("05441c6e-753b-4615-a189-b199007e8a2e"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "44752643-508e-4815-a4fa-e032c61c8737",
+                            ConcurrencyStamp = "06c243d2-bf8e-467e-b851-a4fe14c98527",
                             Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
@@ -1230,7 +1427,7 @@ namespace GPA.Api.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGEFBD7txMhoQQsyBLDcoYTo6EWw1/qs17sDmA6vZORdPe1XfAtZ7WsrX0MqEZB2Cw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEwoHSYsrVGlET6umt8yHjtAiFYRN4OnEZZgWIPVP+AEduVsyggk8FA6YEYI9Iv8nw==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -1265,7 +1462,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("LoginProvider")
                         .HasColumnType("nvarchar(max)");
@@ -1290,7 +1488,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
@@ -1309,9 +1508,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("80200dbc-cdff-4de7-bcf9-5909e3eb70f1"),
-                            RoleId = new Guid("2837494b-01e4-4038-8ea0-b18d01362fc9"),
-                            UserId = new Guid("d71f03d4-ccd9-4003-b0b0-b18d01362fc9")
+                            Id = new Guid("87759775-6b2e-4e03-aba2-0bb5c4ab9b8a"),
+                            RoleId = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e"),
+                            UserId = new Guid("05441c6e-753b-4615-a189-b199007e8a2e")
                         });
                 });
 
@@ -1319,7 +1518,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("LoginProvider")
                         .HasColumnType("nvarchar(max)");
@@ -1344,7 +1544,8 @@ namespace GPA.Api.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -1420,8 +1621,31 @@ namespace GPA.Api.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.ProductAddon", b =>
+                {
+                    b.HasOne("GPA.Common.Entities.Inventory.Addon", "Addon")
+                        .WithMany("ProductAddons")
+                        .HasForeignKey("AddonId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("GPA.Common.Entities.Inventory.Product", "Product")
+                        .WithMany("ProductAddons")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Addon");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Stock", b =>
                 {
+                    b.HasOne("GPA.Common.Entities.Invoice.Invoice", "Invoice")
+                        .WithOne("Stock")
+                        .HasForeignKey("GPA.Common.Entities.Inventory.Stock", "InvoiceId");
+
                     b.HasOne("GPA.Common.Entities.Inventory.Provider", "Provider")
                         .WithMany("Stocks")
                         .HasForeignKey("ProviderId")
@@ -1436,6 +1660,8 @@ namespace GPA.Api.Migrations
                     b.HasOne("GPA.Common.Entities.Inventory.Store", "Store")
                         .WithMany()
                         .HasForeignKey("StoreId");
+
+                    b.Navigation("Invoice");
 
                     b.Navigation("Provider");
 
@@ -1472,6 +1698,17 @@ namespace GPA.Api.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Stock");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Invoice.ClientCredit", b =>
+                {
+                    b.HasOne("GPA.Common.Entities.Invoice.Client", "Client")
+                        .WithMany("Credits")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.ClientPaymentsDetails", b =>
@@ -1628,6 +1865,11 @@ namespace GPA.Api.Migrations
                     b.Navigation("InvoiceDeliveries");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Inventory.Addon", b =>
+                {
+                    b.Navigation("ProductAddons");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Category", b =>
                 {
                     b.Navigation("Products");
@@ -1635,6 +1877,8 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Inventory.Product", b =>
                 {
+                    b.Navigation("ProductAddons");
+
                     b.Navigation("Stocks");
                 });
 
@@ -1665,6 +1909,8 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Client", b =>
                 {
+                    b.Navigation("Credits");
+
                     b.Navigation("Invoices");
                 });
 
@@ -1675,6 +1921,9 @@ namespace GPA.Api.Migrations
                     b.Navigation("InvoiceDeliveries");
 
                     b.Navigation("InvoiceDetails");
+
+                    b.Navigation("Stock")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Purchase", b =>

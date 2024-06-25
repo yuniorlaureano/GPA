@@ -32,6 +32,7 @@ namespace GPA.Business.Services.Invoice
     public class InvoiceService : IInvoiceService
     {
         private readonly IStockRepository _stockRepository;
+        private readonly IClientRepository _clientRepository;
         private readonly IClientService _clientService;
         private readonly IInvoiceRepository _repository;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
@@ -40,12 +41,14 @@ namespace GPA.Business.Services.Invoice
 
         public InvoiceService(
             IClientService clientService,
+            IClientRepository clientRepository,
             IInvoiceRepository repository,
             IStockRepository stockRepository,
             IReceivableAccountRepository receivableAccountRepository,
             IAddonRepository addonRepository,
             IMapper mapper)
         {
+            _clientRepository = clientRepository;
             _clientService = clientService;
             _repository = repository;
             _stockRepository = stockRepository;
@@ -103,9 +106,13 @@ namespace GPA.Business.Services.Invoice
             var invoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
             invoice.InvoiceDetails = _mapper.Map<ICollection<InvoiceDetails>>(dto.InvoiceDetails);
 
-            await UpdatePricesByAddons(dto.InvoiceDetails.ToList());
+            await UpdatePricesByAddons(invoice.InvoiceDetails.ToList());
 
-            //ToDo: calcular el credito y debito, y comparar con el pago, para verificar si puede proceder
+            var isCheckCredits = invoice.Status != InvoiceStatus.Draft;
+            if (isCheckCredits)
+            {
+                await CheckIfClientHasEnoughtCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails);
+            }
 
             invoice.PaymentStatus = GetPaymentStatus(invoice);
             var savedInvoice = await _repository.AddAsync(invoice);
@@ -131,10 +138,14 @@ namespace GPA.Business.Services.Invoice
             {
                 await UpdatePricesByAddons(dto.InvoiceDetails.ToList());
 
-                //ToDo: calcular el credito y debito, y comparar con el pago, para verificar si puede proceder
-
                 var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
                 var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
+
+                var isCheckCredits = newInvoice.Status != InvoiceStatus.Draft;
+                if (isCheckCredits)
+                {
+                    await CheckIfClientHasEnoughtCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails);
+                }
 
                 foreach (var detail in invoiceDetails)
                 {
@@ -242,7 +253,7 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task UpdatePricesByAddons(List<InvoiceDetailDto> invoiceDetail)
+        private async Task UpdatePricesByAddons(List<InvoiceDetails> invoiceDetail)
         {
             var addons = await _addonRepository
                    .GetAddonsByProductIdAsDictionary(invoiceDetail.Select(x => x.ProductId).ToList());
@@ -274,6 +285,22 @@ namespace GPA.Business.Services.Invoice
                         product.StockProduct.Credit = credit;
                     }
                 }
+            }
+        }
+
+        private async Task CheckIfClientHasEnoughtCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails)
+        {
+            var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(clientId);
+            var credits = await _clientRepository.GetCredits(clientId);
+
+            var debit = debits.Sum(x => x.PendingPayment);
+            var credit = credits.Sum(x => x.Credit);
+            var toPay = invoiceDetails.Sum(x => x.Quantity * x.Price);
+            var duePayment = toPay - payment;
+
+            if (duePayment > (credit - debit))
+            {
+                throw new InvalidOperationException("No se puede proceder con la venta, el cliente no tiene suficiente credito");
             }
         }
     }

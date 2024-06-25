@@ -50,8 +50,15 @@ namespace GPA.Invoice.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var entity = await _invoiceService.AddAsync(invoice);
-            return Created(Url.Action(nameof(Get)), new { id = entity.Id });
+            try
+            {
+                var entity = await _invoiceService.AddAsync(invoice);
+                return Created(Url.Action(nameof(Get), new { id = entity.Id }), entity);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut()]
@@ -63,8 +70,15 @@ namespace GPA.Invoice.Api.Controllers
                 return BadRequest(result.Errors);
             }
 
-            await _invoiceService.UpdateAsync(invoice);
-            return NoContent();
+            try
+            {
+                await _invoiceService.UpdateAsync(invoice);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]

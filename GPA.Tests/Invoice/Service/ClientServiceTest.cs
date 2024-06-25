@@ -25,6 +25,21 @@ namespace GPA.Tests.Invoice.Service
         {
             var client = _fixture
                 .Build<ClientDto>()
+                .With(x => x.Name, "Alicia")
+                .With(x => x.LastName, "Meriñez")
+                .With(x => x.Credits, new ClientCreditDto[] 
+                {
+                    new ClientCreditDto
+                    {
+                        Credit = 500,
+                        Concept = "General"
+                    },
+                    new ClientCreditDto
+                    {
+                        Credit = 100,
+                        Concept = "Dadiba"
+                    }
+                })
                 .Without(x => x.Id)
                 .Create();
 
@@ -52,10 +67,25 @@ namespace GPA.Tests.Invoice.Service
         }
 
         [Fact]
-        public async Task ShouldOneCreate()
+        public async Task ShouldCreateOne()
         {
             var client = _fixture
                 .Build<ClientDto>()
+                .With(x => x.Name, "Joaquin")
+                .With(x => x.LastName, "Amilcar")
+                .With(x => x.Credits, new ClientCreditDto[]
+                {
+                    new ClientCreditDto
+                    {
+                        Credit = 500,
+                        Concept = "General"
+                    },
+                    new ClientCreditDto
+                    {
+                        Credit = 100,
+                        Concept = "Dadiba"
+                    }
+                })
                 .Without(x => x.Id)
                 .Create();
 
@@ -68,6 +98,21 @@ namespace GPA.Tests.Invoice.Service
         {
             var client = _fixture
                 .Build<ClientDto>()
+                .With(x => x.Name, "Mario")
+                .With(x => x.LastName, "Aljazar")
+                .With(x => x.Credits, new ClientCreditDto[]
+                {
+                    new ClientCreditDto
+                    {
+                        Credit = 500,
+                        Concept = "General"
+                    },
+                    new ClientCreditDto
+                    {
+                        Credit = 100,
+                        Concept = "Dadiba"
+                    }
+                })
                 .Without(x => x.Id)
                 .Create();
 
@@ -84,7 +129,7 @@ namespace GPA.Tests.Invoice.Service
         }
 
         [Fact]
-        public async Task DeleteUpdate()
+        public async Task DeleteOne()
         {
             var client = _fixture
                 .Build<ClientDto>()
