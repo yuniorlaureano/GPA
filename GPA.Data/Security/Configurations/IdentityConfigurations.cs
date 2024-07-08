@@ -17,6 +17,9 @@ namespace GPA.Data.Security.Configurations
                     .WithOne(p => p.User)
                     .HasForeignKey(p => p.UserId);
 
+                b.HasMany(p => p.Profiles)
+                    .WithOne(p => p.User)
+                    .HasForeignKey(p => p.UserId);
             });
 
             modelBuilder.Entity<GPAUserClaim>(b =>

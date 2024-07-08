@@ -75,5 +75,44 @@ namespace GPA.Api.Controllers.Security
             });
             return Ok(new { token = token });
         }
+
+        [AllowAnonymous]
+        [HttpPost("signup")]
+        public async Task<IActionResult> SignUp(SignUpDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (model is null)
+            {
+                ModelState.AddModelError("model", "The model is null");
+                return BadRequest(ModelState);
+            }
+
+            var passwordHasher = new PasswordHasher<GPAUser>();
+            var entity = new GPAUser
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = model.Email,
+                UserName = model.UserName,
+            };
+            entity.PasswordHash = passwordHasher.HashPassword(entity, model.Password);
+            var result = await _userManager.CreateAsync(entity, model.Password);
+
+            if (result.Succeeded)
+            {
+                return Created();
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(error.Code, error.Description);
+            }
+
+            return BadRequest(ModelState);
+        }
     }
 }

@@ -57,6 +57,8 @@ namespace GPA.Data
         public DbSet<InvoiceDetailsAddon> InvoiceDetailsAddons { get; set; }
 
         //SECURITY ADDED DINAMICALLY BY EF-CORE
+        public DbSet<GPAProfile> Profiles { get; set; }
+        public DbSet<GPAUserProfile> UserProfile { get; set; }
 
         //COMMON
         public DbSet<Delivery> Deliveries { get; set; }

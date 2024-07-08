@@ -9,9 +9,7 @@ namespace GPA.Bussiness.Services.Security.Mappers
     {
         public MappingPrifles()
         {
-            CreateMap<GPAUser, GPAUserDto>()
-                .ForMember(dest => dest.Password, opt => opt.MapFrom(src => ""));                
-                            
+            CreateMap<GPAUser, GPAUserDto>();
             CreateMap<GPAUserDto, GPAUser>();
         }
     }

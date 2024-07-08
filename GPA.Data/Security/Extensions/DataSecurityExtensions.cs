@@ -7,6 +7,7 @@ namespace GPA.Data.Security.Extensions
         public static void AddDataSecurityRepositories(this IServiceCollection services)
         {
             services.AddTransient<IGPAUserRepository, GPAUserRepository>();
+            services.AddTransient<IGPAProfileRepository, GPAProfileRepository>();
         }
     }
 }

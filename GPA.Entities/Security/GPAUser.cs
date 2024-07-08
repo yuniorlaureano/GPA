@@ -11,5 +11,6 @@ namespace GPA.Common.Entities.Security
         public ICollection<GPAUserRole> UserRoles { get; set; }
         public ICollection<GPAUserToken> UserTokens { get; set; }
         public ICollection<GPAUserLogin> UserLogins { get; set; }
+        public ICollection<GPAUserProfile> Profiles { get; set; }
     }
 }

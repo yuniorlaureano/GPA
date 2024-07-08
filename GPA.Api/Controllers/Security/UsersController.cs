@@ -54,7 +54,7 @@ namespace GPA.Api.Controllers.Security
             var entity = _mapper.Map<GPAUser>(model);
             entity.Id = Guid.Empty;
             entity.Deleted = false;
-            var result = await _userManager.CreateAsync(entity, model.Password);
+            var result = await _userManager.CreateAsync(entity, $"Dummy-Password-{Guid.NewGuid().ToString()}*-$#$%");
 
             if (!result.Succeeded)
             {
