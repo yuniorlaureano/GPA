@@ -17,6 +17,8 @@ namespace GPA.Business.Services.Security
 
         public Task UpdateAsync(GPAProfileDto dto);
 
+        Task AssignProfileToUser(Guid profileId, Guid userId);
+
         public Task RemoveAsync(Guid id);
     }
 
@@ -34,11 +36,11 @@ namespace GPA.Business.Services.Security
         public async Task<GPAProfileDto?> GetByIdAsync(Guid id)
         {
             var entity = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return new GPAProfileDto
+            return entity is null ? null : new GPAProfileDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                Permissions = entity.Permissions
+                Value = entity.Value
             };
         }
 
@@ -55,7 +57,7 @@ namespace GPA.Business.Services.Security
                 {
                     Id = x.Id,
                     Name = x.Name,
-                    Permissions = x.Permissions
+                    Value = x.Value
                 }))
             };
         }
@@ -71,7 +73,7 @@ namespace GPA.Business.Services.Security
             {
                 Id = savedEntity.Id,
                 Name = savedEntity.Name,
-                Permissions = savedEntity.Permissions
+                Value = savedEntity.Value
             };
         }
 
@@ -84,10 +86,17 @@ namespace GPA.Business.Services.Security
 
             var savedEntity = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id);
             savedEntity.Name = dto.Name;
+            savedEntity.Value = dto.Value;
             await _repository.UpdateAsync(savedEntity, savedEntity, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+        }
+
+        public async Task AssignProfileToUser(Guid profileId, Guid userId)
+        {
+            var createdBy = Guid.Empty;
+            await _repository.AssignProfileToUser(profileId, userId, createdBy);
         }
 
         public async Task RemoveAsync(Guid id)

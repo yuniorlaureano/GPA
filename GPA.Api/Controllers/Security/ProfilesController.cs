@@ -66,6 +66,13 @@ namespace GPA.Api.Controllers.Security
             return NoContent();
         }
 
+        [HttpPut("{profileId}/assign/users/{userId}")]
+        public async Task<IActionResult> AssignProfileToUser(Guid profileId, Guid userId)
+        {
+            await _gPAProfileService.AssignProfileToUser(profileId, userId);
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

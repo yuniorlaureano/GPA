@@ -22,6 +22,16 @@ namespace GPA.Data.Security.Configurations
                     .HasForeignKey(p => p.UserId);
             });
 
+            modelBuilder.Entity<GPAUserProfile>(b =>
+            {
+                b.ToTable("GPAUserProfiles", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+                b.HasOne(p => p.User)
+                    .WithMany(p => p.Profiles)
+                    .HasForeignKey(p => p.UserId);
+            });
+
             modelBuilder.Entity<GPAUserClaim>(b =>
             {
                 b.ToTable("GPAUserClaims", GPASchema.SECURITY);

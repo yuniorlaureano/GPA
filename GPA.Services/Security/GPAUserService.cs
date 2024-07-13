@@ -23,11 +23,13 @@ namespace GPA.Business.Services.Security
     public class GPAUserService : IGPAUserService
     {
         private readonly IGPAUserRepository _repository;
+        private readonly IGPAProfileRepository _profileRepository;
         private readonly IMapper _mapper;
 
-        public GPAUserService(IGPAUserRepository repository, IMapper mapper)
+        public GPAUserService(IGPAUserRepository repository, IGPAProfileRepository profileRepository, IMapper mapper)
         {
             _repository = repository;
+            _profileRepository = profileRepository;
             _mapper = mapper;
         }
 
@@ -43,11 +45,28 @@ namespace GPA.Business.Services.Security
             {
                 return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
-            return new ResponseDto<GPAUserDto>
+
+            var users =  new ResponseDto<GPAUserDto>
             {
                 Count = await _repository.CountAsync(query => query, expression),
                 Data = _mapper.Map<IEnumerable<GPAUserDto>>(entities)
             };
+
+            var usersIds = entities.Select(x => x.Id).ToList();
+            if (entities is not null)
+            {
+                var profiles = await _profileRepository.GetProfilesByUserId(usersIds);
+                //add the profiels to the user object
+                if (profiles is { Count: > 0 })
+                {
+                    foreach (var user in users.Data)
+                    {
+                        user.Profiles = profiles.Where(x => x.UserId == user.Id).Select(x => x.ProfileId).ToList();
+                    }
+                }
+            }
+
+            return users;
         }
 
         public async Task<GPAUserDto> AddAsync(GPAUserDto dto)
