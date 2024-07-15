@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
+using GPA.Entities.Unmapped;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Security
@@ -10,16 +11,15 @@ namespace GPA.Business.Services.Security
     public interface IGPAProfileService
     {
         public Task<GPAProfileDto?> GetByIdAsync(Guid id);
-
         public Task<ResponseDto<GPAProfileDto>> GetAllAsync(SearchDto search, Expression<Func<GPAProfile, bool>>? expression = null);
-
         public Task<GPAProfileDto?> AddAsync(GPAProfileDto dto);
-
         public Task UpdateAsync(GPAProfileDto dto);
-
         Task AssignProfileToUser(Guid profileId, Guid userId);
-
+        Task<ResponseDto<RawUser>> GetUsers(Guid profileId, SearchDto search);
         public Task RemoveAsync(Guid id);
+        public Task RemovePermissionFromUser(Guid profileId, Guid userId);
+        Task<List<GPAProfileDto>> GetProfilesByUserId(Guid userId);
+        Task<bool> ProfileExists(Guid profileId, Guid userId);
     }
 
     public class GPAProfileService : IGPAProfileService
@@ -42,6 +42,22 @@ namespace GPA.Business.Services.Security
                 Name = entity.Name,
                 Value = entity.Value
             };
+        }
+
+        public async Task<List<GPAProfileDto>> GetProfilesByUserId(Guid userId)
+        {
+            var profilesDto = new List<GPAProfileDto>();
+            var profiles = await _repository.GetProfilesByUserId(userId);
+            if (profiles is not null)
+            {
+                profilesDto.AddRange(profiles.Select(entity => new GPAProfileDto
+                {
+                    Id = entity.Id,
+                    Name = entity.Name,
+                    Value = entity.Value
+                }));
+            }
+            return profilesDto;
         }
 
         public async Task<ResponseDto<GPAProfileDto>> GetAllAsync(SearchDto search, Expression<Func<GPAProfile, bool>>? expression = null)
@@ -97,6 +113,25 @@ namespace GPA.Business.Services.Security
         {
             var createdBy = Guid.Empty;
             await _repository.AssignProfileToUser(profileId, userId, createdBy);
+        }
+
+        public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, SearchDto search)
+        {
+            return new ResponseDto<RawUser>
+            {
+                Count = await _repository.GetUsersCount(),
+                Data = await _repository.GetUsers(profileId, search.Page, search.PageSize)
+            };
+        }
+
+        public async Task RemovePermissionFromUser(Guid profileId, Guid userId)
+        {
+            await _repository.RemovePermissionFromUser(profileId, userId);
+        }
+
+        public Task<bool> ProfileExists(Guid profileId, Guid userId)
+        {
+            return _repository.ProfileExists(profileId, userId);
         }
 
         public async Task RemoveAsync(Guid id)

@@ -13,9 +13,9 @@ namespace GPA.Business.Services.Security
 
         public Task<ResponseDto<GPAUserDto>> GetAllAsync(SearchDto search, Expression<Func<GPAUser, bool>>? expression = null);
 
-        public Task<GPAUserDto?> AddAsync(GPAUserDto dto);
+        public Task<GPAUserDto?> AddAsync(GPAUserUpdateDto dto);
 
-        public Task UpdateAsync(GPAUserDto dto);
+        public Task UpdateAsync(GPAUserUpdateDto dto);
 
         public Task RemoveAsync(Guid id);
     }
@@ -69,14 +69,14 @@ namespace GPA.Business.Services.Security
             return users;
         }
 
-        public async Task<GPAUserDto> AddAsync(GPAUserDto dto)
+        public async Task<GPAUserDto> AddAsync(GPAUserUpdateDto dto)
         {
             var entity = _mapper.Map<GPAUser>(dto);
             var savedEntity = await _repository.AddAsync(entity);
             return _mapper.Map<GPAUserDto>(savedEntity);
         }
 
-        public async Task UpdateAsync(GPAUserDto dto)
+        public async Task UpdateAsync(GPAUserUpdateDto dto)
         {
             if (dto.Id is null)
             {
@@ -89,6 +89,7 @@ namespace GPA.Business.Services.Security
             await _repository.UpdateAsync(savedEntity, newEntity, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;
+                entityState.Property(x => x.Profiles).IsModified = false;
             });
         }
 

@@ -73,6 +73,31 @@ namespace GPA.Api.Controllers.Security
             return NoContent();
         }
 
+        [HttpGet("{profileId}/users")]
+        public async Task<IActionResult> GetUsers(Guid profileId, Guid userId, [FromQuery] SearchDto search)
+        {
+            var users = await _gPAProfileService.GetUsers(profileId, search);
+            return Ok(users);
+        }
+
+        [HttpGet("users/{userId}")]
+        public async Task<IActionResult> GetProfilesByUser(Guid userId)
+        {
+            return Ok(await _gPAProfileService.GetProfilesByUserId(userId));
+        }
+
+        [HttpDelete("{profileId}/users/{userId}")]
+        public async Task<IActionResult> RemovePermissionFromUser(Guid profileId, Guid userId)
+        {
+            if (profileId == Guid.Empty || userId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            await _gPAProfileService.RemovePermissionFromUser(profileId, userId);
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

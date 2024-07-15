@@ -92,6 +92,34 @@ namespace GPA.Data
 
             modelBuilder.Entity<Reason>().HasData(reasons);
 
+            modelBuilder.Entity<GPAProfile>().HasData(
+                new GPAProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Name = "administrador"
+                },
+                new GPAProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Name = "cajero"
+                },
+                new GPAProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Name = "genrente"
+                },
+                new GPAProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Name = "delivery"
+                },
+                new GPAProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Name = "gestor de planta"
+                }
+            );
+
         }
     }
 }

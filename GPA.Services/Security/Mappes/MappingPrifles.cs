@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
+using GPA.Entities.Unmapped;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Security.Mappers
@@ -10,7 +11,10 @@ namespace GPA.Bussiness.Services.Security.Mappers
         public MappingPrifles()
         {
             CreateMap<GPAUser, GPAUserDto>();
+            CreateMap<GPAUser, GPAUserUpdateDto>();
             CreateMap<GPAUserDto, GPAUser>();
+            CreateMap<GPAUserUpdateDto, GPAUser>();
+            CreateMap<RawUser, GPAUserDto>();
         }
     }
 

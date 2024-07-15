@@ -153,14 +153,14 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("e0c68403-b723-4f5b-87bd-b199007e8a2e"),
+                            Id = new Guid("128c1b2b-c529-499f-bc79-b1ab009423ac"),
                             Deleted = false,
                             Description = "Botellitas pequeñas",
                             Name = "Botellita"
                         },
                         new
                         {
-                            Id = new Guid("bed5149c-5eee-4d6d-b88d-b199007e8a2e"),
+                            Id = new Guid("83387819-7040-425a-a505-b1ab009423ac"),
                             Deleted = false,
                             Description = "Botellones de los grandes",
                             Name = "Botellon"
@@ -341,7 +341,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("2126b893-22b2-4a0a-b837-939a0fdf209b"),
+                            Id = new Guid("ce57b0a3-3644-437d-ab5a-a96a815e81f5"),
                             Code = "ST-1",
                             Deleted = false,
                             Description = "Estante 1",
@@ -349,7 +349,7 @@ namespace GPA.Api.Migrations
                         },
                         new
                         {
-                            Id = new Guid("8ed4f979-d1f7-480a-8338-3887c7aed41f"),
+                            Id = new Guid("08d42a4c-c563-4cf3-9354-e021ab784fc1"),
                             Code = "ST-2",
                             Deleted = false,
                             Description = "Estante 2",
@@ -1136,6 +1136,37 @@ namespace GPA.Api.Migrations
                     b.ToTable("InvoiceDetails", "Invoice");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Invoice.InvoiceDetailsAddon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<string>("Concept")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("InvoiceDetailId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDiscount")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceDetailId");
+
+                    b.ToTable("InvoiceDetailsAddons", "Invoice");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Purchase", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1267,6 +1298,46 @@ namespace GPA.Api.Migrations
                     b.ToTable("StorePaymentsDetails", "Invoice");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Security.GPAProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GPAProfiles", "Security");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Security.GPARole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1298,7 +1369,7 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e"),
+                            Id = new Guid("5b2405cf-b099-4e92-b07e-b1ab009423ac"),
                             Name = "admin",
                             NormalizedName = "ADMIN"
                         });
@@ -1333,7 +1404,7 @@ namespace GPA.Api.Migrations
                             Id = 1,
                             ClaimType = "category",
                             ClaimValue = "c,r,u,d",
-                            RoleId = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e")
+                            RoleId = new Guid("5b2405cf-b099-4e92-b07e-b1ab009423ac")
                         });
                 });
 
@@ -1417,9 +1488,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("05441c6e-753b-4615-a189-b199007e8a2e"),
+                            Id = new Guid("3819d3e3-d38e-4e90-a559-b1ab009423ac"),
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "06c243d2-bf8e-467e-b851-a4fe14c98527",
+                            ConcurrencyStamp = "3c231bde-4604-4168-90a9-d5821b1db436",
                             Deleted = false,
                             Email = "admin@gmail.com",
                             EmailConfirmed = false,
@@ -1427,7 +1498,7 @@ namespace GPA.Api.Migrations
                             LastName = "Admin",
                             LockoutEnabled = false,
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEwoHSYsrVGlET6umt8yHjtAiFYRN4OnEZZgWIPVP+AEduVsyggk8FA6YEYI9Iv8nw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKWlfBTmA7HhPQYpcc6SxlVVuspUl2O8tQiLsClVKjIJYU68ILcBHDoc4Jte8IGyZQ==",
                             PhoneNumberConfirmed = false,
                             TwoFactorEnabled = false,
                             UserName = "admin"
@@ -1484,6 +1555,49 @@ namespace GPA.Api.Migrations
                     b.ToTable("GPAUserLogin", "Security");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Security.GPAUserProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWSEQUENTIALID()");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GPAUserProfiles", "Security");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Security.GPAUserRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1508,9 +1622,9 @@ namespace GPA.Api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("87759775-6b2e-4e03-aba2-0bb5c4ab9b8a"),
-                            RoleId = new Guid("ad58d267-1d3c-41ce-bf99-b199007e8a2e"),
-                            UserId = new Guid("05441c6e-753b-4615-a189-b199007e8a2e")
+                            Id = new Guid("14e32cc7-4078-47be-8f33-c682f8d705ed"),
+                            RoleId = new Guid("5b2405cf-b099-4e92-b07e-b1ab009423ac"),
+                            UserId = new Guid("3819d3e3-d38e-4e90-a559-b1ab009423ac")
                         });
                 });
 
@@ -1771,6 +1885,17 @@ namespace GPA.Api.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Invoice.InvoiceDetailsAddon", b =>
+                {
+                    b.HasOne("GPA.Common.Entities.Invoice.InvoiceDetails", "InvoiceDetails")
+                        .WithMany("InvoiceDetailsAddons")
+                        .HasForeignKey("InvoiceDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InvoiceDetails");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Invoice.PurchaseDetails", b =>
                 {
                     b.HasOne("GPA.Common.Entities.Invoice.Purchase", "Purchase")
@@ -1826,6 +1951,25 @@ namespace GPA.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Security.GPAUserProfile", b =>
+                {
+                    b.HasOne("GPA.Common.Entities.Security.GPAProfile", "Profile")
+                        .WithMany("Users")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GPA.Common.Entities.Security.GPAUser", "User")
+                        .WithMany("Profiles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
 
                     b.Navigation("User");
                 });
@@ -1926,9 +2070,19 @@ namespace GPA.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("GPA.Common.Entities.Invoice.InvoiceDetails", b =>
+                {
+                    b.Navigation("InvoiceDetailsAddons");
+                });
+
             modelBuilder.Entity("GPA.Common.Entities.Invoice.Purchase", b =>
                 {
                     b.Navigation("PurchaseDetailses");
+                });
+
+            modelBuilder.Entity("GPA.Common.Entities.Security.GPAProfile", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("GPA.Common.Entities.Security.GPARole", b =>
@@ -1940,6 +2094,8 @@ namespace GPA.Api.Migrations
 
             modelBuilder.Entity("GPA.Common.Entities.Security.GPAUser", b =>
                 {
+                    b.Navigation("Profiles");
+
                     b.Navigation("UserLogins");
 
                     b.Navigation("UserRoles");

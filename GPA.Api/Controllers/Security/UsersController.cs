@@ -38,7 +38,7 @@ namespace GPA.Api.Controllers.Security
 
         [AllowAnonymous]
         [HttpPost()]
-        public async Task<IActionResult> Post(GPAUserDto model)
+        public async Task<IActionResult> Post(GPAUserUpdateDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -68,7 +68,7 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpPut()]
-        public async Task<IActionResult> Put(GPAUserDto model)
+        public async Task<IActionResult> Put(GPAUserUpdateDto model)
         {
             if (!ModelState.IsValid)
             {

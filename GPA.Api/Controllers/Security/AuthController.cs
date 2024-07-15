@@ -1,15 +1,14 @@
 ﻿using GPA.Business.Security;
+using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
+using GPA.Utils.Constants.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -21,11 +20,18 @@ namespace GPA.Api.Controllers.Security
         private readonly IGPAJwtService _jwtService;
         private readonly UserManager<GPAUser> _userManager;
         private readonly GPADbContext _context;
-        public AuthController(IGPAJwtService jwtService, UserManager<GPAUser> userManager, GPADbContext context)
+        private readonly IGPAProfileService _gPAProfileService;
+
+        public AuthController(
+            IGPAJwtService jwtService,
+            UserManager<GPAUser> userManager,
+            GPADbContext context,
+            IGPAProfileService gPAProfileService)
         {
             _jwtService = jwtService;
             _userManager = userManager;
             _context = context;
+            _gPAProfileService = gPAProfileService;
         }
 
         [AllowAnonymous]
@@ -52,22 +58,16 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
-            var roles = await _context.Roles.Include(r => r.RoleClaims)
-                    .Where(x => x.UserRoles.Any(ur => ur.UserId == user.Id))
-                    .ToArrayAsync();
-
-            var claims = new List<Claim>();
-            foreach (var role in roles)
+            var claims = new List<Claim>
             {
-                var permissions = role.RoleClaims.Select(x => $"m:{x.ClaimType}p:{x.ClaimValue}").ToArray();
-                var permissionsAsByte = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(permissions));
-                var base64 = Convert.ToBase64String(permissionsAsByte);
-                claims.Add(new Claim(ClaimTypes.Role, $"rid:{role.Id}rn:{role.Name}pm:{base64}"));
-            }
-            claims.Add(new Claim("FullName", $"{user.FirstName} {user.LastName}"));
-            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
-            claims.Add(new Claim(ClaimTypes.Email, user.Email));
-            claims.Add(new Claim("UserId", user.Id.ToString()));
+                new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"),
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(GPAClaimTypes.UserId, user.Id.ToString())
+            };
+
+            await AssignProfileAsClaimIfUserHasOnlyOneProfile(user.Id, claims);
+
             var token = _jwtService.GenerateToken(new TokenDescriptorDto
             {
                 Algorithm = SecurityAlgorithms.HmacSha256Signature,
@@ -113,6 +113,89 @@ namespace GPA.Api.Controllers.Security
             }
 
             return BadRequest(ModelState);
+        }
+
+        [HttpGet("profile/{profileId}/change")]
+        public async Task<IActionResult> ChooseProfile(Guid profileId)
+        {
+            var user = User;
+            var userId = user.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId).Value;
+            if (userId is null)
+            {
+                return BadRequest("empty userid claim");
+            }
+
+            var exists = await _gPAProfileService.ProfileExists(profileId, Guid.Parse(userId));
+            if (!exists)
+            {
+                return new ForbidResult("does not have access to this profile");
+            }
+
+            var claims = user.Claims.Where(x => x.Type != GPAClaimTypes.ProfileId).ToList();
+            claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId.ToString()));
+
+            var token = _jwtService.GenerateToken(new TokenDescriptorDto
+            {
+                Algorithm = SecurityAlgorithms.HmacSha256Signature,
+                Claims = claims.ToArray()
+            });
+
+            return Ok(new { token = token });
+        }
+
+        [HttpPut("users/{userId}/profile/edit")]
+        public async Task<IActionResult> EditProfile([FromRoute] Guid userId, [FromBody] UserProfileDto model)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user is null)
+            {
+                ModelState.AddModelError("usuario", "El usuario no existe");
+                return BadRequest(ModelState);
+            }
+
+            var userClaim = User.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId);
+            if (user.Id.ToString() != userClaim.Value)
+            {
+                ModelState.AddModelError("usuario", "Solo debe modificar su propio usuario");
+                return BadRequest(ModelState);
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.SecurityStamp = Guid.NewGuid().ToString();
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("usuario", "Error modificando el usuario");
+                return BadRequest(ModelState);
+            }
+
+            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName).ToList();
+            cliams.Add(new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"));
+
+            var token = _jwtService.GenerateToken(new TokenDescriptorDto
+            {
+                Algorithm = SecurityAlgorithms.HmacSha256Signature,
+                Claims = cliams.ToArray()
+            });
+
+            return Ok(new { token = token });
+        }
+
+        private async Task AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)
+        {
+            var profiles = await _gPAProfileService.GetProfilesByUserId(userId);
+
+            if (profiles is { Count: 1 })
+            {
+                var profileId = profiles.FirstOrDefault()?.Id?.ToString();
+                claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId ?? ""));
+            }
+            else
+            {
+                claims.Add(new Claim(GPAClaimTypes.ProfileId, ""));
+            }
         }
     }
 }
