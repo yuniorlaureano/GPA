@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
+using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
@@ -36,7 +37,15 @@ namespace GPA.Business.Services.Security
         public async Task<GPAUserDto?> GetByIdAsync(Guid id)
         {
             var entity = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<GPAUserDto>(entity);
+            var dto = _mapper.Map<GPAUserDto>(entity);
+            if (dto is not null)
+            {
+                var profiles = await _profileRepository.GetProfilesByUserId(entity.Id);
+                dto.Profiles = profiles is null ? 
+                    dto.Profiles : 
+                    _mapper.Map<List<RawProfileDto>>(profiles);
+            }
+            return dto;
         }
 
         public async Task<ResponseDto<GPAUserDto>> GetAllAsync(SearchDto search, Expression<Func<GPAUser, bool>>? expression = null)
@@ -46,27 +55,11 @@ namespace GPA.Business.Services.Security
                 return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
             }, expression);
 
-            var users =  new ResponseDto<GPAUserDto>
+            return new ResponseDto<GPAUserDto>
             {
                 Count = await _repository.CountAsync(query => query, expression),
                 Data = _mapper.Map<IEnumerable<GPAUserDto>>(entities)
             };
-
-            var usersIds = entities.Select(x => x.Id).ToList();
-            if (entities is not null)
-            {
-                var profiles = await _profileRepository.GetProfilesByUserId(usersIds);
-                //add the profiels to the user object
-                if (profiles is { Count: > 0 })
-                {
-                    foreach (var user in users.Data)
-                    {
-                        user.Profiles = profiles.Where(x => x.UserId == user.Id).Select(x => x.ProfileId).ToList();
-                    }
-                }
-            }
-
-            return users;
         }
 
         public async Task<GPAUserDto> AddAsync(GPAUserUpdateDto dto)

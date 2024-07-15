@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
 using GPA.Entities.Unmapped;
@@ -15,6 +16,9 @@ namespace GPA.Bussiness.Services.Security.Mappers
             CreateMap<GPAUserDto, GPAUser>();
             CreateMap<GPAUserUpdateDto, GPAUser>();
             CreateMap<RawUser, GPAUserDto>();
+
+            CreateMap<RawProfile, RawProfileDto>();
+            CreateMap<RawProfileDto, RawProfile>();
         }
     }
 

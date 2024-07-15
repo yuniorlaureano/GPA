@@ -33,6 +33,7 @@ namespace GPA.Tests.Security.Service
                     .With(x => x.FirstName, "User " + i)
                     .With(x => x.LastName, "User " + i)
                     .With(x => x.UserName, "user" + i)
+                    .With(x => x.NormalizedUserName, "user" + i)
                     .With(x => x.Email, $"user{i}@test.com")
                     .Without(x => x.UserRoles)
                     .Without(x => x.UserTokens)

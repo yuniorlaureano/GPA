@@ -1,4 +1,6 @@
-﻿namespace GPA.Dtos.Security
+﻿using GPA.Common.DTOs.Unmapped;
+
+namespace GPA.Dtos.Security
 {
     public class GPAUserDto
     {
@@ -7,6 +9,6 @@
         public string LastName { get; set; }
         public string Email { get; set; }
         public string UserName { get; set; }
-        public List<Guid> Profiles { get; set; }
+        public List<RawProfileDto> Profiles { get; set; } = new();
     }
 }
