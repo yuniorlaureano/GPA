@@ -1,8 +1,10 @@
-﻿using GPA.Business.Security;
+﻿using FluentValidation;
+using GPA.Business.Security;
 using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
+using GPA.Services.Security.Validators;
 using GPA.Utils.Constants.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,17 +23,20 @@ namespace GPA.Api.Controllers.Security
         private readonly UserManager<GPAUser> _userManager;
         private readonly GPADbContext _context;
         private readonly IGPAProfileService _gPAProfileService;
+        private readonly IValidator<SignUpDto> _signUpValidator;
 
         public AuthController(
             IGPAJwtService jwtService,
             UserManager<GPAUser> userManager,
             GPADbContext context,
-            IGPAProfileService gPAProfileService)
+            IGPAProfileService gPAProfileService,
+            IValidator<SignUpDto> signUpValidator)
         {
             _jwtService = jwtService;
             _userManager = userManager;
             _context = context;
             _gPAProfileService = gPAProfileService;
+            _signUpValidator = signUpValidator;
         }
 
         [AllowAnonymous]
@@ -80,18 +85,18 @@ namespace GPA.Api.Controllers.Security
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp(SignUpDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             if (model is null)
             {
                 ModelState.AddModelError("model", "The model is null");
                 return BadRequest(ModelState);
             }
 
-            var passwordHasher = new PasswordHasher<GPAUser>();
+            var validationResult = await _signUpValidator.ValidateAsync(model);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+
             var entity = new GPAUser
             {
                 FirstName = model.FirstName,
@@ -99,6 +104,7 @@ namespace GPA.Api.Controllers.Security
                 Email = model.Email,
                 UserName = model.UserName,
             };
+            var passwordHasher = new PasswordHasher<GPAUser>();
             entity.PasswordHash = passwordHasher.HashPassword(entity, model.Password);
             var result = await _userManager.CreateAsync(entity, model.Password);
 

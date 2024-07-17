@@ -13,6 +13,11 @@ namespace GPA.Data.Security.Configurations
                 b.ToTable("GPAUsers", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+                b.Property(b => b.UserName).HasMaxLength(100);
+                b.Property(b => b.LastName).HasMaxLength(100);
+                b.Property(b => b.UserName).HasMaxLength(30);
+                b.Property(b => b.Email).HasMaxLength(254);
+
                 b.HasMany(p => p.UserRoles)
                     .WithOne(p => p.User)
                     .HasForeignKey(p => p.UserId);
