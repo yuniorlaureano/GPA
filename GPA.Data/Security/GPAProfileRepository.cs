@@ -11,9 +11,11 @@ namespace GPA.Data.Security
         Task<List<RawUserProfile>> GetProfilesByUserId(List<Guid> userIds);
         Task<List<RawUser>> GetUsers(Guid profileId, int page, int pageSize);
         Task<int> GetUsersCount();
-        Task RemovePermissionFromUser(Guid profileId, Guid userId);
+        Task UnAssignProfileFromUser(Guid profileId, Guid userId);
         Task<List<RawProfile>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
+        Task<bool> ProfileExists(Guid userId);
+        Task<string?> GetProfileValue(Guid profileId);
     }
 
     public class GPAProfileRepository : Repository<GPAProfile>, IGPAProfileRepository
@@ -96,7 +98,7 @@ namespace GPA.Data.Security
             return await _context.Users.CountAsync();
         }
 
-        public async Task RemovePermissionFromUser(Guid profileId, Guid userId)
+        public async Task UnAssignProfileFromUser(Guid profileId, Guid userId)
         {
             var parameters = new[]
             {
@@ -132,6 +134,19 @@ namespace GPA.Data.Security
         public async Task<bool> ProfileExists(Guid profileId, Guid userId)
         {
             return await _context.UserProfile.AnyAsync(x => x.ProfileId == profileId && x.UserId == userId);
+        }
+
+        public async Task<bool> ProfileExists(Guid userId)
+        {
+            return await _context.UserProfile.AnyAsync(x => x.UserId == userId);
+        }
+
+        public async Task<string?> GetProfileValue(Guid profileId)
+        {
+            return await _context.Profiles
+                .Where(x => x.Id == profileId)
+                .Select(x => x.Value)
+                .FirstOrDefaultAsync();
         }
     }
 }

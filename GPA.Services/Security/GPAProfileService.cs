@@ -17,9 +17,10 @@ namespace GPA.Business.Services.Security
         Task AssignProfileToUser(Guid profileId, Guid userId);
         Task<ResponseDto<RawUser>> GetUsers(Guid profileId, SearchDto search);
         public Task RemoveAsync(Guid id);
-        public Task RemovePermissionFromUser(Guid profileId, Guid userId);
+        public Task UnAssignProfileFromUser(Guid profileId, Guid userId);
         Task<List<GPAProfileDto>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
+        Task<bool> ProfileExists(Guid userId);
     }
 
     public class GPAProfileService : IGPAProfileService
@@ -124,14 +125,19 @@ namespace GPA.Business.Services.Security
             };
         }
 
-        public async Task RemovePermissionFromUser(Guid profileId, Guid userId)
+        public async Task UnAssignProfileFromUser(Guid profileId, Guid userId)
         {
-            await _repository.RemovePermissionFromUser(profileId, userId);
+            await _repository.UnAssignProfileFromUser(profileId, userId);
         }
 
         public Task<bool> ProfileExists(Guid profileId, Guid userId)
         {
             return _repository.ProfileExists(profileId, userId);
+        }
+
+        public Task<bool> ProfileExists(Guid userId)
+        {
+            return _repository.ProfileExists(userId);
         }
 
         public async Task RemoveAsync(Guid id)

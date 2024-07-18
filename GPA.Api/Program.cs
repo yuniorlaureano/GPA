@@ -16,6 +16,7 @@ using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
 using GPA.Data.Security.Extensions;
 using GPA.Services.Security.Validators;
+using GPA.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -100,6 +101,8 @@ builder.Services.AddBusinessSecurityServices();
 builder.Services.AddSecurityValidators();
 builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
+
+builder.Services.AddUtils();
 
 var app = builder.Build();
 
