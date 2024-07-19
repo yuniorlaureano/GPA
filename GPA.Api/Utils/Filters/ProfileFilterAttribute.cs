@@ -9,13 +9,14 @@ namespace GPA.Api.Utils.Filters
 {
     public class ProfileFilterAttribute : Attribute, IAsyncAuthorizationFilter
     {
-        private readonly string _path;
-        private readonly string _permission;
+        private readonly PermissionPathWithValue permissionPath;
+        private readonly PermissionMessage permissionMessage;
 
         public ProfileFilterAttribute(string path, string permission)
         {
-            _path = path;
-            _permission = permission;
+            var pathTokens = path.Split('.');
+            permissionPath = SetPermissionPath(pathTokens, permission);
+            permissionMessage = SetPermissionMessage(pathTokens, permission);
         }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
@@ -30,7 +31,7 @@ namespace GPA.Api.Utils.Filters
             var valid = ValidatePermission(permissionComparer, profile, context);
             if (!valid)
             {
-                context.Result = new ObjectResult("No tiene permisos para acceder a este recurso.")
+                context.Result = new ObjectResult(permissionMessage)
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
@@ -43,14 +44,7 @@ namespace GPA.Api.Utils.Filters
             {
                 return false;
             }
-
-            var pathTokens = _path.Split('.');
-            var permissionPath = ProfileConstants.CreatePath(
-                app: pathTokens[0],
-                module: pathTokens[1],
-                component: pathTokens[2],
-                valueToCompare: _permission);
-
+            
             return permissionComparer.PermissionMatchesPathStep(profile, permissionPath);
         }
 
@@ -59,7 +53,8 @@ namespace GPA.Api.Utils.Filters
             string? profile = null;
             if (profileId is null)
             {
-                context.Result = new ObjectResult("No tiene un perfil asociado, debe elegir el perfir.")
+                permissionMessage.Message = "No tiene un perfil asociado, debe elegir el perfir.";
+                context.Result = new ObjectResult(permissionMessage)
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
@@ -69,13 +64,34 @@ namespace GPA.Api.Utils.Filters
             profile = await profileRepo.GetProfileValue(Guid.Parse(profileId));
             if (profile is null)
             {
-                context.Result = new ObjectResult("El perfil no existe.")
+                permissionMessage.Message = "No tiene perfil asignado. Comunicarse con el administrador";
+                context.Result = new ObjectResult(permissionMessage)
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
             }
 
             return profile;
+        }
+
+        private PermissionPathWithValue SetPermissionPath(string[] pathTokens, string permission)
+        {
+            return ProfileConstants.CreatePath(
+                app: pathTokens[0],
+                module: pathTokens[1],
+                component: pathTokens[2],
+                valueToCompare: permission);
+        }
+
+        private PermissionMessage SetPermissionMessage(string[] pathTokens, string permission)
+        {
+            return new PermissionMessage
+            {
+                Module = pathTokens[1],
+                Component = pathTokens[2],
+                Permission = permission,
+                Message = $"Permiso: '{permission}', módulo: '{pathTokens[1]}', sección: '{pathTokens[2]}', requerido."
+            };
         }
     }
 }

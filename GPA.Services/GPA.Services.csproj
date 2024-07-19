@@ -18,6 +18,7 @@
     <ProjectReference Include="..\GPA.Data\GPA.Data.csproj" />
     <ProjectReference Include="..\GPA.Dtos\GPA.Dtos.csproj" />
     <ProjectReference Include="..\GPA.Entities\GPA.Entities.csproj" />
+    <ProjectReference Include="..\GPA.Utils\GPA.Utils.csproj" />
   </ItemGroup>
 
 </Project>

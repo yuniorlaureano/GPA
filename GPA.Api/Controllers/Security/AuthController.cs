@@ -4,7 +4,6 @@ using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
-using GPA.Services.Security.Validators;
 using GPA.Utils.Constants.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;

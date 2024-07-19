@@ -2,6 +2,14 @@
 
 namespace GPA.Utils.Profiles
 {
+    public class PermissionMessage
+    {
+        public string Module { get; set; } = "";
+        public string Component { get; set; } = "";
+        public string Permission { get; set; } = "";
+        public string Message { get; set; } = "";
+    };
+
     public class Permissions
     {
         public const string Create = "create";

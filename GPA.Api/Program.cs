@@ -95,6 +95,7 @@ builder.Services.AddCommonValidators();
 builder.Services.AddDataCommonRepositories();
 builder.Services.AddBusinessCommonServices();
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddIdentity<GPAUser, GPARole>().AddEntityFrameworkStores<GPADbContext>();
 builder.Services.AddSecurityMappers();
 builder.Services.AddBusinessSecurityServices();

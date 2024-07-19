@@ -15,6 +15,7 @@ namespace GPA.Business.Security.Extensions
             services.AddTransient<IGPAJwtService, GPAJwtService>();
             services.AddTransient<IGPAUserService, GPAUserService>();
             services.AddTransient<IGPAProfileService, GPAProfileService>();
+            services.AddTransient<IUserContextService, UserContextService>();
         }
 
         public static void AddGPAJwtBearer(this AuthenticationBuilder authenticationBuilder, IConfiguration configuration)
