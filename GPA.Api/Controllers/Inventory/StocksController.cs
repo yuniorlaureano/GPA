@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,30 +24,35 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
             return Ok(await _stockService.GetByIdAsync(id));
         }
 
         [HttpGet()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _stockService.GetAllAsync(search));
         }
 
         [HttpGet("products")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadProducts)]
         public async Task<IActionResult> GetProductCatalog([FromQuery] SearchDto search)
         {
             return Ok(await _stockService.GetProductCatalogAsync(search.Page, search.PageSize));
         }
 
         [HttpGet("existance")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadExistence)]
         public async Task<IActionResult> GetExistance([FromQuery] SearchDto search)
         {
             return Ok(await _stockService.GetExistanceAsync(search.Page, search.PageSize));
         }
 
         [HttpPost("input")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.RegisterInput)]
         public async Task<IActionResult> RegisterInput(StockCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -58,6 +65,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPost("output")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.RegisterOutput)]
         public async Task<IActionResult> RegisterOutput(OutputCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -70,6 +78,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPut("input")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.UpdateInput)]
         public async Task<IActionResult> UpdateInput(StockCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -82,6 +91,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPut("output")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.UpdateOutput)]
         public async Task<IActionResult> UpdateOutput(OutputCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -94,6 +104,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Delete)]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _stockService.RemoveAsync(id);
@@ -101,6 +112,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPut("{id}/cancel")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Cancel)]
         public async Task<IActionResult> Cancel([FromRoute] Guid id)
         {
             await _stockService.CancelAsync(id);

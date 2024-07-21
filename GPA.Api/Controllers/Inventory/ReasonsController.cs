@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,18 +24,21 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(int id)
         {
             return Ok(await _reasonService.GetByIdAsync(id));
         }
 
         [HttpGet()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _reasonService.GetAllAsync(search));
         }
 
         [HttpPost()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(ReasonDto reason)
         {
             if (!ModelState.IsValid)
@@ -46,6 +51,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPut()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(ReasonDto reason)
         {
             if (!ModelState.IsValid)
@@ -58,6 +64,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Delete)]
         public async Task<IActionResult> Delete(int id)
         {
             await _reasonService.RemoveAsync(id);

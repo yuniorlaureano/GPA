@@ -2,8 +2,10 @@
 using GPA.Common.Entities.Security;
 using GPA.Entities.Common;
 using GPA.Utils;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GPA.Data
 {
@@ -92,11 +94,16 @@ namespace GPA.Data
 
             modelBuilder.Entity<Reason>().HasData(reasons);
 
+            var adminProfileId = GuidHelper.NewSequentialGuid();
             modelBuilder.Entity<GPAProfile>().HasData(
                 new GPAProfile
                 {
-                    Id = GuidHelper.NewSequentialGuid(),
-                    Name = "administrador"
+                    Id = adminProfileId,
+                    Name = "administrador",
+                    Value = JsonSerializer.Serialize(ProfileConstants.MasterProfile, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
                 },
                 new GPAProfile
                 {
@@ -117,6 +124,15 @@ namespace GPA.Data
                 {
                     Id = GuidHelper.NewSequentialGuid(),
                     Name = "gestor de planta"
+                }
+            );
+
+            modelBuilder.Entity<GPAUserProfile>().HasData(
+                new GPAUserProfile
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    UserId = userId,
+                    ProfileId = adminProfileId,                    
                 }
             );
 

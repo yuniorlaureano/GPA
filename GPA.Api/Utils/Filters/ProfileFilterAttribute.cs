@@ -51,7 +51,7 @@ namespace GPA.Api.Utils.Filters
         private async Task<string?> GetProfile(IGPAProfileRepository profileRepo, string? profileId, AuthorizationFilterContext context, string? userId)
         {
             string? profile = null;
-            if (profileId is null)
+            if (profileId is { Length: 0 })
             {
                 permissionMessage.Message = "No tiene un perfil asociado, debe elegir el perfir.";
                 context.Result = new ObjectResult(permissionMessage)

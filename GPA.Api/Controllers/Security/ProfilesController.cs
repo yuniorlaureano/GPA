@@ -34,6 +34,13 @@ namespace GPA.Api.Controllers.Security
             return Ok(await _gPAProfileService.GetAllAsync(search));
         }
 
+        [HttpGet("master-profile")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
+        public IActionResult GetMasterProfile()
+        {
+            return Ok(ProfileConstants.MasterProfile);
+        }
+
         [HttpPost()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Create)]
         public async Task<IActionResult> Post(GPAProfileDto model)
@@ -89,7 +96,6 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpGet("users/{userId}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
         public async Task<IActionResult> GetProfilesByUser(Guid userId)
         {
             return Ok(await _gPAProfileService.GetProfilesByUserId(userId));

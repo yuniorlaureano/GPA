@@ -22,9 +22,7 @@ namespace GPA.Utils.Permissions
         {
             // Start with the dynamic permission object
             using var doc = JsonDocument.Parse(profile);
-            JsonElement currentObject = doc.RootElement
-                .GetProperty("Documents")
-                .EnumerateArray().FirstOrDefault();
+            JsonElement currentObject = doc.RootElement;
 
             // Traverse the path
             foreach (var step in pathToCompare.PermissionPath)

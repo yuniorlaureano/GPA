@@ -1,10 +1,12 @@
 ﻿using FluentValidation;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Security;
 using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
 using GPA.Utils.Constants.Claims;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -148,6 +150,7 @@ namespace GPA.Api.Controllers.Security
             return Ok(new { token = token });
         }
 
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Auth}", permission: Permissions.UpdateUserProfile)]
         [HttpPut("users/{userId}/profile/edit")]
         public async Task<IActionResult> EditProfile([FromRoute] Guid userId, [FromBody] UserProfileDto model)
         {

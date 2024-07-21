@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using FluentValidation;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Invoice;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoices;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,18 +33,21 @@ namespace GPA.Invoice.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
             return Ok(await _invoiceService.GetByIdAsync(id));
         }
 
         [HttpGet()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _invoiceService.GetAllAsync(search));
         }
 
         [HttpPost()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(InvoiceDto invoice)
         {
             if (!ModelState.IsValid)
@@ -62,6 +67,7 @@ namespace GPA.Invoice.Api.Controllers
         }
 
         [HttpPut()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(InvoiceUpdateDto invoice)
         {
             var result = await _updateValidator.ValidateAsync(invoice);
@@ -82,6 +88,7 @@ namespace GPA.Invoice.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Delete)]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _invoiceService.RemoveAsync(id);
@@ -89,6 +96,7 @@ namespace GPA.Invoice.Api.Controllers
         }
 
         [HttpPut("cancel/{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoice}", permission: Permissions.Cancel)]
         public async Task<IActionResult> Cancel(Guid id)
         {
             await _invoiceService.CancelAsync(id);

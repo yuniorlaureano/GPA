@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,19 +27,21 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpGet("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
             return Ok(await _gPAUserService.GetByIdAsync(id));
         }
 
         [HttpGet()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _gPAUserService.GetAllAsync(search));
         }
 
-        [AllowAnonymous]
         [HttpPost()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Create)]
         public async Task<IActionResult> Post(GPAUserUpdateDto model)
         {
             if (!ModelState.IsValid)
@@ -68,6 +72,7 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpPut()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
         public async Task<IActionResult> Put(GPAUserUpdateDto model)
         {
             if (!ModelState.IsValid)
@@ -99,6 +104,7 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpDelete("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Delete)]
         public async Task<IActionResult> Delete(Guid id)
         {
             if (id == Guid.Empty)
