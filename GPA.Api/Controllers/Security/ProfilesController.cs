@@ -2,9 +2,12 @@
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Dtos.Security;
+using GPA.Utils.Constants.Claims;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -75,7 +78,15 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
-            await _gPAProfileService.UpdateAsync(model);
+            try
+            {
+                await _gPAProfileService.UpdateAsync(model);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
             return NoContent();
         }
 
@@ -123,7 +134,15 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest();
             }
 
-            await _gPAProfileService.RemoveAsync(id);
+            try
+            {
+                await _gPAProfileService.RemoveAsync(id);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
             return NoContent();
         }
     }

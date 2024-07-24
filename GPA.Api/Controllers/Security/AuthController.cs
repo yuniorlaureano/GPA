@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -72,14 +73,17 @@ namespace GPA.Api.Controllers.Security
                 new Claim(GPAClaimTypes.UserId, user.Id.ToString())
             };
 
-            await AssignProfileAsClaimIfUserHasOnlyOneProfile(user.Id, claims);
+            var profileId = await AssignProfileAsClaimIfUserHasOnlyOneProfile(user.Id, claims);
 
             var token = _jwtService.GenerateToken(new TokenDescriptorDto
             {
                 Algorithm = SecurityAlgorithms.HmacSha256Signature,
                 Claims = claims.ToArray()
             });
-            return Ok(new { token = token });
+
+            var permissions = await GetProfilePermissions(profileId);
+
+            return Ok(new { token = token, permissions = permissions });
         }
 
         [AllowAnonymous]
@@ -147,7 +151,9 @@ namespace GPA.Api.Controllers.Security
                 Claims = claims.ToArray()
             });
 
-            return Ok(new { token = token });
+            var permissions = await GetProfilePermissions(profileId.ToString());
+
+            return Ok(new { token = token, permissions = permissions });
         }
 
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Auth}", permission: Permissions.UpdateUserProfile)]
@@ -188,10 +194,12 @@ namespace GPA.Api.Controllers.Security
                 Claims = cliams.ToArray()
             });
 
-            return Ok(new { token = token });
+            var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
+
+            return Ok(new { token = token, permissions = permissions });
         }
 
-        private async Task AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)
+        private async Task<string> AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)
         {
             var profiles = await _gPAProfileService.GetProfilesByUserId(userId);
 
@@ -199,11 +207,31 @@ namespace GPA.Api.Controllers.Security
             {
                 var profileId = profiles.FirstOrDefault()?.Id?.ToString();
                 claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId ?? ""));
+                return profileId;
             }
             else
             {
                 claims.Add(new Claim(GPAClaimTypes.ProfileId, ""));
+                return string.Empty;
             }
+        }
+
+        private async Task<Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>>> GetProfilePermissions(string profileId)
+        {
+            var profile = new List<GPA.Utils.Profiles.Profile>();
+            if (profileId is not { Length: 0 })
+            {
+                var gpaProfile = await _gPAProfileService.GetByIdAsync(Guid.Parse(profileId!));
+                if (gpaProfile is { Value: { Length: > 0 } })
+                {
+                    profile = JsonSerializer.Deserialize<List<GPA.Utils.Profiles.Profile>>(gpaProfile.Value, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    });
+                }
+            }
+
+            return ProfileConstants.InlineMasterProfile(profile);
         }
     }
 }

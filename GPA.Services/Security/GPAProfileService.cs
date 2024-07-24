@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
+using GPA.Entities;
 using GPA.Entities.Unmapped;
 using System.Linq.Expressions;
 
@@ -102,6 +103,12 @@ namespace GPA.Business.Services.Security
             }
 
             var savedEntity = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id);
+            
+            if (savedEntity?.Name == "administrador")
+            {
+                throw new InvalidOperationException("No puede modificar el perfil administrador");
+            }
+
             savedEntity.Name = dto.Name;
             savedEntity.Value = dto.Value;
             await _repository.UpdateAsync(savedEntity, savedEntity, (entityState, _) =>
@@ -143,6 +150,12 @@ namespace GPA.Business.Services.Security
         public async Task RemoveAsync(Guid id)
         {
             var entity = await _repository.GetByIdAsync(query => query, x => x.Id == id);
+
+            if (entity?.Name == "administrador")
+            {
+                throw new InvalidOperationException("No puede eliminar el perfil administrador");
+            }
+
             await _repository.RemoveAsync(entity);
         }
     }

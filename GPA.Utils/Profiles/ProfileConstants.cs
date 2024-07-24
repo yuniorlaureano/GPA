@@ -1,4 +1,5 @@
 ﻿using GPA.Utils.Permissions;
+using System.Text;
 
 namespace GPA.Utils.Profiles
 {
@@ -20,6 +21,95 @@ namespace GPA.Utils.Profiles
                 }
             }
         };
+
+        public static Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>> InlineMasterProfile(
+                List<Profile> assignedProfile
+            )
+        {
+            var inlineMasterProfile = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>>();
+            var assignedProfileAsDictionary = ProfileToInlineDictionaryh(assignedProfile);
+
+            foreach (var profile in MasterProfile)
+            {
+                if (!inlineMasterProfile.ContainsKey(profile.App))
+                {
+                    inlineMasterProfile.Add(profile.App, new Dictionary<string, Dictionary<string, Dictionary<string, bool>>>());
+
+                }
+
+                foreach (var module in profile.Modules)
+                {
+                    if (!inlineMasterProfile[profile.App].ContainsKey(module.Id))
+                    {
+                        inlineMasterProfile[profile.App].Add(module.Id, new Dictionary<string, Dictionary<string, bool>>());
+                    }
+
+                    foreach (var component in module.Components)
+                    {
+                        if (!inlineMasterProfile[profile.App][module.Id].ContainsKey(component.Id))
+                        {
+                            inlineMasterProfile[profile.App][module.Id].Add(component.Id, new Dictionary<string, bool>());
+                        }
+                        foreach (var permission in component.Permissions)
+                        {
+                            var valid = ContainPermission(profile.App, module.Id, component.Id, permission, assignedProfileAsDictionary);
+                            inlineMasterProfile[profile.App][module.Id][component.Id].Add(permission, valid);
+                        }
+                    }
+                }
+            }
+
+            return inlineMasterProfile;
+        }
+
+        private static bool ContainPermission(
+            string app,
+            string module,
+            string component,
+            string permission,
+            Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>> profileToVerify 
+            )
+        {
+            return profileToVerify.ContainsKey(app) &&
+                profileToVerify[app].ContainsKey(module) &&
+                profileToVerify[app][module].ContainsKey(component) &&
+                profileToVerify[app][module][component].ContainsKey(permission);
+        }
+
+        public static Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>> ProfileToInlineDictionaryh(List<Profile> profiles)
+        {
+            var inlineMasterProfile = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>>();
+            foreach (var profile in profiles)
+            {
+                if (!inlineMasterProfile.ContainsKey(profile.App))
+                {
+                    inlineMasterProfile.Add(profile.App, new Dictionary<string, Dictionary<string, Dictionary<string, bool>>>());
+
+                }
+
+                foreach (var module in profile.Modules)
+                {
+                    if (!inlineMasterProfile[profile.App].ContainsKey(module.Id))
+                    {
+                        inlineMasterProfile[profile.App].Add(module.Id, new Dictionary<string, Dictionary<string, bool>>());
+                    }
+
+                    foreach (var component in module.Components)
+                    {
+                        if (!inlineMasterProfile[profile.App][module.Id].ContainsKey(component.Id))
+                        {
+                            inlineMasterProfile[profile.App][module.Id].Add(component.Id, new Dictionary<string, bool>());
+                        }
+                        foreach (var permission in component.Permissions)
+                        {
+                            inlineMasterProfile[profile.App][module.Id][component.Id].Add(permission, true);
+                        }
+                    }
+                }
+            }
+
+            return inlineMasterProfile;
+        }
 
         public static PermissionPathWithValue CreatePath(string app, string module, string component, string valueToCompare)
         {
@@ -109,7 +199,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.Stock,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.ReadProducts, Permissions.ReadExistence, Permissions.RegisterInput, Permissions.RegisterOutput, Permissions.UpdateInput, Permissions.UpdateOutput, Permissions.Cancel
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.ReadProducts, Permissions.ReadExistence, Permissions.RegisterInput, Permissions.RegisterOutput, Permissions.UpdateInput, Permissions.UpdateOutput, Permissions.Cancel, Permissions.ReadTransactions
                                 }
                             }
                         }
@@ -133,10 +223,10 @@ namespace GPA.Utils.Profiles
                             },
                             new Component
                             {
-                                Id = Components.Invoice,
+                                Id = Components.Invoicing,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel, Permissions.Return
                                 }
                             },
                             new Component
@@ -258,9 +348,11 @@ namespace GPA.Utils.Profiles
         public const string Open = "open";
         public const string Close = "close";
         public const string Cancel = "cancel";
-        public const string AssignProfile = "assignProfile";
-        public const string UnAssignProfile = "unAssignProfile";
-        public const string UpdateUserProfile = "UpdateUserProfile";
+        public const string AssignProfile = "assign-profile";
+        public const string UnAssignProfile = "unAssign-profile";
+        public const string UpdateUserProfile = "updateUser-profile";
+        public const string ReadTransactions = "read-transactions";
+        public const string Return = "return";
     }
 
     public class Apps
@@ -289,7 +381,7 @@ namespace GPA.Utils.Profiles
         public const string StockCycle = "stockCycle";
         public const string Stock = "stock";
         public const string Client = "client";
-        public const string Invoice = "invoice";
+        public const string Invoicing = "invoicing";
         public const string ReceivableAccount = "receivable";
         public const string User = "user";
         public const string Profile = "profile";

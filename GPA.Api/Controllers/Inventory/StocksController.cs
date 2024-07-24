@@ -31,7 +31,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpGet()]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Read)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadTransactions)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _stockService.GetAllAsync(search));
