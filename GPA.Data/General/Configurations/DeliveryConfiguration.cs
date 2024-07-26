@@ -11,7 +11,7 @@ namespace GPA.Data.General.Configurations
         {
             builder.HasQueryFilter(x => !x.Deleted);
 
-            builder.ToTable("Deliveries", GPASchema.COMMON);
+            builder.ToTable("Deliveries", GPASchema.GENERAL);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();

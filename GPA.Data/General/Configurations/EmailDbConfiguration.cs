@@ -9,7 +9,7 @@ namespace GPA.Data.General.Configurations
     {
         public void Configure(EntityTypeBuilder<EmailConfiguration> builder)
         {
-            builder.ToTable("EmailConfigurations", GPASchema.Network);
+            builder.ToTable("EmailConfigurations", GPASchema.GENERAL);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
