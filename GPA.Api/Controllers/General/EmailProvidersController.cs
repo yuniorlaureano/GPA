@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GPA.General.Api.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [Route("inventory/[controller]")]
+    [Route("general/[controller]")]
     [ApiController()]
     public class EmailProvidersController : ControllerBase
     {

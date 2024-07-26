@@ -2,7 +2,7 @@
 {
     public interface IEmailService
     {
-        string Provider { get; }
+        string Engine { get; }
         Task SendEmail(IGPAEmailMessage mailMessage, string options);
     }
 }

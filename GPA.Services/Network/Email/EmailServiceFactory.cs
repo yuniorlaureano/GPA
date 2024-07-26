@@ -41,13 +41,13 @@ namespace GPA.Services.Network.Email
             }
 
             var mgs = GetMessage(message, config);
-            var emailService = _emailSender.Where(x => x.Provider == config.Provider).FirstOrDefault();
+            var emailService = _emailSender.Where(x => x.Engine == config.Engine).FirstOrDefault();
             await emailService.SendEmail(mgs, config.Value);
         }
 
         private IGPAEmailMessage GetMessage(EmailMessage message, EmailConfiguration config)
         {
-            switch (config.Provider)
+            switch (config.Engine)
             {
                 case EmailConstants.SMTP:
                     var mailMessage = new MailMessage

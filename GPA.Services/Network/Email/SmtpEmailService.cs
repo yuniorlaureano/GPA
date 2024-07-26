@@ -5,7 +5,7 @@ namespace GPA.Services.Network.Email
 {
     public class SmtpEmailService : IEmailService
     {
-        public string Provider => "SMTP";
+        public string Engine => "SMTP";
         private SmtpClient SmtpClient;
 
         public async Task SendEmail(IGPAEmailMessage mailMessage, string options)

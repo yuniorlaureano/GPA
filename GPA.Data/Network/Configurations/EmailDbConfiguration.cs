@@ -15,7 +15,7 @@ namespace GPA.Data.Network.Configurations
                 .IsRequired();
 
             builder.Property(x => x.Value).IsRequired();
-            builder.Property(x => x.Provider).IsRequired();
+            builder.Property(x => x.Engine).IsRequired();
 
         }
     }
