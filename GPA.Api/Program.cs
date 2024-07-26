@@ -1,9 +1,9 @@
-using GPA.Business.Common.Extensions;
+using GPA.Business.General.Extensions;
 using GPA.Business.Inventory.Extensions;
 using GPA.Business.Invoice.Extensions;
 using GPA.Business.Security.Extensions;
-using GPA.Bussiness.Services.Common.Mappers;
-using GPA.Bussiness.Services.Common.Validator;
+using GPA.Bussiness.Services.General.Mappers;
+using GPA.Bussiness.Services.General.Validator;
 using GPA.Bussiness.Services.Inventory.Mappers;
 using GPA.Bussiness.Services.Inventory.Validator;
 using GPA.Bussiness.Services.Invoice.Mappers;
@@ -11,15 +11,17 @@ using GPA.Bussiness.Services.Invoice.Validator;
 using GPA.Bussiness.Services.Security.Mappers;
 using GPA.Common.Entities.Security;
 using GPA.Data;
-using GPA.Data.Common.Extensions;
+using GPA.Data.General.Extensions;
 using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
+using GPA.Data.Network.Extensions;
 using GPA.Data.Security.Extensions;
 using GPA.Services.Security.Validators;
 using GPA.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using GPA.Business.Network.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Ingrese un token válido",
+        Description = "Ingrese un token vï¿½lido",
         Type = SecuritySchemeType.Http,
         BearerFormat = "JWT",
         Scheme = "Bearer"
@@ -102,6 +104,9 @@ builder.Services.AddBusinessSecurityServices();
 builder.Services.AddSecurityValidators();
 builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
+
+builder.Services.AddDataNetworkRepositories();
+builder.Services.AddBusinessNetworkServices();
 
 builder.Services.AddUtils();
 

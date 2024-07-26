@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using GPA.Entities.General;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -151,7 +152,7 @@ namespace GPA.Business.Services.Invoice
 
         private async Task MarkInvoiceAsPayed(GPA.Common.Entities.Invoice.Invoice invoice)
         {
-            invoice.PaymentStatus = Entities.Common.PaymentStatus.Payed;
+            invoice.PaymentStatus = PaymentStatus.Payed;
             await _invoiceRepository.UpdateAsync(invoice, invoice, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

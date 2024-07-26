@@ -1,6 +1,6 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Security;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using GPA.Utils;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Identity;

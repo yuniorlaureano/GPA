@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using GPA.Common.DTOs.Invoices;
 using GPA.Data.Invoice;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 
 namespace GPA.Services.Invoice.Validators
 {

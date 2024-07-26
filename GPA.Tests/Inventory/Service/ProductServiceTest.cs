@@ -1,7 +1,7 @@
 using AutoFixture;
-using GPA.Business.Services.Common;
+using GPA.Business.Services.General;
 using GPA.Business.Services.Inventory;
-using GPA.Common.DTOs.Common;
+using GPA.Common.DTOs.General;
 using GPA.Common.DTOs.Inventory;
 using GPA.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;

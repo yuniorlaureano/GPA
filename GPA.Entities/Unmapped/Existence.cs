@@ -1,5 +1,5 @@
 ﻿
-using GPA.Entities.Common;
+using GPA.Entities.General;
 
 namespace GPA.Entities.Unmapped
 {

@@ -1,5 +1,5 @@
 ﻿using GPA.Common.Entities.Inventory;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 

@@ -7,7 +7,7 @@ using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Utils;
 using Microsoft.EntityFrameworkCore;

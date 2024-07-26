@@ -1,6 +1,6 @@
 ﻿using Azure;
 using GPA.Common.Entities.Inventory;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using Microsoft.EntityFrameworkCore;
 
@@ -207,7 +207,7 @@ namespace GPA.Data.Inventory
                 await _context.Stocks.Where(x => x.Id == id)
                     .ExecuteUpdateAsync(setter =>
                         setter
-                            .SetProperty(x => x.Status, Entities.Common.StockStatus.Canceled)
+                            .SetProperty(x => x.Status, StockStatus.Canceled)
                             .SetProperty(x => x.UpdatedAt, DateTime.Now)
                         );
             }

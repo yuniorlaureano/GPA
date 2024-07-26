@@ -141,7 +141,7 @@
       <FileName>Common\Delivery.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="GPA.Entities.Common.Unit" Collapsed="true">
+  <Class Name="GPA.Entities.General.Unit" Collapsed="true">
     <Position X="12" Y="2.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAgAAAAAAAgAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>

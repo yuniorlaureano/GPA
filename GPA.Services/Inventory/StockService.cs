@@ -4,7 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;

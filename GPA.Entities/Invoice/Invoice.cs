@@ -1,6 +1,6 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Entities;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 
 namespace GPA.Common.Entities.Invoice
 {

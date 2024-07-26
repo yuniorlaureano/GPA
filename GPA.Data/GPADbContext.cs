@@ -3,7 +3,8 @@ using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
-using GPA.Entities.Common;
+using GPA.Entities.General;
+using GPA.Entities.Network;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -63,5 +64,6 @@ namespace GPA.Data
         //COMMON
         public DbSet<Delivery> Deliveries { get; set; }
         public DbSet<Unit> Units { get; set; }
+        public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
     }
 }

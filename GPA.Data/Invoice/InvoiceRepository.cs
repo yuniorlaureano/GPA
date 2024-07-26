@@ -1,6 +1,6 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
-using GPA.Entities.Common;
+using GPA.Entities.General;
 using Microsoft.EntityFrameworkCore;
 
 namespace GPA.Data.Invoice
