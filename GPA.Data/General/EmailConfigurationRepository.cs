@@ -1,6 +1,6 @@
-﻿using GPA.Entities.Network;
+﻿using GPA.Entities.General;
 
-namespace GPA.Data.Network
+namespace GPA.Data.General
 {
     public interface IEmailConfigurationRepository : IRepository<EmailConfiguration>
     {

@@ -1,6 +1,6 @@
 ﻿using System.Net.Mail;
 
-namespace GPA.Dtos.Network
+namespace GPA.Dtos.General
 {
     public class SmtpEmailMessage : IGPAEmailMessage
     {

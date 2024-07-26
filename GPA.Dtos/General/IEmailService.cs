@@ -1,4 +1,4 @@
-﻿namespace GPA.Dtos.Network
+﻿namespace GPA.Dtos.General
 {
     public interface IEmailService
     {

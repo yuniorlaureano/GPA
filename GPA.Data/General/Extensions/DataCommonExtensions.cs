@@ -7,6 +7,7 @@ namespace GPA.Data.General.Extensions
         public static void AddDataCommonRepositories(this IServiceCollection services)
         {
             services.AddTransient<IUnitRepository, UnitRepository>();
+            services.AddTransient<IEmailConfigurationRepository, EmailConfigurationRepository>();
         }
     }
 }

@@ -14,14 +14,12 @@ using GPA.Data;
 using GPA.Data.General.Extensions;
 using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
-using GPA.Data.Network.Extensions;
 using GPA.Data.Security.Extensions;
 using GPA.Services.Security.Validators;
 using GPA.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using GPA.Business.Network.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,9 +102,6 @@ builder.Services.AddBusinessSecurityServices();
 builder.Services.AddSecurityValidators();
 builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
-
-builder.Services.AddDataNetworkRepositories();
-builder.Services.AddBusinessNetworkServices();
 
 builder.Services.AddUtils();
 

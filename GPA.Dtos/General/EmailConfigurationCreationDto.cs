@@ -1,8 +1,7 @@
-﻿namespace GPA.Dtos.Network
+﻿namespace GPA.Dtos.General
 {
-    public class EmailConfigurationUpdateDto
+    public class EmailConfigurationCreationDto
     {
-        public Guid Id { get; set; }
         public string Vendor { get; set; }
         public string Value { get; set; }
         public string From { get; set; }

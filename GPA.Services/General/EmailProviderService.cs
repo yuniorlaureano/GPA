@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
-using GPA.Data.Network;
-using GPA.Dtos.Network;
-using GPA.Entities.Network;
+using GPA.Data.General;
+using GPA.Dtos.General;
+using GPA.Entities.General;
 using System.Linq.Expressions;
 
-namespace GPA.Business.Services.Inventory
+namespace GPA.Services.General
 {
     public interface IEmailProviderService
     {

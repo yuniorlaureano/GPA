@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
-using GPA.Dtos.Network;
+using GPA.Dtos.General;
+using GPA.Services.General;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

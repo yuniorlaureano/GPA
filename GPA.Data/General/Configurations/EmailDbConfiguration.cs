@@ -1,9 +1,9 @@
 ﻿using GPA.Data.Schemas;
-using GPA.Entities.Network;
+using GPA.Entities.General;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GPA.Data.Network.Configurations
+namespace GPA.Data.General.Configurations
 {
     public class EmailDbConfiguration : IEntityTypeConfiguration<EmailConfiguration>
     {

@@ -1,10 +1,10 @@
-﻿using GPA.Data.Network;
-using GPA.Dtos.Network;
-using GPA.Entities.Network;
+﻿using GPA.Data.General;
+using GPA.Dtos.General;
+using GPA.Entities.General;
 using GPA.Utils;
 using System.Net.Mail;
 
-namespace GPA.Services.Network.Email
+namespace GPA.Services.General.Email
 {
     public class EmailMessage
     {

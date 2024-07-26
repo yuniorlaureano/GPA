@@ -1,7 +1,7 @@
-﻿using GPA.Dtos.Network;
+﻿using GPA.Dtos.General;
 using System.Net.Mail;
 
-namespace GPA.Services.Network.Email
+namespace GPA.Services.General.Email
 {
     public class SmtpEmailService : IEmailService
     {

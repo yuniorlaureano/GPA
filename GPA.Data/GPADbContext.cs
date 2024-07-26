@@ -4,7 +4,6 @@ using GPA.Common.Entities.Invoice;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
-using GPA.Entities.Network;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
