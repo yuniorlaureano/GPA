@@ -5,7 +5,7 @@ namespace GPA.Services.Security
 {
     public interface IUserContextService
     {
-        string? GetCurrentUserId();
+        Guid GetCurrentUserId();
     }
 
     public class UserContextService : IUserContextService
@@ -17,14 +17,20 @@ namespace GPA.Services.Security
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string? GetCurrentUserId()
+        public Guid GetCurrentUserId()
         {
-            return _httpContextAccessor
+            var currentUser = _httpContextAccessor
                 .HttpContext?
                 .User?
                 .Claims?
                 .FirstOrDefault(x => x.Type == GPAClaimTypes.UserId)?.Value;
 
+            if (currentUser is { Length: 0 })
+            {
+                throw new InvalidOperationException("No está autenticado en el sistema");
+            }
+
+            return Guid.Parse(currentUser!);
         }
     }
 }

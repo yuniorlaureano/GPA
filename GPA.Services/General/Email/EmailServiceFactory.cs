@@ -42,28 +42,36 @@ namespace GPA.Services.General.Email
 
             var mgs = GetMessage(message, config);
             var emailService = _emailSender.Where(x => x.Engine == config.Engine).FirstOrDefault();
+
+            if (emailService is null)
+            {
+                throw new ArgumentException("No se ha encontrado el proveedor de correo");
+            }
+
             await emailService.SendEmail(mgs, config.Value);
         }
 
         private IGPAEmailMessage GetMessage(EmailMessage message, EmailConfiguration config)
         {
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(config.From),
+                Subject = message.Subject,
+                Body = message.Body,
+                IsBodyHtml = message.IsBodyHtml
+            };
+
+            foreach (var address in message.To)
+            {
+                mailMessage.To.Add(address);
+            }
+
             switch (config.Engine)
             {
                 case EmailConstants.SMTP:
-                    var mailMessage = new MailMessage
-                    {
-                        From = new MailAddress(config.From),
-                        Subject = message.Subject,
-                        Body = message.Body,
-                        IsBodyHtml = message.IsBodyHtml
-                    };
-
-                    foreach (var address in message.To)
-                    {
-                        mailMessage.To.Add(address);
-                    }
-
                     return new SmtpEmailMessage(mailMessage);
+                case EmailConstants.SENGRID:
+                    return new SendGridEmailMessage(mailMessage);
                 default:
                     throw new ArgumentException("No se ha encontrado el proveedor de correo");
             }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs.General;
+using GPA.Dtos.General;
 using GPA.Entities.General;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,10 @@ namespace GPA.Bussiness.Services.General.Mappers
         {
             CreateMap<Unit, UnitDto>();
             CreateMap<UnitDto, Unit>();
+
+            CreateMap<EmailConfigurationCreationDto, EmailConfiguration>();
+            CreateMap<EmailConfigurationUpdateDto, EmailConfiguration>();
+            CreateMap<EmailConfiguration, EmailConfigurationDto>();
         }
     }
 

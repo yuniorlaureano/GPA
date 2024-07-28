@@ -1,20 +1,20 @@
 ﻿using GPA.Dtos.General;
+using GPA.Utils;
 using System.Net.Mail;
 
 namespace GPA.Services.General.Email
 {
     public class SmtpEmailService : IEmailService
     {
-        public string Engine => "SMTP";
-        private SmtpClient SmtpClient;
+        public string Engine => EmailConstants.SMTP;
 
         public async Task SendEmail(IGPAEmailMessage mailMessage, string options)
         {
             try
             {
                 var mgs = (SmtpEmailMessage)mailMessage;
-                await Configure(options);
-                SmtpClient.Send(mgs.GetMessage());
+                var smtpClient = await Configure(options);
+                smtpClient.Send(mgs.GetMessage());
             }
             catch (Exception ex)
             {
@@ -22,10 +22,13 @@ namespace GPA.Services.General.Email
             }
         }
 
-        private async Task Configure(string options)
+        private async Task<SmtpClient> Configure(string options)
         {
-            var smtpOptions = System.Text.Json.JsonSerializer.Deserialize<SmtpEmailOptions>(options);
-            var SmtpClient = new SmtpClient(smtpOptions.Host)
+            var smtpOptions = System.Text.Json.JsonSerializer.Deserialize<SmtpEmailOptions>(options, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            });
+            return new SmtpClient(smtpOptions.Host)
             {
                 Port = smtpOptions.Port,
                 Credentials = new System.Net.NetworkCredential(smtpOptions.UserName, smtpOptions.Password),

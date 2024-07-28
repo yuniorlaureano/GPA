@@ -1,8 +1,7 @@
 ﻿namespace GPA.Entities.General
 {
-    public class EmailConfiguration
+    public class EmailConfiguration : Entity<Guid>
     {
-        public Guid Id { get; set; }
         public string Identifier { get; set; }
         public string Engine { get; set; }
         public string Value { get; set; }

@@ -12,6 +12,7 @@ namespace GPA.Business.General.Extensions
         {
             services.AddTransient<IUnitService, UnitService>();
             services.AddTransient<IEmailService, SmtpEmailService>();
+            services.AddTransient<IEmailService, SendGridEmailService>();
             services.AddTransient<IEmailServiceFactory, EmailServiceFactory>();
             services.AddTransient<IEmailProviderService, EmailProviderService>();
         }

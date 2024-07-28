@@ -2,6 +2,7 @@
 using GPA.Common.DTOs;
 using GPA.Dtos.General;
 using GPA.Services.General;
+using GPA.Services.General.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +14,16 @@ namespace GPA.General.Api.Controllers
     public class EmailProvidersController : ControllerBase
     {
         private readonly IEmailProviderService _emailProviderService;
+        private readonly IEmailServiceFactory _emailServiceFactory;
         private readonly IMapper _mapper;
 
-        public EmailProvidersController(IEmailProviderService emailProviderService, IMapper mapper)
+        public EmailProvidersController(
+            IEmailProviderService emailProviderService,
+            IEmailServiceFactory emailServiceFactory,
+            IMapper mapper)
         {
             _emailProviderService = emailProviderService;
+            _emailServiceFactory = emailServiceFactory;
             _mapper = mapper;
         }
 
@@ -41,8 +47,8 @@ namespace GPA.General.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var entity = await _emailProviderService.AddAsync(model);
-            return Created(Url.Action(nameof(Get)), new { id = entity.Id });
+            await _emailProviderService.CreateConfigurationAsync(model);
+            return Ok();
         }
 
         [HttpPut()]
@@ -53,8 +59,20 @@ namespace GPA.General.Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            await _emailProviderService.UpdateAsync(model);
+            await _emailProviderService.UpdateConfigurationAsync(model);
             return NoContent();
+        }
+
+        [HttpPost("mail/send")]
+        public async Task<IActionResult> SendMail(EmailMessage message)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _emailServiceFactory.SendMessageAsync(message);
+            return Ok();
         }
 
         [HttpDelete("{id}")]

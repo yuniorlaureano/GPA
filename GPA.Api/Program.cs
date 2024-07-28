@@ -16,6 +16,7 @@ using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
 using GPA.Data.Security.Extensions;
 using GPA.Services.Security.Validators;
+using GPA.Utils;
 using GPA.Utils.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -103,7 +104,19 @@ builder.Services.AddSecurityValidators();
 builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
 
+
+//ToDo: move this to a extension method.
 builder.Services.AddUtils();
+
+var sendGridUrl = builder.Configuration["Url:SendGrid"];
+if (sendGridUrl is { Length: > 0 })
+{
+    builder.Services.AddHttpClient(UrlConstant.SENDGRID, options =>
+    {
+        options.BaseAddress = new Uri(sendGridUrl);
+    });
+}
+
 
 var app = builder.Build();
 

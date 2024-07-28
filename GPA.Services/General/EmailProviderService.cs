@@ -3,27 +3,34 @@ using GPA.Common.DTOs;
 using GPA.Data.General;
 using GPA.Dtos.General;
 using GPA.Entities.General;
+using GPA.Services.Security;
+using System.Data;
 using System.Linq.Expressions;
 
 namespace GPA.Services.General
 {
     public interface IEmailProviderService
     {
-        public Task<EmailConfigurationDto?> GetByIdAsync(Guid id);
-        public Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(SearchDto search, Expression<Func<EmailConfiguration, bool>>? expression = null);
-        public Task<EmailConfigurationDto?> AddAsync(EmailConfigurationCreationDto emailConfig);
-        public Task UpdateAsync(EmailConfigurationUpdateDto emailConfig);
-        public Task RemoveAsync(Guid id);
+        Task<EmailConfigurationDto?> GetByIdAsync(Guid id);
+        Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(SearchDto search, Expression<Func<EmailConfiguration, bool>>? expression = null);
+        Task CreateConfigurationAsync(EmailConfigurationCreationDto dto);
+        Task UpdateConfigurationAsync(EmailConfigurationUpdateDto dto);
+        Task RemoveAsync(Guid id);
     }
 
     public class EmailProviderService : IEmailProviderService
     {
         private readonly IEmailConfigurationRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public EmailProviderService(IEmailConfigurationRepository repository, IMapper mapper)
+        public EmailProviderService(
+            IEmailConfigurationRepository repository,
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -47,27 +54,18 @@ namespace GPA.Services.General
             };
         }
 
-        public async Task<EmailConfigurationDto> AddAsync(EmailConfigurationCreationDto dto)
+        public async Task CreateConfigurationAsync(EmailConfigurationCreationDto dto)
         {
             var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
-            var savedemailConfiguration = await _repository.AddAsync(emailConfiguration);
-            return _mapper.Map<EmailConfigurationDto>(savedemailConfiguration);
+            emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
+            await _repository.CreateConfigurationAsync(emailConfiguration);
         }
 
-        public async Task UpdateAsync(EmailConfigurationUpdateDto dto)
+        public async Task UpdateConfigurationAsync(EmailConfigurationUpdateDto dto)
         {
-            if (dto.Id == Guid.Empty)
-            {
-                throw new ArgumentNullException();
-            }
-
-            var newEmailConfiguration = _mapper.Map<EmailConfiguration>(dto);
-            newEmailConfiguration.Id = dto.Id;
-            var savedEmailConfiguration = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id);
-            await _repository.UpdateAsync(savedEmailConfiguration, newEmailConfiguration, (entityState, _) =>
-            {
-                entityState.Property(x => x.Id).IsModified = false;
-            });
+            var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
+            emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
+            await _repository.UpdateConfigurationAsync(emailConfiguration);
         }
 
         public async Task RemoveAsync(Guid id)

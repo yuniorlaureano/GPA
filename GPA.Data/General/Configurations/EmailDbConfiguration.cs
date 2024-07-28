@@ -14,9 +14,11 @@ namespace GPA.Data.General.Configurations
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
-            builder.Property(x => x.Value).IsRequired();
-            builder.Property(x => x.Engine).IsRequired();
-
+            builder.Property(x => x.Identifier).HasColumnType("NVARCHAR(50)").IsRequired();
+            builder.Property(x => x.Engine).HasColumnType("NVARCHAR(50)").IsRequired();
+            builder.Property(x => x.Value).HasColumnType("NVARCHAR(MAX)").IsRequired();
+            builder.Property(x => x.From).HasMaxLength(100).IsRequired();
+            builder.Property(x => x.Current).IsRequired();
         }
     }
 }
