@@ -15,6 +15,7 @@ using GPA.Data.General.Extensions;
 using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
 using GPA.Data.Security.Extensions;
+using GPA.Services.General.Security;
 using GPA.Services.Security.Validators;
 using GPA.Utils;
 using GPA.Utils.Extensions;
@@ -104,6 +105,8 @@ builder.Services.AddSecurityValidators();
 builder.Services.AddDataSecurityRepositories();
 builder.Services.AddAuthorization();
 
+builder.Services.AddScoped<IAesHelper, AesHelper>();
+builder.Services.AddScoped<IEmailProviderHelper, EmailProviderHelper>();
 
 //ToDo: move this to a extension method.
 builder.Services.AddUtils();

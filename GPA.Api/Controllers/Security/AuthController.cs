@@ -156,7 +156,7 @@ namespace GPA.Api.Controllers.Security
             return Ok(new { token = token, permissions = permissions });
         }
 
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Auth}", permission: Permissions.UpdateUserProfile)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Auth}", permission: Permissions.UpdateUserProfile)]
         [HttpPut("users/{userId}/profile/edit")]
         public async Task<IActionResult> EditProfile([FromRoute] Guid userId, [FromBody] UserProfileDto model)
         {

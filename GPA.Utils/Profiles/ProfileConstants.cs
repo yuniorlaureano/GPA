@@ -15,9 +15,8 @@ namespace GPA.Utils.Profiles
                     InventoryModule(),
                     InvoiceModule(),
                     SecurityModule(),
-                    AuthModule(),
+                    GeneralModule(),
                     ReportModule(),
-                    CommonModule(),
                 }
             }
         };
@@ -286,40 +285,30 @@ namespace GPA.Utils.Profiles
             };
         }
 
-        private static Module CommonModule()
+        private static Module GeneralModule()
         {
             return new Module
             {
-                Id = Modules.Common,
+                Id = Modules.General,
                 Components = new List<Component>
+                {
+                    new Component
+                    {
+                        Id = Components.Email,
+                        Permissions = new List<string>
                         {
-                            new Component
-                            {
-                                Id = "",
-                                Permissions = new List<string>
-                                {
-                                }
-                            }
+                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Send
                         }
-            };
-        }
-
-        private static Module AuthModule()
-        {
-            return new Module
-            {
-                Id = Modules.Auth,
-                Components = new List<Component>
+                    },
+                    new Component
+                    {
+                        Id = Components.Auth,
+                        Permissions = new List<string>
                         {
-                            new Component
-                            {
-                                Id = Components.Auth,
-                                Permissions = new List<string>
-                                {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.UpdateUserProfile
-                                }
-                            }
+                            Permissions.UpdateUserProfile
                         }
+                    }
+                }
             };
         }
 
@@ -350,9 +339,10 @@ namespace GPA.Utils.Profiles
         public const string Cancel = "cancel";
         public const string AssignProfile = "assign-profile";
         public const string UnAssignProfile = "unAssign-profile";
-        public const string UpdateUserProfile = "updateUser-profile";
+        public const string UpdateUserProfile = "update-user-profile";
         public const string ReadTransactions = "read-transactions";
         public const string Return = "return";
+        public const string Send = "send";
     }
 
     public class Apps
@@ -366,8 +356,7 @@ namespace GPA.Utils.Profiles
         public const string Invoice = "invoice";
         public const string Security = "security";
         public const string Report = "report";
-        public const string Common = "common";
-        public const string Auth = "common";
+        public const string General = "general";
     }
 
     public class Components
@@ -386,5 +375,6 @@ namespace GPA.Utils.Profiles
         public const string User = "user";
         public const string Profile = "profile";
         public const string Auth = "auth";
+        public const string Email = "email";
     }
 }

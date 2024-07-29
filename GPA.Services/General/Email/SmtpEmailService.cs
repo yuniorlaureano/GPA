@@ -1,5 +1,6 @@
 ﻿using GPA.Dtos.General;
 using GPA.Utils;
+using Microsoft.Extensions.Logging;
 using System.Net.Mail;
 
 namespace GPA.Services.General.Email
@@ -7,6 +8,13 @@ namespace GPA.Services.General.Email
     public class SmtpEmailService : IEmailService
     {
         public string Engine => EmailConstants.SMTP;
+
+        private readonly ILogger<SmtpEmailService> _logger;
+
+        public SmtpEmailService(ILogger<SmtpEmailService> logger)
+        {
+            _logger = logger;
+        }
 
         public async Task SendEmail(IGPAEmailMessage mailMessage, string options)
         {
@@ -18,6 +26,7 @@ namespace GPA.Services.General.Email
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error sending email message for provider: {Provider}, {Message}", Engine, ex.Message);
                 throw;
             }
         }

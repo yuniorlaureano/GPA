@@ -1,5 +1,6 @@
 ﻿using GPA.Dtos.General;
 using GPA.Utils;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -9,10 +10,12 @@ namespace GPA.Services.General.Email
     {
         public string Engine => EmailConstants.SENGRID;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<SendGridEmailService> _logger;
 
-        public SendGridEmailService(IHttpClientFactory httpClientFactory)
+        public SendGridEmailService(IHttpClientFactory httpClientFactory, ILogger<SendGridEmailService> logger)
         {
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
 
@@ -27,6 +30,7 @@ namespace GPA.Services.General.Email
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error sending email message for provider: {Provider}, {Message}", Engine, ex.Message);
                 throw;
             }
         }

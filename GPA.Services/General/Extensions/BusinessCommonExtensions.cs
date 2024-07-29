@@ -1,8 +1,8 @@
 ﻿using GPA.Business.Services.General;
-using GPA.Services.General.Email;
-using GPA.Services.General;
-using Microsoft.Extensions.DependencyInjection;
 using GPA.Dtos.General;
+using GPA.Services.General;
+using GPA.Services.General.Email;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Business.General.Extensions
 {

@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
 using GPA.Dtos.General;
 using GPA.Services.General;
 using GPA.Services.General.Email;
+using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,18 +30,21 @@ namespace GPA.General.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
             return Ok(await _emailProviderService.GetByIdAsync(id));
         }
 
         [HttpGet()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] SearchDto search)
         {
             return Ok(await _emailProviderService.GetAllAsync(search));
         }
 
         [HttpPost()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(EmailConfigurationCreationDto model)
         {
             if (!ModelState.IsValid)
@@ -52,6 +57,7 @@ namespace GPA.General.Api.Controllers
         }
 
         [HttpPut()]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(EmailConfigurationUpdateDto model)
         {
             if (!ModelState.IsValid)
@@ -64,6 +70,7 @@ namespace GPA.General.Api.Controllers
         }
 
         [HttpPost("mail/send")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Send)]
         public async Task<IActionResult> SendMail(EmailMessage message)
         {
             if (!ModelState.IsValid)
@@ -76,6 +83,7 @@ namespace GPA.General.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Email}", permission: Permissions.Delete)]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _emailProviderService.RemoveAsync(id);

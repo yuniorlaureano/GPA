@@ -1,6 +1,6 @@
 ﻿namespace GPA.Dtos.General
 {
-    public class SmtpEmailOptions
+    public class SmtpEmailOptions : IEmailOptions
     {
         public string Host { get; set; }
         public string UserName { get; set; }
