@@ -13,13 +13,16 @@ using GPA.Data;
 using GPA.Data.General.Extensions;
 using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
+using GPA.Services.General.Security;
+using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using GPA.Utils.Extensions;
 
 namespace GPA.Tests
 {
-    internal class DependenyBuilder
+    internal class DependencyBuilder
     {
         public static IServiceProvider GetServices()
         {
@@ -47,6 +50,14 @@ namespace GPA.Tests
 
             services.AddSecurityMappers();
             services.AddBusinessSecurityServices();
+
+            services.AddHttpContextAccessor();
+
+            services.AddScoped<IAesHelper, AesHelper>();
+            services.AddScoped<IEmailProviderHelper, EmailProviderHelper>();
+
+            //ToDo: move this to a extension method.
+            services.AddUtils();
 
             return services.BuildServiceProvider();
         }

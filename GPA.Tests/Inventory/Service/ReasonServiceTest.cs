@@ -16,7 +16,7 @@ namespace GPA.Tests.Inventory.Service
         {
             var x = CleanUpDbFixture.Current;
             _fixture = new Fixture();
-            _services = DependenyBuilder.GetServices();
+            _services = DependencyBuilder.GetServices();
             _reasonService = _services.GetRequiredService<IReasonService>();
         }
 

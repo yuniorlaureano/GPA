@@ -45,7 +45,9 @@ namespace GPA.Data
                 LastName = "Admin",
                 UserName = "admin",
                 NormalizedUserName = "ADMIN",
-                Email = "admin@gmail.com"
+                Email = "admin@gmail.com",
+                NormalizedEmail = "admin@gmail.com".ToUpper(),
+                SecurityStamp = Guid.NewGuid().ToString(),
             };
 
             var role = new GPARole

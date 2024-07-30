@@ -29,7 +29,7 @@ namespace GPA.Tests.Inventory.Service
         {
             var x = CleanUpDbFixture.Current;
             _fixture = new Fixture();
-            _services = DependenyBuilder.GetServices();
+            _services = DependencyBuilder.GetServices();
             _stockService = _services.GetRequiredService<IStockService>();
             _productService = _services.GetRequiredService<IProductService>();
             _productLocationService = _services.GetRequiredService<IProductLocationService>();

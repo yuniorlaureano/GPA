@@ -14,7 +14,7 @@ namespace GPA.Tests.Inventory.Service
         public CycleServiceTest()
         {
             _fixture = new Fixture();
-            _services = DependenyBuilder.GetServices();
+            _services = DependencyBuilder.GetServices();
             _stockCycleRepository = _services.GetRequiredService<IStockCycleRepository>();
         }
 

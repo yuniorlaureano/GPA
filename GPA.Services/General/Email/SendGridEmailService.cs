@@ -10,11 +10,16 @@ namespace GPA.Services.General.Email
     {
         public string Engine => EmailConstants.SENGRID;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IEmailProviderHelper _emailProviderHelper;
         private readonly ILogger<SendGridEmailService> _logger;
 
-        public SendGridEmailService(IHttpClientFactory httpClientFactory, ILogger<SendGridEmailService> logger)
+        public SendGridEmailService(
+            IHttpClientFactory httpClientFactory, 
+            IEmailProviderHelper emailProviderHelper,
+            ILogger<SendGridEmailService> logger)
         {
             _httpClientFactory = httpClientFactory;
+            _emailProviderHelper = emailProviderHelper;
             _logger = logger;
         }
 
@@ -37,11 +42,8 @@ namespace GPA.Services.General.Email
 
         private HttpClient Configure(string options)
         {
-            var sendGridOptions = JsonSerializer.Deserialize<SendGridEmailOptions>(options, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-
+            var sendGridOptions = (SendGridEmailOptions)_emailProviderHelper.DecryptCredentialsInOptions(options, Engine);
+            
             var client = _httpClientFactory.CreateClient(UrlConstant.SENDGRID);
             client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {sendGridOptions.Apikey}");

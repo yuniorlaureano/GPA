@@ -9,7 +9,7 @@ namespace GPA.Tests.Fixtures
 
         private CleanUpDbFixture()
         {
-            var services = DependenyBuilder.GetServices();
+            var services = DependencyBuilder.GetServices();
             var context = services.GetRequiredService<GPADbContext>();
             context.Database.EnsureDeleted();
             context.Database.EnsureCreated();

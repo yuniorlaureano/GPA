@@ -5,6 +5,7 @@ using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
+using GPA.Services.General.Email;
 using GPA.Utils.Constants.Claims;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -26,19 +27,22 @@ namespace GPA.Api.Controllers.Security
         private readonly GPADbContext _context;
         private readonly IGPAProfileService _gPAProfileService;
         private readonly IValidator<SignUpDto> _signUpValidator;
+        private readonly IEmailServiceFactory _emailServiceFactory;
 
         public AuthController(
             IGPAJwtService jwtService,
             UserManager<GPAUser> userManager,
             GPADbContext context,
             IGPAProfileService gPAProfileService,
-            IValidator<SignUpDto> signUpValidator)
+            IValidator<SignUpDto> signUpValidator,
+            IEmailServiceFactory emailServiceFactory)
         {
             _jwtService = jwtService;
             _userManager = userManager;
             _context = context;
             _gPAProfileService = gPAProfileService;
             _signUpValidator = signUpValidator;
+            _emailServiceFactory = emailServiceFactory;
         }
 
         [AllowAnonymous]
@@ -176,6 +180,7 @@ namespace GPA.Api.Controllers.Security
 
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
+            user.Email = model.Email;
             user.SecurityStamp = Guid.NewGuid().ToString();
 
             var result = await _userManager.UpdateAsync(user);
@@ -197,6 +202,37 @@ namespace GPA.Api.Controllers.Security
             var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
 
             return Ok(new { token = token, permissions = permissions });
+        }
+
+        [AllowAnonymous]
+        [HttpGet("totp/send/{email}")]
+        public async Task<IActionResult> SendTOTPCode([FromRoute] string email)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null)
+            {
+                ModelState.AddModelError("usuario", "No existe usuario registrado con ese correo");
+                return BadRequest(ModelState);
+            }
+
+            var emailProvider = new EmailTokenProvider<GPAUser>();
+            var token = await emailProvider.GenerateAsync("Email", _userManager, user);
+
+            var message = new EmailMessage
+            {
+                Subject = "Código de verificación",
+                Body = $"Su código de verificación es: {token}",
+                To = new List<string> { email },
+            };
+
+            await _emailServiceFactory.SendMessageAsync(message);
+                        
+            return Ok();
         }
 
         private async Task<string> AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)

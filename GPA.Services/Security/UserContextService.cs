@@ -25,12 +25,19 @@ namespace GPA.Services.Security
                 .Claims?
                 .FirstOrDefault(x => x.Type == GPAClaimTypes.UserId)?.Value;
 
-            if (currentUser is { Length: 0 })
+#if DEBUG
+            if (currentUser is null)
+            {
+                return Guid.Parse("00000000-0000-0000-0000-000000000001");
+            }
+            return Guid.Parse(currentUser!);
+#else
+            if (currentUser is null || currentUser is { Length: 0 })
             {
                 throw new InvalidOperationException("No está autenticado en el sistema");
             }
-
             return Guid.Parse(currentUser!);
+#endif
         }
     }
 }

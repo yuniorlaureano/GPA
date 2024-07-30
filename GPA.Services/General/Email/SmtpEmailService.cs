@@ -9,10 +9,12 @@ namespace GPA.Services.General.Email
     {
         public string Engine => EmailConstants.SMTP;
 
+        private readonly IEmailProviderHelper _emailProviderHelper;
         private readonly ILogger<SmtpEmailService> _logger;
 
-        public SmtpEmailService(ILogger<SmtpEmailService> logger)
+        public SmtpEmailService(IEmailProviderHelper emailProviderHelper, ILogger<SmtpEmailService> logger)
         {
+            _emailProviderHelper = emailProviderHelper;
             _logger = logger;
         }
 
@@ -33,10 +35,7 @@ namespace GPA.Services.General.Email
 
         private async Task<SmtpClient> Configure(string options)
         {
-            var smtpOptions = System.Text.Json.JsonSerializer.Deserialize<SmtpEmailOptions>(options, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-            });
+            var smtpOptions = (SmtpEmailOptions)_emailProviderHelper.DecryptCredentialsInOptions(options, Engine);
             return new SmtpClient(smtpOptions.Host)
             {
                 Port = smtpOptions.Port,

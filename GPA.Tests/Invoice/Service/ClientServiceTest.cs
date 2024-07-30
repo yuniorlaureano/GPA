@@ -16,7 +16,7 @@ namespace GPA.Tests.Invoice.Service
         {
             var x = CleanUpDbFixture.Current;
             _fixture = new Fixture();
-            _services = DependenyBuilder.GetServices();
+            _services = DependencyBuilder.GetServices();
             _clientService = _services.GetRequiredService<IClientService>();
         }
 
