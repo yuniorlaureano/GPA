@@ -8,7 +8,7 @@ namespace GPA.Data.Inventory
     public interface IStockCycleRepository : IRepository<StockCycle>
     {
         Task<Guid> OpenCycleAsync(StockCycle model);
-		Task CloseCycleAsync(Guid id);
+		Task CloseCycleAsync(Guid id, Guid updatedBy);
     }
 
     public class StockCycleRepository : Repository<StockCycle>, IStockCycleRepository
@@ -27,7 +27,7 @@ namespace GPA.Data.Inventory
 
                 INSERT INTO [GPA].[Inventory].[StockCycles]([Note], [StartDate], [EndDate], [CreatedBy], [CreatedAt], [IsClose])
 	                OUTPUT INSERTED.Id INTO @OutputTable
-                VALUES(@Note, @StartDate, @EndDate, @CreatedBy, GETDATE(), 0)
+                VALUES(@Note, @StartDate, @EndDate, @CreatedBy, GETUTCDATE(), 0)
 
                 SELECT @InsertedId=Id FROM @OutputTable
 
@@ -85,7 +85,7 @@ namespace GPA.Data.Inventory
             command.Parameters.AddRange(
                    new[]
                    {
-                        new ("@CreatedBy", System.Data.SqlDbType.NVarChar) { Value = Guid.NewGuid().ToString() },
+                        new ("@CreatedBy", System.Data.SqlDbType.NVarChar) { Value = model.CreatedBy },
                         new ("@StartDate", System.Data.SqlDbType.Date) { Value = model.StartDate },
                         new ("@EndDate", System.Data.SqlDbType.Date) { Value = model.EndDate },
                         new ("@Note", System.Data.SqlDbType.NVarChar) { Value = model.Note },
@@ -100,7 +100,7 @@ namespace GPA.Data.Inventory
             return insertedCycleId;
         }
 
-        public async Task CloseCycleAsync(Guid id)
+        public async Task CloseCycleAsync(Guid id, Guid updatedBy)
         {
             await _context.Database.OpenConnectionAsync();
             using var command = _context.Database.GetDbConnection().CreateCommand();
@@ -109,7 +109,9 @@ namespace GPA.Data.Inventory
                 IF EXISTS (SELECT 1 FROM [GPA].[Inventory].[StockCycles] WHERE Id = @CycleId AND IsClose = 0)
                 BEGIN
 	                UPDATE [GPA].[Inventory].[StockCycles]
-	                SET [IsClose] = 1
+	                SET [IsClose] = 1,
+						[UpdatedBy] = @UpdatedBy,
+						[UpdatedAt] = @UpdatedAt			
 	                WHERE Id = @CycleId
 
 	                INSERT INTO [GPA].[Inventory].[StockCycleDetails](
@@ -162,7 +164,9 @@ namespace GPA.Data.Inventory
             command.Parameters.AddRange(new SqlParameter[]
                    {
                         new ("@CycleId", System.Data.SqlDbType.UniqueIdentifier) { Value = id },
-                        new ("@CycleType", System.Data.SqlDbType.TinyInt) { Value = (byte)CycleType.Final }                        
+                        new ("@CycleType", System.Data.SqlDbType.TinyInt) { Value = (byte)CycleType.Final },                        
+                        new ("@UpdatedBy", System.Data.SqlDbType.UniqueIdentifier) { Value = updatedBy },                        
+                        new ("@UpdatedAt", System.Data.SqlDbType.DateTimeOffset) { Value = DateTimeOffset.UtcNow },                        
                    }
                 );
 

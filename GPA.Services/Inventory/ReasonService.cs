@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -23,11 +24,16 @@ namespace GPA.Business.Services.Inventory
     public class ReasonService : IReasonService
     {
         private readonly IReasonRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public ReasonService(IReasonRepository repository, IMapper mapper)
+        public ReasonService(
+            IReasonRepository repository, 
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -52,8 +58,10 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<ReasonDto> AddAsync(ReasonDto dto)
         {
-            var deason = _mapper.Map<Reason>(dto);
-            var savedReason = await _repository.AddAsync(deason);
+            var reason = _mapper.Map<Reason>(dto);
+            reason.CreatedBy = _userContextService.GetCurrentUserId();
+            reason.CreatedAt = DateTimeOffset.UtcNow;
+            var savedReason = await _repository.AddAsync(reason);
             return _mapper.Map<ReasonDto>(savedReason);
         }
 
@@ -66,6 +74,8 @@ namespace GPA.Business.Services.Inventory
 
             var newReason = _mapper.Map<Reason>(dto);
             newReason.Id = dto.Id.Value;
+            newReason.UpdatedBy = _userContextService.GetCurrentUserId();
+            newReason.UpdatedAt = DateTimeOffset.UtcNow;
             var savedReason = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
             await _repository.UpdateAsync(savedReason, newReason, (entityState, _) =>
             {

@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -26,12 +27,18 @@ namespace GPA.Business.Services.Invoice
     public class ClientService : IClientService
     {
         private readonly IClientRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
 
-        public ClientService(IClientRepository repository, IMapper mapper, IReceivableAccountRepository receivableAccountRepository)
+        public ClientService(
+            IClientRepository repository,
+            IUserContextService userContextService,
+            IMapper mapper, 
+            IReceivableAccountRepository receivableAccountRepository)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
             _receivableAccountRepository = receivableAccountRepository;
         }
@@ -71,6 +78,8 @@ namespace GPA.Business.Services.Invoice
         public async Task<ClientDto> AddAsync(ClientDto dto)
         {
             var client = _mapper.Map<Client>(dto);
+            client.CreatedBy = _userContextService.GetCurrentUserId();
+            client.CreatedAt = DateTimeOffset.UtcNow;
             var savedClient = await _repository.AddAsync(client);
             return _mapper.Map<ClientDto>(savedClient);
         }
@@ -84,6 +93,8 @@ namespace GPA.Business.Services.Invoice
 
             var newClient = _mapper.Map<Client>(dto);
             newClient.Id = dto.Id.Value;            
+            newClient.UpdatedBy = _userContextService.GetCurrentUserId();
+            newClient.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(newClient);
         }
 

@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -24,15 +25,18 @@ namespace GPA.Business.Services.Inventory
     public class ProductService : IProductService
     {
         private readonly IProductRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
         private readonly IAddonRepository _addonRepository;
 
         public ProductService(
             IProductRepository repository,
+            IUserContextService userContextService,
             IMapper mapper,
             IAddonRepository addonRepository)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
             _addonRepository = addonRepository;
         }
@@ -79,6 +83,8 @@ namespace GPA.Business.Services.Inventory
             {
                 newProduct.ProductAddons = dto.Addons.Select(addon => new ProductAddon { AddonId = addon }).ToList();
             }
+            newProduct.CreatedBy = _userContextService.GetCurrentUserId();
+            newProduct.CreatedAt = DateTimeOffset.UtcNow;
             var savedProduct = await _repository.AddAsync(newProduct);
             return _mapper.Map<ProductDto>(savedProduct);
         }
@@ -101,7 +107,8 @@ namespace GPA.Business.Services.Inventory
                 newProduct.ProductAddons = dto.Addons.Select(
                     addon => new ProductAddon { AddonId = addon }).ToList();
             }
-
+            newProduct.UpdatedBy = _userContextService.GetCurrentUserId();
+            newProduct.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(savedProduct, newProduct, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

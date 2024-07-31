@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -22,11 +23,16 @@ namespace GPA.Business.Services.Inventory
     public class StockCycleService : IStockCycleService
     {
         private readonly IStockCycleRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public StockCycleService(IStockCycleRepository repository, IMapper mapper)
+        public StockCycleService(
+            IStockCycleRepository repository,
+            IUserContextService userContextService, 
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -60,13 +66,15 @@ namespace GPA.Business.Services.Inventory
         public async Task<Guid> OpenCycleAsync(StockCycleCreationDto dto)
         {
             var newStockCycle = _mapper.Map<StockCycle>(dto);
+            newStockCycle.CreatedBy = _userContextService.GetCurrentUserId();
+            newStockCycle.CreatedAt = DateTimeOffset.UtcNow;
             var cycleId = await _repository.OpenCycleAsync(newStockCycle);
             return cycleId;
         }
 
         public async Task CloseCycleAsync(Guid id)
         {
-            await _repository.CloseCycleAsync(id);
+            await _repository.CloseCycleAsync(id, _userContextService.GetCurrentUserId());
         }
 
         public async Task RemoveAsync(Guid id)

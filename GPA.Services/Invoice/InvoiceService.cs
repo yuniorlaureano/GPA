@@ -9,6 +9,7 @@ using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
+using GPA.Services.Security;
 using GPA.Utils;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -38,6 +39,7 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoiceRepository _repository;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
         private readonly IAddonRepository _addonRepository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
         public InvoiceService(
@@ -47,6 +49,7 @@ namespace GPA.Business.Services.Invoice
             IStockRepository stockRepository,
             IReceivableAccountRepository receivableAccountRepository,
             IAddonRepository addonRepository,
+            IUserContextService userContextService,
             IMapper mapper)
         {
             _clientRepository = clientRepository;
@@ -55,6 +58,7 @@ namespace GPA.Business.Services.Invoice
             _stockRepository = stockRepository;
             _receivableAccountRepository = receivableAccountRepository;
             _addonRepository = addonRepository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -119,6 +123,8 @@ namespace GPA.Business.Services.Invoice
             InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
 
             invoice.PaymentStatus = GetPaymentStatus(invoice);
+            invoice.CreatedBy = _userContextService.GetCurrentUserId();
+            invoice.CreatedAt = DateTimeOffset.UtcNow;
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(savedInvoice);
@@ -160,7 +166,8 @@ namespace GPA.Business.Services.Invoice
                 newInvoice.PaymentStatus = GetPaymentStatus(newInvoice, invoiceDetails);
 
                 InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
-
+                newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
+                newInvoice.UpdatedAt = DateTimeOffset.UtcNow;
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
@@ -175,7 +182,7 @@ namespace GPA.Business.Services.Invoice
 
         public async Task CancelAsync(Guid id)
         {
-            await _repository.CancelAsync(id);
+            await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
         }
 
         private Stock ToStock(GPA.Common.Entities.Invoice.Invoice invoice)
@@ -224,6 +231,8 @@ namespace GPA.Business.Services.Invoice
         {
             if (invoice.Status == InvoiceStatus.Saved)
             {
+                invoice.CreatedBy = _userContextService.GetCurrentUserId();
+                invoice.CreatedAt = DateTimeOffset.UtcNow;
                 await _stockRepository.AddAsync(ToStock(invoice));
             }
         }
@@ -240,7 +249,8 @@ namespace GPA.Business.Services.Invoice
                     PendingPayment = payment - invoice.Payment,
                     Date = DateTime.Now,
                 };
-
+                paymentDetail.CreatedBy = _userContextService.GetCurrentUserId();
+                paymentDetail.CreatedAt = DateTimeOffset.UtcNow;
                 await _receivableAccountRepository.AddAsync(paymentDetail);
             }
         }

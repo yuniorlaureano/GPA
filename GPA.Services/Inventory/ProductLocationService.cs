@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -23,11 +24,16 @@ namespace GPA.Business.Services.Inventory
     public class ProductLocationService : IProductLocationService
     {
         private readonly IProductLocationRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public ProductLocationService(IProductLocationRepository repository, IMapper mapper)
+        public ProductLocationService(
+            IProductLocationRepository repository,
+            IUserContextService userContextService, 
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -53,6 +59,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<ProductLocationDto> AddAsync(ProductLocationDto dto)
         {
             var newProductLocation = _mapper.Map<ProductLocation>(dto);
+            newProductLocation.CreatedBy = _userContextService.GetCurrentUserId();
+            newProductLocation.CreatedAt = DateTimeOffset.UtcNow;
             var savedProductLocation = await _repository.AddAsync(newProductLocation);
             return _mapper.Map<ProductLocationDto>(savedProductLocation);
         }
@@ -66,6 +74,8 @@ namespace GPA.Business.Services.Inventory
 
             var newProductLocation = _mapper.Map<ProductLocation>(dto);
             newProductLocation.Id = dto.Id.Value;
+            newProductLocation.UpdatedBy = _userContextService.GetCurrentUserId();
+            newProductLocation.UpdatedAt = DateTimeOffset.UtcNow;
             var savedProductLocation = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
             await _repository.UpdateAsync(savedProductLocation, newProductLocation, (entityState, _) =>
             {

@@ -8,7 +8,7 @@ namespace GPA.Data.Invoice
     public interface IInvoiceRepository : IRepository<GPA.Common.Entities.Invoice.Invoice>
     {
         Task UpdateAsync(GPA.Common.Entities.Invoice.Invoice model, IEnumerable<InvoiceDetails> invoiceDetails);
-        Task CancelAsync(Guid id);
+        Task CancelAsync(Guid id, Guid updatedBy);
     }
 
     public class InvoiceRepository : Repository<GPA.Common.Entities.Invoice.Invoice>, IInvoiceRepository
@@ -40,7 +40,7 @@ namespace GPA.Data.Invoice
             }
         }
 
-        public async Task CancelAsync(Guid id)
+        public async Task CancelAsync(Guid id, Guid updatedBy)
         {
             using var transaction = _context.Database.BeginTransaction();
 
@@ -54,7 +54,8 @@ namespace GPA.Data.Invoice
                 await _context.Invoices.Where(x => x.Id == id).ExecuteUpdateAsync(
                     setter => setter
                         .SetProperty(x => x.Status, InvoiceStatus.Cancel)
-                        .SetProperty(x => x.UpdatedAt, DateTime.Now)
+                        .SetProperty(x => x.UpdatedAt, DateTimeOffset.UtcNow)
+                        .SetProperty(x => x.UpdatedBy, updatedBy)
                 );
 
                 var stock = new Stock
@@ -64,10 +65,14 @@ namespace GPA.Data.Invoice
                     Date = DateTime.Now,
                     ReasonId = (int)ReasonTypes.Return,
                     Status = StockStatus.Saved,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedBy = updatedBy,
                     StockDetails = invoice.InvoiceDetails.Select(x => new StockDetails
                     {
                         Quantity = x.Quantity,
                         ProductId = x.ProductId,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        CreatedBy = updatedBy
                     }).ToList()
                 };
 

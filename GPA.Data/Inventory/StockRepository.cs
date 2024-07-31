@@ -14,7 +14,7 @@ namespace GPA.Data.Inventory
         Task UpdateAsync(Stock model, IEnumerable<StockDetails> stockDetails);
         Task<IEnumerable<Existence>> GetExistenceAsync(int page = 1, int pageSize = 10);
         Task<int> GetExistenceCountAsync();
-        Task CancelAsync(Guid id);
+        Task CancelAsync(Guid id, Guid updatedBy);
     }
 
     public class StockRepository : Repository<Stock>, IStockRepository
@@ -196,7 +196,7 @@ namespace GPA.Data.Inventory
             }
         }
 
-        public async Task CancelAsync(Guid id)
+        public async Task CancelAsync(Guid id, Guid updatedBy)
         {
             var stock = await _context.Stocks.FirstAsync(x => x.Id == id);
             var canCancel = 
@@ -208,7 +208,8 @@ namespace GPA.Data.Inventory
                     .ExecuteUpdateAsync(setter =>
                         setter
                             .SetProperty(x => x.Status, StockStatus.Canceled)
-                            .SetProperty(x => x.UpdatedAt, DateTime.Now)
+                            .SetProperty(x => x.UpdatedAt, DateTimeOffset.Now)
+                            .SetProperty(x => x.UpdatedBy, updatedBy)
                         );
             }
         }

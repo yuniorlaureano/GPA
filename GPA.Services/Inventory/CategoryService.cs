@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -23,11 +24,16 @@ namespace GPA.Business.Services.Inventory
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public CategoryService(ICategoryRepository repository, IMapper mapper)
+        public CategoryService(
+            ICategoryRepository repository,
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -54,6 +60,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<CategoryDto> AddAsync(CategoryDto dto)
         {
             var category = _mapper.Map<Category>(dto);
+            category.CreatedBy = _userContextService.GetCurrentUserId();
+            category.CreatedAt = DateTimeOffset.UtcNow;
             var savedCategory = await _repository.AddAsync(category);
             return _mapper.Map<CategoryDto>(savedCategory);
         }
@@ -67,6 +75,8 @@ namespace GPA.Business.Services.Inventory
 
             var newCategory = _mapper.Map<Category>(dto);
             newCategory.Id = dto.Id.Value;
+            newCategory.UpdatedBy = _userContextService.GetCurrentUserId();
+            newCategory.UpdatedAt = DateTimeOffset.UtcNow;
             var savedCategory = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
             await _repository.UpdateAsync(savedCategory, newCategory, (entityState, _) =>
             {

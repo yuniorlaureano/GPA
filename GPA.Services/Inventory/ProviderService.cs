@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -24,11 +25,16 @@ namespace GPA.Business.Services.Inventory
     public class ProviderService : IProviderService
     {
         private readonly IProviderRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public ProviderService(IProviderRepository repository, IMapper mapper)
+        public ProviderService(
+            IProviderRepository repository, 
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -54,6 +60,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<ProviderDto> AddAsync(ProviderDto dto)
         {
             var newProvider = _mapper.Map<Provider>(dto);
+            newProvider.CreatedBy = _userContextService.GetCurrentUserId();
+            newProvider.CreatedAt = DateTimeOffset.UtcNow;
             var savedProvider = await _repository.AddAsync(newProvider);
             return _mapper.Map<ProviderDto>(savedProvider);
         }
@@ -67,6 +75,8 @@ namespace GPA.Business.Services.Inventory
 
             var newProvider = _mapper.Map<Provider>(dto);
             newProvider.Id = dto.Id.Value;
+            newProvider.UpdatedBy = _userContextService.GetCurrentUserId();
+            newProvider.UpdatedAt = DateTimeOffset.UtcNow;
             var savedProvider = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
             await _repository.UpdateAsync(savedProvider, newProvider, (entityState, _) =>
             {

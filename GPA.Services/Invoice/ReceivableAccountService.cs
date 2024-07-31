@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
+using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -30,11 +31,17 @@ namespace GPA.Business.Services.Invoice
     {
         private readonly IReceivableAccountRepository _repository;
         private readonly IInvoiceRepository _invoiceRepository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public ReceivableAccountService(IReceivableAccountRepository repository, IMapper mapper, IInvoiceRepository invoiceRepository)
+        public ReceivableAccountService(
+            IReceivableAccountRepository repository,
+            IUserContextService userContextService,
+            IInvoiceRepository invoiceRepository,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
             _invoiceRepository = invoiceRepository;
         }
@@ -98,6 +105,8 @@ namespace GPA.Business.Services.Invoice
         public async Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto dto)
         {
             var payment = _mapper.Map<ClientPaymentsDetails>(dto);
+            payment.CreatedBy = _userContextService.GetCurrentUserId();
+            payment.CreatedAt = DateTimeOffset.UtcNow;
             var savedClient = await _repository.AddAsync(payment);
             return _mapper.Map<ClientPaymentsDetailDto>(savedClient);
         }
@@ -153,6 +162,8 @@ namespace GPA.Business.Services.Invoice
         private async Task MarkInvoiceAsPayed(GPA.Common.Entities.Invoice.Invoice invoice)
         {
             invoice.PaymentStatus = PaymentStatus.Payed;
+            invoice.UpdatedBy = _userContextService.GetCurrentUserId();
+            invoice.UpdatedAt = DateTimeOffset.UtcNow;
             await _invoiceRepository.UpdateAsync(invoice, invoice, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;
@@ -164,7 +175,8 @@ namespace GPA.Business.Services.Invoice
             var pendingPayment = paymentDetail.PendingPayment - dto.Payment;
             paymentDetail.Payment = dto.Payment;
             paymentDetail.Date = new DateTime(dto.Date.Year, dto.Date.Month, dto.Date.Day);
-
+            paymentDetail.UpdatedBy = _userContextService.GetCurrentUserId();
+            paymentDetail.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(paymentDetail, paymentDetail, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

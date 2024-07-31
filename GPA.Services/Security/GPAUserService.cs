@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Security
@@ -25,12 +26,18 @@ namespace GPA.Business.Services.Security
     {
         private readonly IGPAUserRepository _repository;
         private readonly IGPAProfileRepository _profileRepository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public GPAUserService(IGPAUserRepository repository, IGPAProfileRepository profileRepository, IMapper mapper)
+        public GPAUserService(
+            IGPAUserRepository repository,
+            IGPAProfileRepository profileRepository,
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
             _profileRepository = profileRepository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -41,8 +48,8 @@ namespace GPA.Business.Services.Security
             if (dto is not null)
             {
                 var profiles = await _profileRepository.GetProfilesByUserId(entity.Id);
-                dto.Profiles = profiles is null ? 
-                    dto.Profiles : 
+                dto.Profiles = profiles is null ?
+                    dto.Profiles :
                     _mapper.Map<List<RawProfileDto>>(profiles);
             }
             return dto;
@@ -65,6 +72,8 @@ namespace GPA.Business.Services.Security
         public async Task<GPAUserDto> AddAsync(GPAUserUpdateDto dto)
         {
             var entity = _mapper.Map<GPAUser>(dto);
+            entity.CreatedAt = DateTimeOffset.UtcNow;
+            entity.CreatedBy = _userContextService.GetCurrentUserId();
             var savedEntity = await _repository.AddAsync(entity);
             return _mapper.Map<GPAUserDto>(savedEntity);
         }
@@ -78,6 +87,8 @@ namespace GPA.Business.Services.Security
 
             var newEntity = _mapper.Map<GPAUser>(dto);
             newEntity.Id = dto.Id.Value;
+            newEntity.UpdatedAt = DateTimeOffset.UtcNow;
+            newEntity.UpdatedBy = _userContextService.GetCurrentUserId();
             var savedEntity = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
             await _repository.UpdateAsync(savedEntity, newEntity, (entityState, _) =>
             {

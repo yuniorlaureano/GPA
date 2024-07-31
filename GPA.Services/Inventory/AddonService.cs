@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -23,11 +24,16 @@ namespace GPA.Business.Services.Inventory
     public class AddonService : IAddonService
     {
         private readonly IAddonRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public AddonService(IAddonRepository repository, IMapper mapper)
+        public AddonService(
+            IAddonRepository repository,
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -54,6 +60,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<AddonDto> AddAsync(AddonDto dto)
         {
             var addon = _mapper.Map<Addon>(dto);
+            addon.CreatedBy = _userContextService.GetCurrentUserId();
+            addon.CreatedAt = DateTimeOffset.UtcNow;
             var savedAddon = await _repository.AddAsync(addon);
             return _mapper.Map<AddonDto>(savedAddon);
         }
@@ -68,6 +76,8 @@ namespace GPA.Business.Services.Inventory
             var newAddon = _mapper.Map<Addon>(dto);
             newAddon.Id = dto.Id.Value;
             var savedAddon = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            newAddon.UpdatedBy = _userContextService.GetCurrentUserId();
+            newAddon.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(savedAddon, newAddon, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

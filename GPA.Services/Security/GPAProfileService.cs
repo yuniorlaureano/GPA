@@ -3,8 +3,8 @@ using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
-using GPA.Entities;
 using GPA.Entities.Unmapped;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Security
@@ -27,11 +27,16 @@ namespace GPA.Business.Services.Security
     public class GPAProfileService : IGPAProfileService
     {
         private readonly IGPAProfileRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public GPAProfileService(IGPAProfileRepository repository, IMapper mapper)
+        public GPAProfileService(
+            IGPAProfileRepository repository,
+            IUserContextService userContextService,
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -86,6 +91,8 @@ namespace GPA.Business.Services.Security
             {
                 Name = dto.Name,
             };
+            entity.CreatedBy = _userContextService.GetCurrentUserId();
+            entity.CreatedAt = DateTimeOffset.UtcNow;
             var savedEntity = await _repository.AddAsync(entity);
             return new GPAProfileDto
             {
@@ -103,7 +110,7 @@ namespace GPA.Business.Services.Security
             }
 
             var savedEntity = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id);
-            
+
             if (savedEntity?.Name == "administrador")
             {
                 throw new InvalidOperationException("No puede modificar el perfil administrador");
@@ -111,6 +118,8 @@ namespace GPA.Business.Services.Security
 
             savedEntity.Name = dto.Name;
             savedEntity.Value = dto.Value;
+            savedEntity.UpdatedBy = _userContextService.GetCurrentUserId();
+            savedEntity.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(savedEntity, savedEntity, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Services.Security;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -23,11 +24,16 @@ namespace GPA.Business.Services.Inventory
     public class StoreService : IStoreService
     {
         private readonly IStoreRepository _repository;
+        private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
 
-        public StoreService(IStoreRepository repository, IMapper mapper)
+        public StoreService(
+            IStoreRepository repository, 
+            IUserContextService userContextService, 
+            IMapper mapper)
         {
             _repository = repository;
+            _userContextService = userContextService;
             _mapper = mapper;
         }
 
@@ -53,6 +59,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<StoreDto> AddAsync(StoreDto dto)
         {
             var store = _mapper.Map<Store>(dto);
+            store.CreatedBy = _userContextService.GetCurrentUserId();
+            store.CreatedAt = DateTimeOffset.UtcNow;
             var savedStore = await _repository.AddAsync(store);
             return _mapper.Map<StoreDto>(savedStore);
         }
@@ -67,6 +75,8 @@ namespace GPA.Business.Services.Inventory
             var newStore = _mapper.Map<Store>(dto);
             newStore.Id = dto.Id.Value;
             var savedStore = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            newStore.UpdatedBy = _userContextService.GetCurrentUserId();
+            newStore.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(savedStore, newStore, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

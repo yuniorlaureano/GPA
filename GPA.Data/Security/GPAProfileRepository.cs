@@ -46,11 +46,13 @@ namespace GPA.Data.Security
 		                ,[ProfileId]
 		                ,[CreatedBy]
                         ,[Deleted]
+                        ,[CreatedAt]
 	                ) VALUES(
 		                 @UserId,
 		                 @ProfileId,
 		                 @CreatedBy,
-                         0
+                         0,
+                         GETUTCDATE()   
 	                )
                 END", parameters);
         }
