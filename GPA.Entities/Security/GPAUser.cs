@@ -6,6 +6,9 @@ namespace GPA.Common.Entities.Security
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public string LastTOTPCode { get; set; }
+        public byte TOTPAccessCodeAttempts { get; set; }
+        public DateTimeOffset TOTPAccessCodeAttemptsDate { get; set; }
         public bool Deleted { get; set; }
 
         public ICollection<GPAUserRole> UserRoles { get; set; }

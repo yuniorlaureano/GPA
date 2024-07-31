@@ -6,6 +6,7 @@ using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Security;
 using GPA.Services.General.Email;
+using GPA.Services.General.Security;
 using GPA.Utils.Constants.Claims;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IGPAProfileService _gPAProfileService;
         private readonly IValidator<SignUpDto> _signUpValidator;
         private readonly IEmailServiceFactory _emailServiceFactory;
+        private readonly IAesHelper _aesHelper;
 
         public AuthController(
             IGPAJwtService jwtService,
@@ -35,7 +37,8 @@ namespace GPA.Api.Controllers.Security
             GPADbContext context,
             IGPAProfileService gPAProfileService,
             IValidator<SignUpDto> signUpValidator,
-            IEmailServiceFactory emailServiceFactory)
+            IEmailServiceFactory emailServiceFactory,
+            IAesHelper aesHelper)
         {
             _jwtService = jwtService;
             _userManager = userManager;
@@ -43,11 +46,12 @@ namespace GPA.Api.Controllers.Security
             _gPAProfileService = gPAProfileService;
             _signUpValidator = signUpValidator;
             _emailServiceFactory = emailServiceFactory;
+            _aesHelper = aesHelper;
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(GPAAuthDto model)
+        public async Task<IActionResult> Login(LogInDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -112,6 +116,7 @@ namespace GPA.Api.Controllers.Security
                 LastName = model.LastName,
                 Email = model.Email,
                 UserName = model.UserName,
+                SecurityStamp = Guid.NewGuid().ToString()
             };
             var passwordHasher = new PasswordHasher<GPAUser>();
             entity.PasswordHash = passwordHasher.HashPassword(entity, model.Password);
@@ -220,8 +225,15 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            var timeSpan = DateTimeOffset.Now - user.TOTPAccessCodeAttemptsDate;
+            if (user.TOTPAccessCodeAttempts == 3 && timeSpan.Minutes < 1)
+            {
+                ModelState.AddModelError("usuario", "Debe esperar un minuto para volver a intentar");
+                return BadRequest(ModelState);
+            }
+
             var emailProvider = new EmailTokenProvider<GPAUser>();
-            var token = await emailProvider.GenerateAsync("Email", _userManager, user);
+            var token = await emailProvider.GenerateAsync("password-reset", _userManager, user);
 
             var message = new EmailMessage
             {
@@ -230,9 +242,67 @@ namespace GPA.Api.Controllers.Security
                 To = new List<string> { email },
             };
 
+            user.LastTOTPCode = _aesHelper.Encrypt(token);
+            user.TOTPAccessCodeAttempts = 0;
+            user.TOTPAccessCodeAttemptsDate = DateTimeOffset.Now;
+            await _userManager.UpdateAsync(user);
+
             await _emailServiceFactory.SendMessageAsync(message);
-                        
+
             return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] PasswordResetDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (model.Password != model.ConfirmPassword)
+            {
+                ModelState.AddModelError("usuario", "Las contraseñas deben coincidir");
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByNameAsync(model.userName);
+            if (user is null)
+            {
+                ModelState.AddModelError("usuario", "No existe usuario registrado con ese correo");
+                return BadRequest(ModelState);
+            }
+
+            if (user.TOTPAccessCodeAttempts == 3)
+            {
+                ModelState.AddModelError("usuario", "Máximo de intentos alcanzados");
+                ModelState.AddModelError("usuario", "Debe solicitar otro código de verificación");
+                return BadRequest(ModelState);
+            }
+
+            var emailProvider = new EmailTokenProvider<GPAUser>();
+            var isTOTPCodeValid = await emailProvider.ValidateAsync("password-reset", model.Code, _userManager, user);
+
+            if (!isTOTPCodeValid || model.Code != _aesHelper.Decrypt(user.LastTOTPCode))
+            {
+                await UpdateTOTPCodeAttempts(user);
+                ModelState.AddModelError("usuario", "El código ingresado no es válido.");
+                ModelState.AddModelError("usuario", "Debe ingresar el código que recibió vía correo");
+                return BadRequest(ModelState);
+            }
+
+            var passwordHasher = new PasswordHasher<GPAUser>();
+            user.SecurityStamp = Guid.NewGuid().ToString();
+            user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
+            await _userManager.UpdateAsync(user);
+            return Ok();
+        }
+
+        private async Task UpdateTOTPCodeAttempts(GPAUser user)
+        {
+            user.TOTPAccessCodeAttempts++;
+            await _userManager.UpdateAsync(user);
         }
 
         private async Task<string> AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)

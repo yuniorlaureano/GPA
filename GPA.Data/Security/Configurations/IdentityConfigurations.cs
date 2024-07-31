@@ -15,6 +15,10 @@ namespace GPA.Data.Security.Configurations
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.Property(b => b.UserName).HasMaxLength(100);
                 b.Property(b => b.LastName).HasMaxLength(100);
+                b.Property(b => b.LastTOTPCode).HasMaxLength(256).IsRequired(false);
+                b.Property(b => b.TOTPAccessCodeAttempts).HasDefaultValue(0);
+                b.Property(b => b.TOTPAccessCodeAttemptsDate);
+                b.Property(b => b.PasswordHash).HasMaxLength(256);
                 b.Property(b => b.UserName).HasMaxLength(30);
                 b.Property(b => b.Email).HasMaxLength(254);
 
