@@ -39,16 +39,16 @@ namespace GPA.Invoice.Api.Controllers
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _service.GetAllAsync(search));
+            return Ok(await _service.GetAllAsync(filter));
         }
 
         [HttpGet("summary")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Read)]
-        public async Task<IActionResult> GetReceivableSummary([FromQuery] SearchDto search)
+        public async Task<IActionResult> GetReceivableSummary([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _service.GetReceivableSummaryAsync(search));
+            return Ok(await _service.GetReceivableSummaryAsync(filter));
         }
 
         [HttpPost()]

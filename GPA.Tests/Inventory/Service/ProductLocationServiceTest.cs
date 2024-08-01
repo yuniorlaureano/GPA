@@ -49,7 +49,7 @@ namespace GPA.Tests.Inventory.Service
                 await _productLocationService.AddAsync(productLocation);
             }
 
-            var availables = await _productLocationService.GetAllAsync(new GPA.Common.DTOs.SearchDto { Page = 1, PageSize = 3 });
+            var availables = await _productLocationService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 

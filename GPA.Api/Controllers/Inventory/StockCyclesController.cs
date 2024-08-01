@@ -33,9 +33,9 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.StockCycle}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockCycleService.GetAllAsync(search));
+            return Ok(await _stockCycleService.GetAllAsync(filter));
         }
 
         [HttpPost("open")]

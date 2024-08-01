@@ -32,9 +32,9 @@ namespace GPA.Api.Controllers.Security
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _gPAProfileService.GetAllAsync(search));
+            return Ok(await _gPAProfileService.GetAllAsync(filter));
         }
 
         [HttpGet("master-profile")]
@@ -100,9 +100,9 @@ namespace GPA.Api.Controllers.Security
 
         [HttpGet("{profileId}/users")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
-        public async Task<IActionResult> GetUsers(Guid profileId, Guid userId, [FromQuery] SearchDto search)
+        public async Task<IActionResult> GetUsers(Guid profileId, Guid userId, [FromQuery] RequestFilterDto filter)
         {
-            var users = await _gPAProfileService.GetUsers(profileId, search);
+            var users = await _gPAProfileService.GetUsers(profileId, filter);
             return Ok(users);
         }
 

@@ -12,11 +12,11 @@ namespace GPA.Business.Services.Security
     public interface IGPAProfileService
     {
         public Task<GPAProfileDto?> GetByIdAsync(Guid id);
-        public Task<ResponseDto<GPAProfileDto>> GetAllAsync(SearchDto search, Expression<Func<GPAProfile, bool>>? expression = null);
+        public Task<ResponseDto<GPAProfileDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAProfile, bool>>? expression = null);
         public Task<GPAProfileDto?> AddAsync(GPAProfileDto dto);
         public Task UpdateAsync(GPAProfileDto dto);
         Task AssignProfileToUser(Guid profileId, Guid userId);
-        Task<ResponseDto<RawUser>> GetUsers(Guid profileId, SearchDto search);
+        Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto search);
         public Task RemoveAsync(Guid id);
         public Task UnAssignProfileFromUser(Guid profileId, Guid userId);
         Task<List<GPAProfileDto>> GetProfilesByUserId(Guid userId);
@@ -67,7 +67,7 @@ namespace GPA.Business.Services.Security
             return profilesDto;
         }
 
-        public async Task<ResponseDto<GPAProfileDto>> GetAllAsync(SearchDto search, Expression<Func<GPAProfile, bool>>? expression = null)
+        public async Task<ResponseDto<GPAProfileDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAProfile, bool>>? expression = null)
         {
             var entities = await _repository.GetAllAsync(query =>
             {
@@ -132,7 +132,7 @@ namespace GPA.Business.Services.Security
             await _repository.AssignProfileToUser(profileId, userId, createdBy);
         }
 
-        public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, SearchDto search)
+        public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto search)
         {
             return new ResponseDto<RawUser>
             {

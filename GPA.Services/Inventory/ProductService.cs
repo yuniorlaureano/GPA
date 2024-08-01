@@ -13,7 +13,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<ProductDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<ProductDto>> GetAllAsync(SearchDto search, Expression<Func<Product, bool>>? expression = null);
+        public Task<ResponseDto<ProductDto>> GetAllAsync(RequestFilterDto search);
 
         public Task<ProductDto?> AddAsync(ProductCreationDto ProductDto);
 
@@ -58,8 +58,17 @@ namespace GPA.Business.Services.Inventory
             return productDto;
         }
 
-        public async Task<ResponseDto<ProductDto>> GetAllAsync(SearchDto search, Expression<Func<Product, bool>>? expression = null)
+        public async Task<ResponseDto<ProductDto>> GetAllAsync(RequestFilterDto search)
         {
+            Expression<Func<Product, bool>>? expression = null;
+            if (search.Search is { Length: > 0 })
+            {
+                expression = x =>
+                    x.Code.Contains(search.Search) ||
+                    x.Name.Contains(search.Search) ||
+                    x.Description.Contains(search.Search);
+            }
+
             var products = await _repository.GetAllAsync(query => 
             {
                 return query.Include(x => x.ProductLocation)

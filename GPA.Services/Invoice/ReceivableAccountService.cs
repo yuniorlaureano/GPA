@@ -16,9 +16,9 @@ namespace GPA.Business.Services.Invoice
 
         Task<InvoiceWithReceivableAccountsDto?> GetByInvoiceIdAsync(Guid id);
 
-        Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(SearchDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
+        Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
 
-        Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(SearchDto search);
+        Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search);
 
         Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto clientDto);
 
@@ -75,7 +75,7 @@ namespace GPA.Business.Services.Invoice
             return invoiceWithReceivableAccounts;
         }
 
-        public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(SearchDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
+        public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
         {
             var categories = await _repository.GetAllAsync(query =>
             {
@@ -91,7 +91,7 @@ namespace GPA.Business.Services.Invoice
             };
         }
 
-        public async Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(SearchDto search)
+        public async Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search)
         {
             var receivables = await _repository.GetReceivableSummaryAsync(search.Page, search.PageSize);
 

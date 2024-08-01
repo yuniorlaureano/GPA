@@ -35,9 +35,9 @@ namespace GPA.Api.Controllers.Security
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _gPAUserService.GetAllAsync(search));
+            return Ok(await _gPAUserService.GetAllAsync(filter));
         }
 
         [HttpPost()]

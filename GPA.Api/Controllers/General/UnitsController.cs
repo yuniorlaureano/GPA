@@ -28,9 +28,9 @@ namespace GPA.General.Api.Controllers
         }
 
         [HttpGet()]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _unitService.GetAllAsync(search));
+            return Ok(await _unitService.GetAllAsync(filter));
         }
 
         [HttpPost()]

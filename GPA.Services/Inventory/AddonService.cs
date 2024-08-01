@@ -12,7 +12,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<AddonDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<AddonDto>> GetAllAsync(SearchDto search, Expression<Func<Addon, bool>>? expression = null);
+        public Task<ResponseDto<AddonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Addon, bool>>? expression = null);
 
         public Task<AddonDto?> AddAsync(AddonDto addonDto);
 
@@ -43,7 +43,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<AddonDto>(addon);
         }
 
-        public async Task<ResponseDto<AddonDto>> GetAllAsync(SearchDto search, Expression<Func<Addon, bool>>? expression = null)
+        public async Task<ResponseDto<AddonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Addon, bool>>? expression = null)
         {
             var categories = await _repository.GetAllAsync(query =>
             {

@@ -32,9 +32,9 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _addonService.GetAllAsync(search));
+            return Ok(await _addonService.GetAllAsync(filter));
         }
 
         [HttpPost()]

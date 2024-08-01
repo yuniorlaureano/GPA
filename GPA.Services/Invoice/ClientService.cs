@@ -13,7 +13,7 @@ namespace GPA.Business.Services.Invoice
     {
         public Task<ClientDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<ClientDto>> GetAllAsync(SearchDto search, Expression<Func<Client, bool>>? expression = null);
+        public Task<ResponseDto<ClientDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Client, bool>>? expression = null);
 
         public Task<ClientDto?> AddAsync(ClientDto clientDto);
 
@@ -57,7 +57,7 @@ namespace GPA.Business.Services.Invoice
             return clientDto;
         }
 
-        public async Task<ResponseDto<ClientDto>> GetAllAsync(SearchDto search, Expression<Func<Client, bool>>? expression = null)
+        public async Task<ResponseDto<ClientDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Client, bool>>? expression = null)
         {
             var clients = await _repository.GetAllAsync(query =>
             {

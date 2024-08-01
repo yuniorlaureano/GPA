@@ -65,7 +65,7 @@ namespace GPA.Tests.Inventory.Service
                 await _providerService.AddAsync(provider);
             }
 
-            var availables = await _providerService.GetAllAsync(new GPA.Common.DTOs.SearchDto { Page = 1, PageSize = 3 });
+            var availables = await _providerService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 

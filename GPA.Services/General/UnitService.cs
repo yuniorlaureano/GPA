@@ -11,7 +11,7 @@ namespace GPA.Business.Services.General
     {
         public Task<UnitDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<UnitDto>> GetAllAsync(SearchDto search, Expression<Func<Unit, bool>>? expression = null);
+        public Task<ResponseDto<UnitDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Unit, bool>>? expression = null);
 
         public Task<UnitDto?> AddAsync(UnitDto unitDto);
 
@@ -37,7 +37,7 @@ namespace GPA.Business.Services.General
             return _mapper.Map<UnitDto>(unit);
         }
 
-        public async Task<ResponseDto<UnitDto>> GetAllAsync(SearchDto search, Expression<Func<Unit, bool>>? expression = null)
+        public async Task<ResponseDto<UnitDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Unit, bool>>? expression = null)
         {
             var categories = await _repository.GetAllAsync(query =>
             {

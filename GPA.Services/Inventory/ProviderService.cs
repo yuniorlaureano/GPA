@@ -13,7 +13,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<ProviderDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<ProviderDto>> GetAllAsync(SearchDto search, Expression<Func<Provider, bool>>? expression = null);
+        public Task<ResponseDto<ProviderDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Provider, bool>>? expression = null);
 
         public Task<ProviderDto?> AddAsync(ProviderDto providerDto);
 
@@ -44,7 +44,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<ProviderDto>(Provider);
         }
 
-        public async Task<ResponseDto<ProviderDto>> GetAllAsync(SearchDto search, Expression<Func<Provider, bool>>? expression = null)
+        public async Task<ResponseDto<ProviderDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Provider, bool>>? expression = null)
         {
             var providers = await _repository.GetAllAsync(query => 
             {

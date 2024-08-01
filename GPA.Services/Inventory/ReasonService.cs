@@ -12,7 +12,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<ReasonDto?> GetByIdAsync(int id);
 
-        public Task<ResponseDto<ReasonDto>> GetAllAsync(SearchDto search, Expression<Func<Reason, bool>>? expression = null);
+        public Task<ResponseDto<ReasonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Reason, bool>>? expression = null);
 
         public Task<ReasonDto?> AddAsync(ReasonDto deasonDto);
 
@@ -43,7 +43,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<ReasonDto>(deason);
         }
 
-        public async Task<ResponseDto<ReasonDto>> GetAllAsync(SearchDto search, Expression<Func<Reason, bool>>? expression = null)
+        public async Task<ResponseDto<ReasonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Reason, bool>>? expression = null)
         {
             var categories = await _repository.GetAllAsync(query =>
             {

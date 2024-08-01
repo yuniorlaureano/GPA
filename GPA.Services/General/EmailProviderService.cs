@@ -13,7 +13,7 @@ namespace GPA.Services.General
     public interface IEmailProviderService
     {
         Task<EmailConfigurationDto?> GetByIdAsync(Guid id);
-        Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(SearchDto search, Expression<Func<EmailConfiguration, bool>>? expression = null);
+        Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(RequestFilterDto search, Expression<Func<EmailConfiguration, bool>>? expression = null);
         Task CreateConfigurationAsync(EmailConfigurationCreationDto dto);
         Task UpdateConfigurationAsync(EmailConfigurationUpdateDto dto);
         Task RemoveAsync(Guid id);
@@ -44,7 +44,7 @@ namespace GPA.Services.General
             return _mapper.Map<EmailConfigurationDto>(emailConfiguration);
         }
 
-        public async Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(SearchDto search, Expression<Func<EmailConfiguration, bool>>? expression = null)
+        public async Task<ResponseDto<EmailConfigurationDto>> GetAllAsync(RequestFilterDto search, Expression<Func<EmailConfiguration, bool>>? expression = null)
         {
             var emailConfigurations = await _repository.GetAllAsync(query =>
             {

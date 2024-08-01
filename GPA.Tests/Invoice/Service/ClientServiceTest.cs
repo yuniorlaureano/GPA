@@ -62,7 +62,7 @@ namespace GPA.Tests.Invoice.Service
                 await _clientService.AddAsync(client);
             }
 
-            var availables = await _clientService.GetAllAsync(new GPA.Common.DTOs.SearchDto { Page = 1, PageSize = 3 });
+            var availables = await _clientService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 

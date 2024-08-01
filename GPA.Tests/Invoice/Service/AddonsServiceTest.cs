@@ -52,7 +52,7 @@ namespace GPA.Tests.Invoice.Service
                 await _addonService.AddAsync(addon);
             }
 
-            var availables = await _addonService.GetAllAsync(new GPA.Common.DTOs.SearchDto { Page = 1, PageSize = 3 });
+            var availables = await _addonService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 

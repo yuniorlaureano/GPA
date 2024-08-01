@@ -13,7 +13,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<StockCycleDto?> GetByIdAsync(Guid id);
         Task<Guid> OpenCycleAsync(StockCycleCreationDto dto);
-        public Task<ResponseDto<StockCycleDto>> GetAllAsync(SearchDto search, Expression<Func<StockCycle, bool>>? expression = null);
+        public Task<ResponseDto<StockCycleDto>> GetAllAsync(RequestFilterDto search, Expression<Func<StockCycle, bool>>? expression = null);
 
         public Task CloseCycleAsync(Guid id);
 
@@ -47,7 +47,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<StockCycleDto>(stockCycle);
         }
 
-        public async Task<ResponseDto<StockCycleDto>> GetAllAsync(SearchDto search, Expression<Func<StockCycle, bool>>? expression = null)
+        public async Task<ResponseDto<StockCycleDto>> GetAllAsync(RequestFilterDto search, Expression<Func<StockCycle, bool>>? expression = null)
         {
             var stocks = await _repository.GetAllAsync(query =>
             {

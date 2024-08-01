@@ -32,23 +32,23 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadTransactions)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetAllAsync(search));
+            return Ok(await _stockService.GetAllAsync(filter));
         }
 
         [HttpGet("products")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadProducts)]
-        public async Task<IActionResult> GetProductCatalog([FromQuery] SearchDto search)
+        public async Task<IActionResult> GetProductCatalog([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetProductCatalogAsync(search.Page, search.PageSize));
+            return Ok(await _stockService.GetProductCatalogAsync(filter.Page, filter.PageSize));
         }
 
         [HttpGet("existance")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadExistence)]
-        public async Task<IActionResult> GetExistance([FromQuery] SearchDto search)
+        public async Task<IActionResult> GetExistance([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetExistanceAsync(search.Page, search.PageSize));
+            return Ok(await _stockService.GetExistanceAsync(filter.Page, filter.PageSize));
         }
 
         [HttpPost("input")]

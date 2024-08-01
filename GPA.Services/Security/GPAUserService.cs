@@ -13,7 +13,7 @@ namespace GPA.Business.Services.Security
     {
         public Task<GPAUserDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<GPAUserDto>> GetAllAsync(SearchDto search, Expression<Func<GPAUser, bool>>? expression = null);
+        public Task<ResponseDto<GPAUserDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAUser, bool>>? expression = null);
 
         public Task<GPAUserDto?> AddAsync(GPAUserUpdateDto dto);
 
@@ -55,7 +55,7 @@ namespace GPA.Business.Services.Security
             return dto;
         }
 
-        public async Task<ResponseDto<GPAUserDto>> GetAllAsync(SearchDto search, Expression<Func<GPAUser, bool>>? expression = null)
+        public async Task<ResponseDto<GPAUserDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAUser, bool>>? expression = null)
         {
             var entities = await _repository.GetAllAsync(query =>
             {

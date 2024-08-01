@@ -32,9 +32,9 @@ namespace GPA.Invoice.Api.Controllers
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Client}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] SearchDto search)
+        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _clientService.GetAllAsync(search));
+            return Ok(await _clientService.GetAllAsync(filter));
         }
 
         [HttpPost()]

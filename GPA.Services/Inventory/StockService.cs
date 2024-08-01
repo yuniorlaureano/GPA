@@ -16,7 +16,7 @@ namespace GPA.Business.Services.Inventory
     {
         public Task<StockWithDetailDto?> GetByIdAsync(Guid id);
 
-        public Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null);
+        public Task<ResponseDto<StockDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null);
 
         public Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
 
@@ -65,7 +65,7 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<StockWithDetailDto>(stock);
         }
 
-        public async Task<ResponseDto<StockDto>> GetAllAsync(SearchDto search, Expression<Func<Stock, bool>>? expression = null)
+        public async Task<ResponseDto<StockDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null)
         {
             var stocks = await _repository.GetAllAsync(query =>
             {
