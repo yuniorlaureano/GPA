@@ -3,6 +3,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Inventory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Inventory.Mappers
@@ -12,6 +13,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
         public MappingPrifles()
         {
             CreateMap<Category, CategoryDto>();
+            CreateMap<RawCategory, CategoryDto>();
             CreateMap<CategoryDto, Category>();
 
             CreateMap<Addon, AddonDto>();
@@ -26,6 +28,13 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => "Unidad"))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => "Category"))
                 .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"))
+                .ForMember(dest => dest.ExpirationDate, opt =>
+                {
+                    opt.PreCondition(src => src.ExpirationDate is not null);
+                    opt.MapFrom(src => new DetailedDate(src.ExpirationDate.Value.Year, src.ExpirationDate.Value.Month, src.ExpirationDate.Value.Day));
+                });
+
+            CreateMap<RawProduct, ProductDto>()
                 .ForMember(dest => dest.ExpirationDate, opt =>
                 {
                     opt.PreCondition(src => src.ExpirationDate is not null);

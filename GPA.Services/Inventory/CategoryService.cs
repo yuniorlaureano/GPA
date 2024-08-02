@@ -4,21 +4,18 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
-using System.Linq.Expressions;
+using GPA.Utils.Database;
+using System.Text;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface ICategoryService
     {
-        public Task<CategoryDto?> GetByIdAsync(Guid id);
-
-        public Task<ResponseDto<CategoryDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Category, bool>>? expression = null);
-
-        public Task<CategoryDto?> AddAsync(CategoryDto categoryDto);
-
-        public Task UpdateAsync(CategoryDto categoryDto);
-
-        public Task RemoveAsync(Guid id);
+        Task<CategoryDto?> GetCategoryAsync(Guid id);
+        Task<ResponseDto<CategoryDto>> GetCategoriesAsync(RequestFilterDto search);
+        Task<CategoryDto?> AddAsync(CategoryDto categoryDto);
+        Task UpdateAsync(CategoryDto categoryDto);
+        Task RemoveAsync(Guid id);
     }
 
     public class CategoryService : ICategoryService
@@ -37,23 +34,18 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<CategoryDto?> GetByIdAsync(Guid id)
+        public async Task<CategoryDto?> GetCategoryAsync(Guid id)
         {
-            var category = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<CategoryDto>(category);
+            return _mapper.Map<CategoryDto>(await _repository.GetCategoryAsync(id));
         }
 
-        public async Task<ResponseDto<CategoryDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Category, bool>>? expression = null)
+        public async Task<ResponseDto<CategoryDto>> GetCategoriesAsync(RequestFilterDto filter)
         {
-            var categories = await _repository.GetAllAsync(query =>
-            {
-                return query.OrderByDescending(x => x.Id)
-                    .Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+            filter.Search = SearchHelper.ConvertSearchToString(filter);
             return new ResponseDto<CategoryDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<CategoryDto>>(categories)
+                Count = await _repository.GetCategoriesCountAsync(filter),
+                Data = _mapper.Map<IEnumerable<CategoryDto>>(await _repository.GetCategoriesAsync(filter))
             };
         }
 

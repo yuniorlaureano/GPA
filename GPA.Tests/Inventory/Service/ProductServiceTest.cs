@@ -49,7 +49,7 @@ namespace GPA.Tests.Inventory.Service
                 .Create();
 
             var dto = await _productService.AddAsync(product);
-            var existing = await _productService.GetByIdAsync(dto.Id.Value);
+            var existing = await _productService.GetProductAsync(dto.Id.Value);
 
             Assert.Equal(dto.Id, existing?.Id);
         }
@@ -78,7 +78,7 @@ namespace GPA.Tests.Inventory.Service
                 await _productService.AddAsync(product);
             }
 
-            var availables = await _productService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _productService.GetProductsAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 
@@ -131,7 +131,7 @@ namespace GPA.Tests.Inventory.Service
 
             await _productService.UpdateAsync(product);
 
-            var updated = await _productService.GetByIdAsync(added.Id.Value);
+            var updated = await _productService.GetProductAsync(added.Id.Value);
 
             Assert.NotEqual(updated.Photo, added.Photo);
         }
@@ -156,7 +156,7 @@ namespace GPA.Tests.Inventory.Service
 
             var added = await _productService.AddAsync(product);
             await _productService.RemoveAsync(added.Id.Value);
-            var existing = await _productService.GetByIdAsync(added.Id.Value);
+            var existing = await _productService.GetProductAsync(added.Id.Value);
 
             Assert.Null(existing);
         }

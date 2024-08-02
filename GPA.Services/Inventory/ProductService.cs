@@ -4,22 +4,21 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+using System.Text;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IProductService
     {
-        public Task<ProductDto?> GetByIdAsync(Guid id);
+        Task<ProductDto?> GetProductAsync(Guid id);
 
-        public Task<ResponseDto<ProductDto>> GetAllAsync(RequestFilterDto search);
+        Task<ResponseDto<ProductDto>> GetProductsAsync(RequestFilterDto filter);
 
-        public Task<ProductDto?> AddAsync(ProductCreationDto ProductDto);
+        Task<ProductDto?> AddAsync(ProductCreationDto ProductDto);
 
-        public Task UpdateAsync(ProductCreationDto ProductDto);
+        Task UpdateAsync(ProductCreationDto ProductDto);
 
-        public Task RemoveAsync(Guid id);
+        Task RemoveAsync(Guid id);
     }
 
     public class ProductService : IProductService
@@ -41,14 +40,11 @@ namespace GPA.Business.Services.Inventory
             _addonRepository = addonRepository;
         }
 
-        public async Task<ProductDto?> GetByIdAsync(Guid id)
+        public async Task<ProductDto?> GetProductAsync(Guid id)
         {
-            var product = await _repository.GetByIdAsync(query =>
-            {
-                return query.Include(x => x.ProductLocation).Include(x => x.Category);
-            }, x => x.Id == id);
+            var product = await _repository.GetProductAsync(id);
+            var productDto = _mapper.Map<ProductDto>(await _repository.GetProductAsync(id));
 
-            var productDto = _mapper.Map<ProductDto>(product);
             if (product is not null)
             {
                 var addons = await _addonRepository.GetAddonsByProductId(product.Id);
@@ -58,30 +54,13 @@ namespace GPA.Business.Services.Inventory
             return productDto;
         }
 
-        public async Task<ResponseDto<ProductDto>> GetAllAsync(RequestFilterDto search)
+        public async Task<ResponseDto<ProductDto>> GetProductsAsync(RequestFilterDto filter)
         {
-            Expression<Func<Product, bool>>? expression = null;
-            if (search.Search is { Length: > 0 })
-            {
-                expression = x =>
-                    x.Code.Contains(search.Search) ||
-                    x.Name.Contains(search.Search) ||
-                    x.Description.Contains(search.Search);
-            }
-
-            var products = await _repository.GetAllAsync(query => 
-            {
-                return query.Include(x => x.ProductLocation)
-                     .Include(x => x.Category)
-                     .OrderByDescending(x => x.Id)
-                     .Skip(search.PageSize * Math.Abs(search.Page - 1))
-                     .Take(search.PageSize);
-            }, expression);
-
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
             return new ResponseDto<ProductDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<ProductDto>>(products)
+                Count = await _repository.GetProductsCountAsync(filter),
+                Data = _mapper.Map<IEnumerable<ProductDto>>(await _repository.GetProductsAsync(filter))
             };
         }
 
@@ -108,7 +87,7 @@ namespace GPA.Business.Services.Inventory
             var newProduct = _mapper.Map<Product>(dto);
             newProduct.Id = dto.Id.Value;
             var savedProduct = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
-            
+
             await _addonRepository.DeleteAddonsByProductId(dto.Id.Value);
 
             if (dto.Addons is { Length: > 0 })

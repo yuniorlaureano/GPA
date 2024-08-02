@@ -1,5 +1,8 @@
-﻿using GPA.Common.Entities.Inventory;
+﻿using GPA.Common.DTOs;
+using GPA.Common.Entities.Inventory;
 using GPA.Entities.General;
+using GPA.Entities.Unmapped.Inventory;
+using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -85,7 +88,7 @@ namespace GPA.Data.Inventory
             command.Parameters.AddRange(
                    new[]
                    {
-                        new ("@CreatedBy", System.Data.SqlDbType.NVarChar) { Value = model.CreatedBy },
+                        new ("@CreatedBy", System.Data.SqlDbType.UniqueIdentifier) { Value = model.CreatedBy },
                         new ("@StartDate", System.Data.SqlDbType.Date) { Value = model.StartDate },
                         new ("@EndDate", System.Data.SqlDbType.Date) { Value = model.EndDate },
                         new ("@Note", System.Data.SqlDbType.NVarChar) { Value = model.Note },
@@ -172,6 +175,63 @@ namespace GPA.Data.Inventory
 
             await command.ExecuteNonQueryAsync();
             await _context.Database.CloseConnectionAsync();
+        }
+
+        public async Task<RawProduct?> GetStockCycleAsync(Guid id)
+        {
+            var query = @"
+                SELECT 
+	                 [Id]
+                    ,[Note]
+                    ,[StartDate]
+                    ,[EndDate]
+                    ,[IsClose]
+                FROM [GPA].[Inventory].[StockCycles]
+                WHERE 
+                    @Search IS NULL
+                    OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
+                    OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
+                ORDER BY PRO.Id
+                OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
+                    ";
+
+            return await _context.Database.SqlQueryRaw<RawProduct>(
+                query,
+                new SqlParameter("@Id", id)
+            ).FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<RawProduct>> GetStockCyclesAsync(RequestFilterDto filter)
+        {
+            var query = @"
+                SELECT 
+	                 [Id]
+                    ,[Note]
+                    ,[StartDate]
+                    ,[EndDate]
+                    ,[IsClose]
+                FROM [GPA].[Inventory].[StockCycles]
+                WHER Id = @Id
+                    ";
+
+            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<RawProduct>(query, Page, PageSize, Search).ToListAsync();
+        }
+
+
+        public async Task<int> GetStockCycleCountAsync(RequestFilterDto filter)
+        {
+            var query = @"
+                SELECT 
+                     COUNT(1) AS [Value]
+                FROM [GPA].[Inventory].[StockCycles]
+                WHERE 
+                    @Search IS NULL
+                    OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
+                    OR PRO.[Name] LIKE CONCAT('%', @Search, '%') 
+            ";
+            var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
         }
     }
 }
