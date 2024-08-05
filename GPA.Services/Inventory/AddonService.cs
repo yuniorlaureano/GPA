@@ -4,15 +4,14 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
-using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IAddonService
     {
-        public Task<AddonDto?> GetByIdAsync(Guid id);
+        public Task<AddonDto?> GetAddonsAsync(Guid id);
 
-        public Task<ResponseDto<AddonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Addon, bool>>? expression = null);
+        public Task<ResponseDto<AddonDto>> GetAddonsAsync(RequestFilterDto search);
 
         public Task<AddonDto?> AddAsync(AddonDto addonDto);
 
@@ -37,22 +36,18 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<AddonDto?> GetByIdAsync(Guid id)
+        public async Task<AddonDto?> GetAddonsAsync(Guid id)
         {
-            var addon = await _repository.GetByIdAsync(query => query, x => x.Id == id);
+            var addon = await _repository.GetAddonsAsync(id);
             return _mapper.Map<AddonDto>(addon);
         }
 
-        public async Task<ResponseDto<AddonDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Addon, bool>>? expression = null)
+        public async Task<ResponseDto<AddonDto>> GetAddonsAsync(RequestFilterDto search)
         {
-            var categories = await _repository.GetAllAsync(query =>
-            {
-                return query.OrderByDescending(x => x.Id)
-                    .Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+            var categories = await _repository.GetAddonsAsync(search);
             return new ResponseDto<AddonDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetAddonsCountAsync(search),
                 Data = _mapper.Map<IEnumerable<AddonDto>>(categories)
             };
         }

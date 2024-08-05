@@ -19,6 +19,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Addon, AddonDto>();
             CreateMap<AddonDto, Addon>();
             CreateMap<RawAddons, AddonDto>();
+            CreateMap<RawAddonsList, AddonDto>();
 
             CreateMap<ProductAddon, ProductAddonDto>();
             CreateMap<ProductAddonDto, ProductAddon>();
@@ -68,6 +69,13 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                     opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
                 });
 
+            CreateMap<RawStock, StockDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
+                });
+
             CreateMap<StockDto, Stock>();
 
             CreateMap<Stock, StockCreationDto>()
@@ -91,7 +99,15 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                     opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
                 });
 
+            CreateMap<RawStock, StockWithDetailDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.PreCondition(src => src.Date is not null);
+                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
+                });
+
             CreateMap<StockDetails, StockDetailsDto>();
+            CreateMap<RawStockDetails, StockDetailsDto>();
             CreateMap<StockDetailsDto, StockDetails>();
 
             CreateMap<StockDetails, StockCreationDetailDto>();
@@ -110,6 +126,16 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<ExistanceDto, Existence>();
 
             CreateMap<StockCycle, StockCycleDto>()
+                .ForMember(dest => dest.StartDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.StartDate.Year, src.StartDate.Month, src.StartDate.Day));
+                })
+                .ForMember(dest => dest.EndDate, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                });
+
+            CreateMap<RawStockCycle, StockCycleDto>()
                 .ForMember(dest => dest.StartDate, opt =>
                 {
                     opt.MapFrom(src => new DetailedDate(src.StartDate.Year, src.StartDate.Month, src.StartDate.Day));

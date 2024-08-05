@@ -1,6 +1,7 @@
 ﻿using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Inventory;
 
 namespace GPA.Utils
 {

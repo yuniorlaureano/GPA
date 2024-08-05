@@ -1,15 +1,22 @@
-﻿using GPA.Common.DTOs;
+﻿using Azure;
+using GPA.Common.DTOs;
 using GPA.Common.Entities.Inventory;
+using GPA.Dtos.Inventory;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped.Inventory;
+using GPA.Utils;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GPA.Data.Inventory
 {
     public interface IStockCycleRepository : IRepository<StockCycle>
     {
+        Task<RawStockCycle?> GetStockCycleAsync(Guid id);
+        Task<IEnumerable<RawStockCycle>> GetStockCyclesAsync(RequestFilterDto filter);
+        Task<int> GetStockCycleCountAsync(RequestFilterDto filter);
         Task<Guid> OpenCycleAsync(StockCycle model);
 		Task CloseCycleAsync(Guid id, Guid updatedBy);
     }
@@ -177,31 +184,7 @@ namespace GPA.Data.Inventory
             await _context.Database.CloseConnectionAsync();
         }
 
-        public async Task<RawProduct?> GetStockCycleAsync(Guid id)
-        {
-            var query = @"
-                SELECT 
-	                 [Id]
-                    ,[Note]
-                    ,[StartDate]
-                    ,[EndDate]
-                    ,[IsClose]
-                FROM [GPA].[Inventory].[StockCycles]
-                WHERE 
-                    @Search IS NULL
-                    OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-                    OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
-                ORDER BY PRO.Id
-                OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
-                    ";
-
-            return await _context.Database.SqlQueryRaw<RawProduct>(
-                query,
-                new SqlParameter("@Id", id)
-            ).FirstOrDefaultAsync();
-        }
-
-        public async Task<IEnumerable<RawProduct>> GetStockCyclesAsync(RequestFilterDto filter)
+        public async Task<RawStockCycle?> GetStockCycleAsync(Guid id)
         {
             var query = @"
                 SELECT 
@@ -214,24 +197,113 @@ namespace GPA.Data.Inventory
                 WHER Id = @Id
                     ";
 
-            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
-            return await _context.Database.SqlQueryRaw<RawProduct>(query, Page, PageSize, Search).ToListAsync();
+            return await _context.Database
+                .SqlQueryRaw<RawStockCycle>(query, new SqlParameter("@Id", id))
+                .FirstOrDefaultAsync();
         }
 
+        public async Task<IEnumerable<RawStockCycle>> GetStockCyclesAsync(RequestFilterDto filter)
+        {
+            var (DateFilter, IsCloseFilter, StockCycleFilter) = GetFilter(filter);
+
+            var query = @$"
+                SELECT 
+	                 [Id]
+                    ,[Note]
+                    ,[StartDate]
+                    ,[EndDate]
+                    ,[IsClose]
+                FROM [GPA].[Inventory].[StockCycles]
+                WHERE 1 = 1 
+                    {DateFilter}
+                    {IsCloseFilter}
+                ORDER BY Id
+                OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
+                    ";
+
+            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
+            var (From, To, IsClose) = GetFilterParameter(StockCycleFilter);
+            var parameters = new List<SqlParameter>();
+            parameters.AddRange([Page, PageSize]);
+           
+            if (DateFilter is { Length: > 0 })
+            {
+                parameters.AddRange([From, To]);
+            }
+            if (IsCloseFilter is { Length: > 0 })
+            {
+                parameters.Add(IsClose);
+            }
+
+            return await _context.Database.SqlQueryRaw<RawStockCycle>(query, parameters.ToArray()).ToListAsync();
+        }
 
         public async Task<int> GetStockCycleCountAsync(RequestFilterDto filter)
         {
-            var query = @"
+            var (DateFilter, IsCloseFilter, StockCycleFilter) = GetFilter(filter);
+
+            var query = @$"
                 SELECT 
-                     COUNT(1) AS [Value]
+	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[StockCycles]
-                WHERE 
-                    @Search IS NULL
-                    OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-                    OR PRO.[Name] LIKE CONCAT('%', @Search, '%') 
-            ";
-            var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
-            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
+                WHERE 1 = 1 
+                    {DateFilter}
+                    {IsCloseFilter}
+                    ";
+
+            var (From, To, IsClose) = GetFilterParameter(StockCycleFilter);
+            var parameters = new List<SqlParameter>();
+            
+            if (DateFilter is { Length: > 0 })
+            {
+                parameters.AddRange([From, To]);
+            }
+            if (IsCloseFilter is { Length: > 0 })
+            {
+                parameters.Add(IsClose);
+            }
+            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
+        }
+
+        private (SqlParameter From, SqlParameter To, SqlParameter IsClose) GetFilterParameter(StockCycleListFilter? stockCycleFilter)
+        {
+            var from = new SqlParameter("@From", DetailedDateUtil.GetDetailedDate(stockCycleFilter?.From));
+            var to = new SqlParameter("@To", DetailedDateUtil.GetDetailedDate(stockCycleFilter?.To));
+            var isClose = new SqlParameter("@IsClose", stockCycleFilter?.IsClose  == -1 ? null : stockCycleFilter?.IsClose);
+            from.DbType = System.Data.DbType.Date;
+            to.DbType = System.Data.DbType.Date;
+            isClose.DbType = System.Data.DbType.Boolean;
+
+            return (from, to, isClose);
+        }
+
+        private (string DateFilter, string IsCloseFilter, StockCycleListFilter? StockCycleFilter) GetFilter(RequestFilterDto filter)
+        {
+            var search = SearchHelper.ConvertSearchToString(filter);
+            var stockCycleListFilter = new StockCycleListFilter()
+            {
+                DateTypeFilter = "",
+                From = null,
+                To = null,
+            };
+
+            if (search is { Length: > 0 })
+            {
+                stockCycleListFilter = JsonSerializer.Deserialize<StockCycleListFilter>(search, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+            }
+
+            var dateField = "EndDate";
+            if (stockCycleListFilter?.DateTypeFilter == "init")
+            {
+                dateField = "StartDate";
+            }
+
+            var dateFilter = stockCycleListFilter?.From is null || stockCycleListFilter?.To is null ? "" : $"AND {dateField} BETWEEN @From AND @To";
+            var isCloseFilter = stockCycleListFilter?.IsClose is null || stockCycleListFilter?.IsClose == -1 ? "" : "AND IsClose = @IsClose";
+            return (dateFilter, isCloseFilter, stockCycleListFilter);
         }
     }
 }

@@ -27,14 +27,14 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _addonService.GetByIdAsync(id));
+            return Ok(await _addonService.GetAddonsAsync(id));
         }
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _addonService.GetAllAsync(filter));
+            return Ok(await _addonService.GetAddonsAsync(filter));
         }
 
         [HttpPost()]

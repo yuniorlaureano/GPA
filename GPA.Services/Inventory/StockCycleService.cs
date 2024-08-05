@@ -4,19 +4,15 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IStockCycleService
     {
-        public Task<StockCycleDto?> GetByIdAsync(Guid id);
+        public Task<StockCycleDto?> GetStockCycleAsync(Guid id);
         Task<Guid> OpenCycleAsync(StockCycleCreationDto dto);
-        public Task<ResponseDto<StockCycleDto>> GetAllAsync(RequestFilterDto search, Expression<Func<StockCycle, bool>>? expression = null);
-
+        public Task<ResponseDto<StockCycleDto>> GetStockCyclesAsync(RequestFilterDto search);
         public Task CloseCycleAsync(Guid id);
-
         public Task RemoveAsync(Guid id);
     }
 
@@ -28,7 +24,7 @@ namespace GPA.Business.Services.Inventory
 
         public StockCycleService(
             IStockCycleRepository repository,
-            IUserContextService userContextService, 
+            IUserContextService userContextService,
             IMapper mapper)
         {
             _repository = repository;
@@ -36,29 +32,18 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<StockCycleDto?> GetByIdAsync(Guid id)
+        public async Task<StockCycleDto?> GetStockCycleAsync(Guid id)
         {
-            var stockCycle = await _repository.GetByIdAsync(query =>
-            {
-                return query
-                    .Include(x => x.StockCycleDetails);
-            }, x => x.Id == id);
-
+            var stockCycle = await _repository.GetStockCycleAsync(id);
             return _mapper.Map<StockCycleDto>(stockCycle);
         }
 
-        public async Task<ResponseDto<StockCycleDto>> GetAllAsync(RequestFilterDto search, Expression<Func<StockCycle, bool>>? expression = null)
+        public async Task<ResponseDto<StockCycleDto>> GetStockCyclesAsync(RequestFilterDto search)
         {
-            var stocks = await _repository.GetAllAsync(query =>
-            {
-                return query
-                     .OrderByDescending(x => x.Id)
-                     .Skip(search.PageSize * Math.Abs(search.Page - 1))
-                     .Take(search.PageSize);
-            }, expression);
+            var stocks = await _repository.GetStockCyclesAsync(search);
             return new ResponseDto<StockCycleDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetStockCycleCountAsync(search),
                 Data = _mapper.Map<IEnumerable<StockCycleDto>>(stocks)
             };
         }

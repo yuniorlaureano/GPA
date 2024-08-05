@@ -5,9 +5,9 @@ using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Entities.General;
+using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.Security;
 using GPA.Utils;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -15,37 +15,33 @@ namespace GPA.Business.Services.Inventory
     public interface IStockService
     {
         public Task<StockWithDetailDto?> GetByIdAsync(Guid id);
-
-        public Task<ResponseDto<StockDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null);
-
+        public Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null);
         public Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
-
-        Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10);
-
+        Task<ResponseDto<ExistanceDto>> GetExistenceAsync(RequestFilterDto filter);
         public Task<StockDto?> AddAsync(StockCreationDto dto);
-
         public Task UpdateInputAsync(StockCreationDto dto);
         public Task UpdateOutputAsync(StockCreationDto dto);
-
         public Task RemoveAsync(Guid id);
-
         Task CancelAsync(Guid id);
     }
 
     public class StockService : IStockService
     {
         private readonly IAddonRepository _addonRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IUserContextService _userContextService;
         private readonly IStockRepository _repository;
         private readonly IMapper _mapper;
 
         public StockService(
+            IProductRepository productRepository,
             IAddonRepository addonRepository,
             IUserContextService userContextService,
             IStockRepository repository,
             IMapper mapper)
         {
             _addonRepository = addonRepository;
+            _productRepository = productRepository;
             _userContextService = userContextService;
             _repository = repository;
             _mapper = mapper;
@@ -53,32 +49,26 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<StockWithDetailDto?> GetByIdAsync(Guid id)
         {
-            var stock = await _repository.GetByIdAsync(query =>
+            var stock = await _repository.GetStockByIdAsync(id);
+            if (stock == null)
             {
-                return query
-                    .Include(x => x.Provider)
-                    .Include(X => X.Reason)
-                    .Include(x => x.StockDetails)
-                        .ThenInclude(x => x.Product);
-            }, x => x.Id == id);
+                return null;
+            }
 
-            return _mapper.Map<StockWithDetailDto>(stock);
+            var stockDto = _mapper.Map<StockWithDetailDto>(stock);
+            var stockDetails = await _repository.GetStockDetailsByStockIdAsync(id);
+            stockDto.StockDetails = _mapper.Map<ICollection<StockDetailsDto>>(stockDetails);
+            await MapProductsToStockDetails(stockDto, stockDetails);
+
+            return stockDto;
         }
 
-        public async Task<ResponseDto<StockDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null)
+        public async Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null)
         {
-            var stocks = await _repository.GetAllAsync(query =>
-            {
-                return query
-                     .Include(x => x.Provider)
-                     .Include(x => x.Reason)
-                     .OrderByDescending(x => x.Id)
-                     .Skip(search.PageSize * Math.Abs(search.Page - 1))
-                     .Take(search.PageSize);
-            }, expression);
+            var stocks = await _repository.GetStocksAsync(search);
             return new ResponseDto<StockDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetStocksCountAsync(search),
                 Data = _mapper.Map<IEnumerable<StockDto>>(stocks)
             };
         }
@@ -97,12 +87,12 @@ namespace GPA.Business.Services.Inventory
             return productCatalogDto;
         }
 
-        public async Task<ResponseDto<ExistanceDto>> GetExistanceAsync(int page = 1, int pageSize = 10)
+        public async Task<ResponseDto<ExistanceDto>> GetExistenceAsync(RequestFilterDto filter)
         {
-            var productCatalog = await _repository.GetExistenceAsync(page, pageSize);
+            var productCatalog = await _repository.GetExistenceAsync(filter);
             var productCatalogDto = new ResponseDto<ExistanceDto>
             {
-                Count = await _repository.GetExistenceCountAsync(),
+                Count = await _repository.GetExistenceCountAsync(filter),
                 Data = _mapper.Map<IEnumerable<ExistanceDto>>(productCatalog)
             };
 
@@ -231,6 +221,24 @@ namespace GPA.Business.Services.Inventory
                         var (debit, credit) = AddonCalculator.CalculateAddon(product.Price, product.Addons);
                         product.Debit = debit;
                         product.Credit = credit;
+                    }
+                }
+            }
+        }
+
+        private async Task MapProductsToStockDetails(StockWithDetailDto stockDto, IEnumerable<RawStockDetails> stockDetails)
+        {
+            var productIds = stockDetails.Select(x => x.ProductId).ToList();
+            if (productIds is { Count: > 0 })
+            {
+                var products = await _productRepository.GetProductsAsync(productIds);
+                var productDict = products.ToDictionary(x => x.Id, x => x);
+
+                foreach (var detail in stockDto.StockDetails)
+                {
+                    if (productDict.ContainsKey(detail.ProductId))
+                    {
+                        detail.Product = _mapper.Map<ProductDto>(productDict[detail.ProductId]);
                     }
                 }
             }

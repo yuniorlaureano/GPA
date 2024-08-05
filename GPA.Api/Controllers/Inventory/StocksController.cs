@@ -34,7 +34,7 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadTransactions)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetAllAsync(filter));
+            return Ok(await _stockService.GetStocksAsync(filter));
         }
 
         [HttpGet("products")]
@@ -46,9 +46,9 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpGet("existance")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadExistence)]
-        public async Task<IActionResult> GetExistance([FromQuery] RequestFilterDto filter)
+        public async Task<IActionResult> GetExistence([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetExistanceAsync(filter.Page, filter.PageSize));
+            return Ok(await _stockService.GetExistenceAsync(filter));
         }
 
         [HttpPost("input")]
