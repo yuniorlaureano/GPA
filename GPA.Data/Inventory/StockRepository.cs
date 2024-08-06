@@ -7,6 +7,7 @@ using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace GPA.Data.Inventory
@@ -90,7 +91,7 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<Existence>> GetExistenceAsync(RequestFilterDto filter)
         {
-            var (existenceFilterDto, termFilter, typeFilter) = SetFilterParametersIfNotEmpty(filter);
+            var (existenceFilterDto, termFilter, typeFilter) = SetExistenceFilterParametersIfNotEmpty(filter);
 
             var sqlQuery = @$"SELECT 
 	                            SUM(CASE
@@ -136,14 +137,14 @@ namespace GPA.Data.Inventory
             var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
             var parameters = new List<SqlParameter>();
             parameters.AddRange([Page, PageSize]);
-            AddFilterParameters(existenceFilterDto, termFilter, typeFilter, parameters);
+            AddExistenceFilterParameters(existenceFilterDto, termFilter, typeFilter, parameters);
 
             return await _context.Database.SqlQueryRaw<Existence>(sqlQuery, parameters.ToArray()).ToListAsync();
         }
 
         public async Task<int> GetExistenceCountAsync(RequestFilterDto filter)
         {
-            var (existenceFilterDto, termFilter, typeFilter) = SetFilterParametersIfNotEmpty(filter);
+            var (existenceFilterDto, termFilter, typeFilter) = SetExistenceFilterParametersIfNotEmpty(filter);
 
             var query = @$"
             SELECT 
@@ -156,7 +157,7 @@ namespace GPA.Data.Inventory
             ";
 
             var parameters = new List<SqlParameter>();
-            AddFilterParameters(existenceFilterDto, termFilter, typeFilter, parameters);
+            AddExistenceFilterParameters(existenceFilterDto, termFilter, typeFilter, parameters);
             return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
         }
 
@@ -290,6 +291,7 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<RawStock>> GetStocksAsync(RequestFilterDto filter)
         {
+            var (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
             var query = @$"
                 SELECT 
 	                 ST.[Id]
@@ -310,6 +312,10 @@ namespace GPA.Data.Inventory
 	                JOIN [GPA].[Inventory].[Reasons] RS ON ST.ReasonId = RS.Id
 	                JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
                 WHERE 1 = 1  
+                    {termFilter}
+                    {statusFilter}
+                    {transactionTypeFilter}
+                    {reasonFilter}
                 ORDER BY Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -317,6 +323,7 @@ namespace GPA.Data.Inventory
             var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
             var parameters = new List<SqlParameter>();
             parameters.AddRange([Page, PageSize]);
+            AddStockFilterParameters(transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter, parameters);
 
             return await _context.Database.SqlQueryRaw<RawStock>(
                 query, parameters.ToArray()
@@ -325,21 +332,28 @@ namespace GPA.Data.Inventory
 
         public async Task<int> GetStocksCountAsync(RequestFilterDto filter)
         {
+            var (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
             var query = @$"
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Stocks] ST
+                    LEFT JOIN [GPA].[Inventory].[Providers] PROV ON ST.ProviderId = PROV.Id 
                 WHERE 1 = 1  
+                    {termFilter}
+                    {statusFilter}
+                    {transactionTypeFilter}
+                    {reasonFilter}
             ";
 
             var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
             var parameters = new List<SqlParameter>();
             parameters.AddRange([Page, PageSize]);
+            AddStockFilterParameters(transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter, parameters);
 
             return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
         }
 
-        private (ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter) SetFilterParametersIfNotEmpty(RequestFilterDto filter)
+        private (ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter) SetExistenceFilterParametersIfNotEmpty(RequestFilterDto filter)
         {
             var existenceFilterDto = new ExistenceFilterDto();
             if (filter.Search is { Length: > 0 })
@@ -356,7 +370,7 @@ namespace GPA.Data.Inventory
             return (existenceFilterDto, termFilter, typeFilter);
         }
 
-        private void AddFilterParameters(ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter, List<SqlParameter> parameters)
+        private void AddExistenceFilterParameters(ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter, List<SqlParameter> parameters)
         {
             if (termFilter is { Length: > 0 })
             {
@@ -366,6 +380,48 @@ namespace GPA.Data.Inventory
             if (typeFilter is { Length: > 0 })
             {
                 parameters.Add(new SqlParameter("@Type", existenceFilterDto?.Type));
+            }
+        }
+
+        private (TransactionsFilterDto? transactionsFilterDto, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter) SetStockFilterParametersIfNotEmpty(RequestFilterDto filter)
+        {
+            var transactionsFilterDto = new TransactionsFilterDto();
+            if (filter.Search is { Length: > 0 })
+            {
+                transactionsFilterDto = JsonSerializer.Deserialize<TransactionsFilterDto>(SearchHelper.ConvertSearchToString(filter), new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+            }
+
+            var termFilter = transactionsFilterDto?.Term is { Length: > 0 } ? "AND PROV.[Name] LIKE CONCAT('%', @Term, '%')" : "";
+            var statusFilter = transactionsFilterDto?.Status != -1 ? "AND ST.[Status] = @Status" : "";
+            var transactionTypeFilter = transactionsFilterDto?.TransactionType != -1 ? "AND ST.[TransactionType] = @TransactionType" : "";
+            var reasonFilter = transactionsFilterDto?.Reason != -1 ? "AND ST.[Status] = @Reason" : "";
+
+            return (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter);
+        }
+
+        private void AddStockFilterParameters(TransactionsFilterDto? transactionsFilterDto, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter, List<SqlParameter> parameters)
+        {
+            if (termFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@Term", transactionsFilterDto?.Term));
+            }
+
+            if (statusFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@Status", transactionsFilterDto?.Status));
+            }
+
+            if (transactionTypeFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@TransactionType", transactionsFilterDto?.TransactionType));
+            }
+
+            if (reasonFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@Reason", transactionsFilterDto?.Reason));
             }
         }
     }

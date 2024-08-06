@@ -85,7 +85,7 @@ namespace GPA.Business.Services.Invoice
                             invoiceDetail.StockProduct = _mapper.Map<ProductCatalogDto>(product);
                         }
                     }
-                    invoice.Client = await _clientService.GetByIdAsync(savedInvoice.ClientId);
+                    invoice.Client = await _clientService.GetClientAsync(savedInvoice.ClientId)?? new Common.DTOs.Invoice.ClientDto();
                     await MapAddonsToProduct(invoice.InvoiceDetails);
                 }
             }
@@ -312,7 +312,7 @@ namespace GPA.Business.Services.Invoice
         private async Task CheckIfClientHasEnoughtCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
         {
             var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(clientId);
-            var credits = await _clientRepository.GetCredits(clientId);
+            var credits = await _clientRepository.GetCreditsByClientIdAsync(new List<Guid> { clientId });
 
             var debit = debits.Sum(x => x.PendingPayment);
             var credit = credits.Sum(x => x.Credit);

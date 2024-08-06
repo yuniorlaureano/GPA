@@ -37,12 +37,12 @@ namespace GPA.Invoice.Api.Controllers
             return Ok(await _service.GetByInvoiceIdAsync(id));
         }
 
-        [HttpGet()]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Read)]
-        public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
-        {
-            return Ok(await _service.GetAllAsync(filter));
-        }
+        //[HttpGet()]
+        //[ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Read)]
+        //public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
+        //{
+        //    return Ok(await _service.GetAllAsync(filter));
+        //}
 
         [HttpGet("summary")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Read)]

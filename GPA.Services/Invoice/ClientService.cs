@@ -3,24 +3,18 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Security;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IClientService
     {
-        public Task<ClientDto?> GetByIdAsync(Guid id);
-
-        public Task<ResponseDto<ClientDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Client, bool>>? expression = null);
-
-        public Task<ClientDto?> AddAsync(ClientDto clientDto);
-
-        public Task UpdateAsync(ClientDto clientDto);
-
-        public Task RemoveAsync(Guid id);
-
+        Task<ClientDto?> GetClientAsync(Guid id);
+        Task<ResponseDto<ClientDto>> GetClientsAsync(RequestFilterDto search);
+        Task<ClientDto?> AddAsync(ClientDto clientDto);
+        Task UpdateAsync(ClientDto clientDto);
+        Task RemoveAsync(Guid id);
         Task<List<ClientCreditDto>> GetCredits(Guid clientId);
     }
 
@@ -34,7 +28,7 @@ namespace GPA.Business.Services.Invoice
         public ClientService(
             IClientRepository repository,
             IUserContextService userContextService,
-            IMapper mapper, 
+            IMapper mapper,
             IReceivableAccountRepository receivableAccountRepository)
         {
             _repository = repository;
@@ -43,34 +37,24 @@ namespace GPA.Business.Services.Invoice
             _receivableAccountRepository = receivableAccountRepository;
         }
 
-        public async Task<ClientDto?> GetByIdAsync(Guid id)
+        public async Task<ClientDto?> GetClientAsync(Guid id)
         {
-            var client = await _repository.GetByIdAsync(query => query.Include(x => x.Credits), x => x.Id == id);
-            var penddingPayments = await _receivableAccountRepository.GetPenddingPaymentByClientId(id);
+            var client = await _repository.GetClientAsync(id);
 
             var clientDto = _mapper.Map<ClientDto>(client);
-            if (client is not null)
-            {                
-                clientDto.Debits = _mapper.Map<ClientDebitDto[]>(penddingPayments);
-            }
-
+            clientDto.Debits = await GetClientDebit(id, client);
             return clientDto;
         }
 
-        public async Task<ResponseDto<ClientDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Client, bool>>? expression = null)
+        public async Task<ResponseDto<ClientDto>> GetClientsAsync(RequestFilterDto search)
         {
-            var clients = await _repository.GetAllAsync(query =>
-            {
-                return query
-                    .Include(x => x.Credits)
-                    .OrderByDescending(x => x.Id)
-                    .Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+            var clients = await _repository.GetClientsAsync(search);
             var clientsDto = new ResponseDto<ClientDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<ClientDto>>(clients)
+                Count = await _repository.GetClientsCountAsync(search),
+                Data = _mapper.Map<List<ClientDto>>(clients)
             };
+            await MapCreditsToClients(clients, clientsDto);
 
             return clientsDto;
         }
@@ -92,7 +76,7 @@ namespace GPA.Business.Services.Invoice
             }
 
             var newClient = _mapper.Map<Client>(dto);
-            newClient.Id = dto.Id.Value;            
+            newClient.Id = dto.Id.Value;
             newClient.UpdatedBy = _userContextService.GetCurrentUserId();
             newClient.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(newClient);
@@ -106,8 +90,40 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<List<ClientCreditDto>> GetCredits(Guid clientId)
         {
-            var credits = await _repository.GetCredits(clientId);
+            var credits = await _repository.GetCreditsByClientIdAsync(new List<Guid> { clientId });
             return _mapper.Map<List<ClientCreditDto>>(credits);
+        }
+
+        private async Task MapCreditsToClients(IEnumerable<RawClient> clients, ResponseDto<ClientDto> clientsDto)
+        {
+            if (clientsDto?.Data?.Any() == true)
+            {
+                var credits = await _repository.GetCreditsByClientIdAsync(clients.Select(x => x.Id).ToList());
+                var creditsDictionary = new Dictionary<Guid, List<ClientCreditDto>>();
+                foreach (var credit in credits)
+                {
+                    if (!creditsDictionary.ContainsKey(credit.ClientId))
+                    {
+                        creditsDictionary.Add(credit.ClientId, new List<ClientCreditDto>());
+                    }
+                    creditsDictionary[credit.ClientId].Add(_mapper.Map<ClientCreditDto>(credit));
+                }
+
+                foreach (var client in clientsDto.Data)
+                {
+                    client.Credits = creditsDictionary.ContainsKey(client.Id.Value) ? creditsDictionary[client.Id.Value].ToArray() : [];
+                }
+            }
+        }
+
+        private async Task<ClientDebitDto[]> GetClientDebit(Guid id, RawClient? client)
+        {
+            if (client is not null)
+            {
+                var pendingPayments = await _receivableAccountRepository.GetPenddingPaymentByClientId(client.Id);
+                return _mapper.Map<ClientDebitDto[]>(pendingPayments);
+            }
+            return [];
         }
     }
 }

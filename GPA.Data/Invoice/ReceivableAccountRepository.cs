@@ -1,13 +1,17 @@
-﻿using GPA.Common.Entities.Invoice;
+﻿using GPA.Common.DTOs;
+using GPA.Common.Entities.Invoice;
 using GPA.Entities.Unmapped;
+using GPA.Utils.Database;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace GPA.Data.Invoice
 {
     public interface IReceivableAccountRepository : IRepository<ClientPaymentsDetails>
     {
-        Task<IEnumerable<ClientPaymentsDetailSummary>> GetReceivableSummaryAsync(int page = 1, int pageSize = 10);
-        Task<int> GetReceivableSummaryCountAsync();
+        Task<IEnumerable<ClientPaymentsDetailSummary>> GetReceivableSummaryAsync(RequestFilterDto filter);
+        Task<int> GetReceivableSummaryCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawPenddingPayment>> GetPenddingPaymentByClientId(Guid clientId);
     }
 
@@ -18,11 +22,12 @@ namespace GPA.Data.Invoice
 
         }
 
-        public async Task<IEnumerable<ClientPaymentsDetailSummary>> GetReceivableSummaryAsync(int page = 1, int pageSize = 10)
+        public async Task<IEnumerable<ClientPaymentsDetailSummary>> GetReceivableSummaryAsync(RequestFilterDto filter)
         {
-            return await _context.Database
-                .SqlQuery<ClientPaymentsDetailSummary>(
-                @$"SELECT 
+            var search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            search = filter.Search is { Length: > 0 } ? "AND CONCAT(C.[Name],' ',C.LastName) LIKE CONCAT('%', @Search, '%')" : "";
+
+            var query = @$"SELECT 
                      CD.[InvoiceId]
 	                ,CONCAT(C.[Name],' ',C.LastName) AS Client
                     ,max(CD.[PendingPayment]) AS PendingPayment 
@@ -30,13 +35,25 @@ namespace GPA.Data.Invoice
                 FROM [GPA].[Invoice].[ClientPaymentsDetails] CD
 	                JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id
 	                JOIN Invoice.Clients C ON INV.ClientId =  C.Id
+                WHERE 1 = 1
+                    {search}
                 group by 
 	                [InvoiceId]
 	                ,CONCAT(C.[Name],' ',C.LastName)
                 ORDER BY CD.[InvoiceId]
-                OFFSET {pageSize * Math.Abs(page - 1)} ROWS
-                FETCH NEXT {pageSize} ROWS ONLY ").ToListAsync();
+                OFFSET @Page ROWS
+                FETCH NEXT @PageSize ROWS ONLY ";
 
+            var (Page, PageSize, _) = PagingHelper.GetPagingParameter(filter);
+            var parameters = new List<SqlParameter>();
+            parameters.AddRange([Page, PageSize]);
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                parameters.Add(new SqlParameter("@Search", search));
+            }
+
+            return await _context.Database.SqlQueryRaw<ClientPaymentsDetailSummary>(query, parameters.ToArray()).ToListAsync();
         }
 
         public async Task<IEnumerable<RawPenddingPayment>> GetPenddingPaymentByClientId(Guid clientId)
@@ -54,15 +71,29 @@ namespace GPA.Data.Invoice
 
         }
 
-        public async Task<int> GetReceivableSummaryCountAsync()
+        public async Task<int> GetReceivableSummaryCountAsync(RequestFilterDto filter)
         {
-            return await _context.Database
-                .SqlQuery<int>(
-                @$"SELECT 
-		                    1 AS [Count]
-	                    FROM [GPA].[Invoice].[ClientPaymentsDetails] CD
-	                    GROUP BY [InvoiceId] ").CountAsync();
+            var search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            search = filter.Search is { Length: > 0 } ? "AND CONCAT(C.[Name],' ',C.LastName) LIKE CONCAT('%', @Search, '%')" : "";
 
+            var query = @$"SELECT 
+                               COUNT(1) AS [Value]
+                        FROM [GPA].[Invoice].[ClientPaymentsDetails] CD
+	                        JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id
+	                        JOIN Invoice.Clients C ON INV.ClientId =  C.Id
+                        WHERE 1 = 1
+                            {search}
+                        group by 
+	                        [InvoiceId]
+	                        ,CONCAT(C.[Name],' ',C.LastName) ";
+
+            var parameters = new List<SqlParameter>();
+            if (!string.IsNullOrEmpty(search))
+            {
+                parameters.Add(new SqlParameter("@Search", search));
+            }
+
+            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).CountAsync();
         }
     }
 }

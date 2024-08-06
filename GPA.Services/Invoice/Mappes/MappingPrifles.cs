@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Invoice;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.Entities.Invoice;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Invoice;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Invoice.Mappers
@@ -13,10 +14,12 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
         public MappingPrifles()
         {
             CreateMap<Client, ClientDto>();
+            CreateMap<RawClient, ClientDto>();
             CreateMap<ClientDto, Client>();
 
             CreateMap<ClientCreditDto, ClientCredit>();
             CreateMap<ClientCredit, ClientCreditDto>();
+            CreateMap<RawCredit, ClientCreditDto>();
 
             CreateMap<RawPenddingPayment, ClientDebitDto>();
 

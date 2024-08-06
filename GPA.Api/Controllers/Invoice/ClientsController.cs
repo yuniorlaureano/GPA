@@ -27,14 +27,14 @@ namespace GPA.Invoice.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Client}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _clientService.GetByIdAsync(id));
+            return Ok(await _clientService.GetClientAsync(id));
         }
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Client}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _clientService.GetAllAsync(filter));
+            return Ok(await _clientService.GetClientsAsync(filter));
         }
 
         [HttpPost()]

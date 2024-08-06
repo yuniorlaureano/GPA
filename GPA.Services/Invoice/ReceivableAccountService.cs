@@ -16,7 +16,7 @@ namespace GPA.Business.Services.Invoice
 
         Task<InvoiceWithReceivableAccountsDto?> GetByInvoiceIdAsync(Guid id);
 
-        Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
+        //Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
 
         Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search);
 
@@ -75,29 +75,29 @@ namespace GPA.Business.Services.Invoice
             return invoiceWithReceivableAccounts;
         }
 
-        public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
-        {
-            var categories = await _repository.GetAllAsync(query =>
-            {
-                return query
-                    .OrderByDescending(x => x.Id)
-                    .Skip(search.PageSize * Math.Abs(search.Page - 1))
-                    .Take(search.PageSize);
-            }, expression);
-            return new ResponseDto<ClientPaymentsDetailDto>
-            {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<ClientPaymentsDetailDto>>(categories)
-            };
-        }
+        //public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
+        //{
+        //    var categories = await _repository.GetAllAsync(query =>
+        //    {
+        //        return query
+        //            .OrderByDescending(x => x.Id)
+        //            .Skip(search.PageSize * Math.Abs(search.Page - 1))
+        //            .Take(search.PageSize);
+        //    }, expression);
+        //    return new ResponseDto<ClientPaymentsDetailDto>
+        //    {
+        //        Count = await _repository.CountAsync(query => query, expression),
+        //        Data = _mapper.Map<IEnumerable<ClientPaymentsDetailDto>>(categories)
+        //    };
+        //}
 
         public async Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search)
         {
-            var receivables = await _repository.GetReceivableSummaryAsync(search.Page, search.PageSize);
+            var receivables = await _repository.GetReceivableSummaryAsync(search);
 
             return new ResponseDto<ClientPaymentsDetailSummaryDto>
             {
-                Count = await _repository.GetReceivableSummaryCountAsync(),
+                Count = await _repository.GetReceivableSummaryCountAsync(search),
                 Data = _mapper.Map<IEnumerable<ClientPaymentsDetailSummaryDto>>(receivables)
             };
         }
