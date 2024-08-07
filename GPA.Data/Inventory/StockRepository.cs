@@ -304,7 +304,7 @@ namespace GPA.Data.Inventory
                     ,ST.[ReasonId]
                     ,ST.[InvoiceId]
 	                ,PROV.[Name] ProviderName
-	                ,PROV.Identification ProviderRnc
+	                ,PROV.Identification ProviderIdentification
 	                ,RS.[Name] ReasonName
 	                ,STRS.[Name] StoreName
                 FROM [GPA].[Inventory].[Stocks] ST

@@ -60,6 +60,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<ProductLocationDto, ProductLocation>();
 
             CreateMap<Provider, ProviderDto>();
+            CreateMap<RawProviders, ProviderDto>();
             CreateMap<ProviderDto, Provider>();
 
             CreateMap<Stock, StockDto>()

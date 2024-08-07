@@ -4,16 +4,15 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+using System.Text;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IProviderService
     {
-        public Task<ProviderDto?> GetByIdAsync(Guid id);
+        public Task<ProviderDto?> GetProviderByIdAsync(Guid id);
 
-        public Task<ResponseDto<ProviderDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Provider, bool>>? expression = null);
+        public Task<ResponseDto<ProviderDto>> GetProvidersAsync(RequestFilterDto search);
 
         public Task<ProviderDto?> AddAsync(ProviderDto providerDto);
 
@@ -29,7 +28,7 @@ namespace GPA.Business.Services.Inventory
         private readonly IMapper _mapper;
 
         public ProviderService(
-            IProviderRepository repository, 
+            IProviderRepository repository,
             IUserContextService userContextService,
             IMapper mapper)
         {
@@ -38,21 +37,19 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
         }
 
-        public async Task<ProviderDto?> GetByIdAsync(Guid id)
+        public async Task<ProviderDto?> GetProviderByIdAsync(Guid id)
         {
-            var Provider = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<ProviderDto>(Provider);
+            var provider = await _repository.GetProviderByIdAsync(id);
+            return _mapper.Map<ProviderDto>(provider);
         }
 
-        public async Task<ResponseDto<ProviderDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Provider, bool>>? expression = null)
+        public async Task<ResponseDto<ProviderDto>> GetProvidersAsync(RequestFilterDto filter)
         {
-            var providers = await _repository.GetAllAsync(query => 
-            {
-                return query.OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            var providers = await _repository.GetProvidersAsync(filter);
             return new ResponseDto<ProviderDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetProvidersCountAsync(filter),
                 Data = _mapper.Map<IEnumerable<ProviderDto>>(providers)
             };
         }
