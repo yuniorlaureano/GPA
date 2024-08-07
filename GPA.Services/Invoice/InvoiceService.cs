@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Common.DTOs.Invoice;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
@@ -9,18 +10,17 @@ using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Security;
 using GPA.Utils;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IInvoiceService
     {
-        public Task<InvoiceListDto?> GetByIdAsync(Guid id);
+        public Task<InvoiceListDto?> GetInvoiceByIdAsync(Guid id);
 
-        public Task<ResponseDto<InvoiceListDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null);
+        public Task<ResponseDto<InvoiceListDto>> GetInvoicesAsync(RequestFilterDto search);
 
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
 
@@ -62,47 +62,59 @@ namespace GPA.Business.Services.Invoice
             _mapper = mapper;
         }
 
-        public async Task<InvoiceListDto?> GetByIdAsync(Guid id)
+        public async Task<InvoiceListDto?> GetInvoiceByIdAsync(Guid id)
         {
-            var savedInvoice = await _repository.GetByIdAsync(
-                query => query.Include(x => x.InvoiceDetails).ThenInclude(x => x.Product)
-                , x => x.Id == id);
+            var invoice = await _repository.GetInvoiceByIdAsync(id);
 
-            var invoice = _mapper.Map<InvoiceListDto>(savedInvoice);
-
-            if (savedInvoice is { InvoiceDetails: { Count: > 0 } })
+            if (invoice is null)
             {
-                var productsId = savedInvoice.InvoiceDetails.Select(x => x.Product.Id).ToList();
-                if (productsId is not null)
-                {
-                    var stocks = (await _stockRepository.GetProductCatalogAsync(productsId.ToArray()))
-                            .ToDictionary(k => k.ProductId, v => v);
-
-                    foreach (var invoiceDetail in invoice.InvoiceDetails)
-                    {
-                        if (stocks.TryGetValue(invoiceDetail.ProductId, out var product))
-                        {
-                            invoiceDetail.StockProduct = _mapper.Map<ProductCatalogDto>(product);
-                        }
-                    }
-                    invoice.Client = await _clientService.GetClientAsync(savedInvoice.ClientId)?? new Common.DTOs.Invoice.ClientDto();
-                    await MapAddonsToProduct(invoice.InvoiceDetails);
-                }
+                throw new InvalidOperationException("The invoice does not exists.");
             }
 
-            return invoice;
+            var invoiceDetails = await _repository.GetInvoiceDetailsByInvoiceIdAsync(id);
+            var invoiceDto = _mapper.Map<InvoiceListDto>(invoice);
+            var invoiceDetailDto = _mapper.Map<List<InvoiceListDetailDto>>(invoiceDetails);
+
+            invoiceDto.Client = await _clientService.GetClientAsync(invoice.ClientId) ?? new ClientDto();
+            invoiceDto.InvoiceDetails = invoiceDetailDto;
+
+            if (invoiceDetailDto is { Count: 0 })
+            {
+                return invoiceDto;
+            }
+
+            var productsCatalog = await GetRawProductCatalogsAsDictionary(invoiceDetailDto);
+            if (productsCatalog is null)
+            {
+                return invoiceDto;
+            }
+
+            MapProductCatalogToInvoiceDetail(invoiceDetailDto, productsCatalog);
+            await MapAddonsToProduct(invoiceDetailDto);
+
+            return invoiceDto;
         }
 
-        public async Task<ResponseDto<InvoiceListDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPA.Common.Entities.Invoice.Invoice, bool>>? expression = null)
+        public async Task<ResponseDto<InvoiceListDto>> GetInvoicesAsync(RequestFilterDto search)
         {
-            var categories = await _repository.GetAllAsync(query =>
+            var invoices = (await _repository.GetInvoicesAsync(search)).ToList();
+            var invoicesDto = _mapper.Map<List<InvoiceListDto>>(invoices);
+
+            if (invoices is { Count: 0 })
             {
-                return query.Include(x => x.Client).OrderByDescending(x => x.Id).Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+                return new ResponseDto<InvoiceListDto>
+                {
+                    Count = await _repository.GetInvoicesCountAsync(search),
+                    Data = invoicesDto
+                };
+            }
+
+            await MapClientsToInvoice(invoices, invoicesDto);
+
             return new ResponseDto<InvoiceListDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<InvoiceListDto>>(categories)
+                Count = await _repository.GetInvoicesCountAsync(search),
+                Data = invoicesDto
             };
         }
 
@@ -338,6 +350,53 @@ namespace GPA.Business.Services.Invoice
                         Type = x.Type,
                         Value = x.Value
                     }).ToList();
+                }
+            }
+        }
+
+        private async Task MapClientsToInvoice(IEnumerable<RawInvoice> invoices, IEnumerable<InvoiceListDto> invoicesDto)
+        {
+            var clients = await _clientRepository.GetClientsByIdsAsync(invoices.Select(x => x.ClientId));
+
+            var clientDictionary = new Dictionary<Guid, ClientDto?>();
+            foreach (var client in clients)
+            {
+                if (!clientDictionary.ContainsKey(client.Id))
+                {
+                    clientDictionary.Add(client.Id, null);
+                }
+                clientDictionary[client.Id] = _mapper.Map<ClientDto>(client);
+            }
+
+            foreach (var invoice in invoicesDto)
+            {
+                if (clientDictionary.ContainsKey(invoice.ClientId))
+                {
+                    invoice.Client = clientDictionary[invoice.ClientId]!;
+                }
+            }
+        }
+
+        private async Task<Dictionary<Guid, RawProductCatalog>?> GetRawProductCatalogsAsDictionary(List<InvoiceListDetailDto> invoiceDetailDto)
+        {
+            var productsId = invoiceDetailDto.Select(x => x.ProductId).ToList();
+
+            if (productsId is { Count: 0 })
+            {
+                return null;
+            }
+
+            return (await _stockRepository.GetProductCatalogAsync(productsId.ToArray()))
+                        .ToDictionary(k => k.ProductId, v => v);
+        }
+
+        private void MapProductCatalogToInvoiceDetail(List<InvoiceListDetailDto> invoiceDetailDto, Dictionary<Guid, RawProductCatalog> productsCatalog)
+        {
+            foreach (var invoiceDetail in invoiceDetailDto)
+            {
+                if (productsCatalog.TryGetValue(invoiceDetail.ProductId, out var product))
+                {
+                    invoiceDetail.StockProduct = _mapper.Map<ProductCatalogDto>(product);
                 }
             }
         }

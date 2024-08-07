@@ -36,14 +36,14 @@ namespace GPA.Invoice.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _invoiceService.GetByIdAsync(id));
+            return Ok(await _invoiceService.GetInvoiceByIdAsync(id));
         }
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _invoiceService.GetAllAsync(filter));
+            return Ok(await _invoiceService.GetInvoicesAsync(filter));
         }
 
         [HttpPost()]

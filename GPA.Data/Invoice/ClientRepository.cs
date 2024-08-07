@@ -13,6 +13,7 @@ namespace GPA.Data.Invoice
         Task<RawClient> GetClientAsync(Guid clientId);
         Task<int> GetClientsCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawClient>> GetClientsAsync(RequestFilterDto filter);
+        Task<IEnumerable<RawClient>> GetClientsByIdsAsync(IEnumerable<Guid> clientIds);
         Task UpdateAsync(Client client);
         Task<IEnumerable<RawCredit>> GetCreditsByClientIdAsync(List<Guid> clientIds);
     }
@@ -44,6 +45,29 @@ namespace GPA.Data.Invoice
                 WHERE C.Id = @ClientId";
 
             return await _context.Database.SqlQueryRaw<RawClient>(query, new SqlParameter("@ClientId", clientId)).FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<RawClient>> GetClientsByIdsAsync(IEnumerable<Guid> clientIds)
+        {
+            var query = @$"
+                  SELECT [Id]
+                        ,[Name]
+                        ,[LastName]
+                        ,[Identification]
+                        ,[IdentificationType]
+                        ,[Phone]
+                        ,[AvailableCredit]
+                        ,[Email]
+                        ,[Street]
+                        ,[BuildingNumber]
+                        ,[City]
+                        ,[State]
+                        ,[Country]
+                        ,[PostalCode]
+                FROM [GPA].[Invoice].[Clients]
+                WHERE C.Id IN ({string.Join(",", clientIds.Select(clientId => $"'{clientId}'"))})";
+
+            return await _context.Database.SqlQueryRaw<RawClient>(query).ToListAsync();
         }
 
         public async Task<IEnumerable<RawClient>> GetClientsAsync(RequestFilterDto filter)

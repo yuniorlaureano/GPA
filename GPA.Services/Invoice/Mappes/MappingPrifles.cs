@@ -57,10 +57,18 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                     opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
                 });
 
+            CreateMap<RawInvoice, InvoiceListDto>()
+                .ForMember(dest => dest.Date, opt =>
+                {
+                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
+                });
+
             CreateMap<InvoiceListDetailDto, InvoiceDetails>()
                 .ForMember(x => x.Id, opt => opt.Ignore());
 
             CreateMap<InvoiceDetails, InvoiceListDetailDto>();
+            
+            CreateMap<RawInvoiceDetails, InvoiceListDetailDto>();
 
             CreateMap<ClientPaymentsDetails, ClientPaymentsDetailDto>()
                 .ForMember(dest => dest.Date, opt =>
