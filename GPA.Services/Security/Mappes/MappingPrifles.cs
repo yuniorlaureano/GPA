@@ -12,6 +12,7 @@ namespace GPA.Bussiness.Services.Security.Mappers
         public MappingPrifles()
         {
             CreateMap<GPAUser, GPAUserDto>();
+            CreateMap<RawUser, GPAUserDto>();
             CreateMap<GPAUser, GPAUserUpdateDto>();
             CreateMap<GPAUserDto, GPAUser>();
             CreateMap<GPAUserUpdateDto, GPAUser>();

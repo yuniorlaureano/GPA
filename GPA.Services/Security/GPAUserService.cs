@@ -5,20 +5,16 @@ using GPA.Common.Entities.Security;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
 using GPA.Services.Security;
-using System.Linq.Expressions;
+using System.Text;
 
 namespace GPA.Business.Services.Security
 {
     public interface IGPAUserService
     {
-        public Task<GPAUserDto?> GetByIdAsync(Guid id);
-
-        public Task<ResponseDto<GPAUserDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAUser, bool>>? expression = null);
-
+        public Task<GPAUserDto?> GetUserByIdAsync(Guid id);
+        public Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter);
         public Task<GPAUserDto?> AddAsync(GPAUserUpdateDto dto);
-
         public Task UpdateAsync(GPAUserUpdateDto dto);
-
         public Task RemoveAsync(Guid id);
     }
 
@@ -41,13 +37,13 @@ namespace GPA.Business.Services.Security
             _mapper = mapper;
         }
 
-        public async Task<GPAUserDto?> GetByIdAsync(Guid id)
+        public async Task<GPAUserDto?> GetUserByIdAsync(Guid id)
         {
-            var entity = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            var dto = _mapper.Map<GPAUserDto>(entity);
+            var user = await _repository.GetUserByIdAsync(id);
+            var dto = _mapper.Map<GPAUserDto>(user);
             if (dto is not null)
             {
-                var profiles = await _profileRepository.GetProfilesByUserId(entity.Id);
+                var profiles = await _profileRepository.GetProfilesByUserId(user.Id);
                 dto.Profiles = profiles is null ?
                     dto.Profiles :
                     _mapper.Map<List<RawProfileDto>>(profiles);
@@ -55,16 +51,13 @@ namespace GPA.Business.Services.Security
             return dto;
         }
 
-        public async Task<ResponseDto<GPAUserDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAUser, bool>>? expression = null)
+        public async Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter)
         {
-            var entities = await _repository.GetAllAsync(query =>
-            {
-                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
-
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            var entities = await _repository.GetUsersAsync(filter);
             return new ResponseDto<GPAUserDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetUsersCountAsync(filter),
                 Data = _mapper.Map<IEnumerable<GPAUserDto>>(entities)
             };
         }

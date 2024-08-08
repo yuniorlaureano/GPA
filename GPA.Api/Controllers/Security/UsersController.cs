@@ -30,14 +30,14 @@ namespace GPA.Api.Controllers.Security
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _gPAUserService.GetByIdAsync(id));
+            return Ok(await _gPAUserService.GetUserByIdAsync(id));
         }
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _gPAUserService.GetAllAsync(filter));
+            return Ok(await _gPAUserService.GetUsersAsync(filter));
         }
 
         [HttpPost()]
