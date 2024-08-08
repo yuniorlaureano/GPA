@@ -2,12 +2,9 @@
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Dtos.Security;
-using GPA.Utils.Constants.Claims;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -27,14 +24,14 @@ namespace GPA.Api.Controllers.Security
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            return Ok(await _gPAProfileService.GetByIdAsync(id));
+            return Ok(await _gPAProfileService.GetProfilesByIdAsync(id));
         }
 
         [HttpGet()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Profile}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _gPAProfileService.GetAllAsync(filter));
+            return Ok(await _gPAProfileService.GetProfilesAsync(filter));
         }
 
         [HttpGet("master-profile")]
@@ -142,7 +139,7 @@ namespace GPA.Api.Controllers.Security
             {
                 return BadRequest(ex.Message);
             }
-            
+
             return NoContent();
         }
     }

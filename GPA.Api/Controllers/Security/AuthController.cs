@@ -327,7 +327,7 @@ namespace GPA.Api.Controllers.Security
             var profile = new List<GPA.Utils.Profiles.Profile>();
             if (profileId is not { Length: 0 })
             {
-                var gpaProfile = await _gPAProfileService.GetByIdAsync(Guid.Parse(profileId!));
+                var gpaProfile = await _gPAProfileService.GetProfilesByIdAsync(Guid.Parse(profileId!));
                 if (gpaProfile is { Value: { Length: > 0 } })
                 {
                     profile = JsonSerializer.Deserialize<List<GPA.Utils.Profiles.Profile>>(gpaProfile.Value, new JsonSerializerOptions

@@ -5,20 +5,20 @@ using GPA.Data.Security;
 using GPA.Dtos.Security;
 using GPA.Entities.Unmapped;
 using GPA.Services.Security;
-using System.Linq.Expressions;
+using System.Text;
 
 namespace GPA.Business.Services.Security
 {
     public interface IGPAProfileService
     {
-        public Task<GPAProfileDto?> GetByIdAsync(Guid id);
-        public Task<ResponseDto<GPAProfileDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAProfile, bool>>? expression = null);
-        public Task<GPAProfileDto?> AddAsync(GPAProfileDto dto);
-        public Task UpdateAsync(GPAProfileDto dto);
+        Task<GPAProfileDto?> GetProfilesByIdAsync(Guid id);
+        Task<ResponseDto<GPAProfileDto>> GetProfilesAsync(RequestFilterDto search);
+        Task<GPAProfileDto?> AddAsync(GPAProfileDto dto);
+        Task UpdateAsync(GPAProfileDto dto);
         Task AssignProfileToUser(Guid profileId, Guid userId);
         Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto search);
-        public Task RemoveAsync(Guid id);
-        public Task UnAssignProfileFromUser(Guid profileId, Guid userId);
+        Task RemoveAsync(Guid id);
+        Task UnAssignProfileFromUser(Guid profileId, Guid userId);
         Task<List<GPAProfileDto>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
         Task<bool> ProfileExists(Guid userId);
@@ -40,9 +40,9 @@ namespace GPA.Business.Services.Security
             _mapper = mapper;
         }
 
-        public async Task<GPAProfileDto?> GetByIdAsync(Guid id)
+        public async Task<GPAProfileDto?> GetProfilesByIdAsync(Guid id)
         {
-            var entity = await _repository.GetByIdAsync(query => query, x => x.Id == id);
+            var entity = await _repository.GetProfilesByIdAsync(id);
             return entity is null ? null : new GPAProfileDto
             {
                 Id = entity.Id,
@@ -67,15 +67,13 @@ namespace GPA.Business.Services.Security
             return profilesDto;
         }
 
-        public async Task<ResponseDto<GPAProfileDto>> GetAllAsync(RequestFilterDto search, Expression<Func<GPAProfile, bool>>? expression = null)
+        public async Task<ResponseDto<GPAProfileDto>> GetProfilesAsync(RequestFilterDto filter)
         {
-            var entities = await _repository.GetAllAsync(query =>
-            {
-                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            var entities = await _repository.GetProfilesAsync(filter);
             return new ResponseDto<GPAProfileDto>
             {
-                Count = await _repository.CountAsync(query => query, expression),
+                Count = await _repository.GetProfilesCountAsync(filter),
                 Data = new List<GPAProfileDto>(entities.Select(x => new GPAProfileDto
                 {
                     Id = x.Id,

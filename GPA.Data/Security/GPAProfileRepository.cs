@@ -1,5 +1,7 @@
-﻿using GPA.Common.Entities.Security;
+﻿using GPA.Common.DTOs;
+using GPA.Common.Entities.Security;
 using GPA.Entities.Unmapped;
+using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +9,9 @@ namespace GPA.Data.Security
 {
     public interface IGPAProfileRepository : IRepository<GPAProfile>
     {
+        Task<int> GetProfilesCountAsync(RequestFilterDto filter);
+        Task<RawProfile?> GetProfilesByIdAsync(Guid id);
+        Task<IEnumerable<RawProfile>> GetProfilesAsync(RequestFilterDto filter);
         Task AssignProfileToUser(Guid profileId, Guid userId, Guid createdBy);
         Task<List<RawUserProfile>> GetProfilesByUserId(List<Guid> userIds);
         Task<List<RawUser>> GetUsers(Guid profileId, int page, int pageSize);
@@ -149,6 +154,54 @@ namespace GPA.Data.Security
                 .Where(x => x.Id == profileId)
                 .Select(x => x.Value)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<RawProfile>> GetProfilesAsync(RequestFilterDto filter)
+        {
+            var query = @"
+                SELECT 
+	                 [Id]
+                    ,[Name]
+                    ,[Value]
+                FROM [GPA].[Security].[GPAProfiles]
+                WHERE 
+	              @Search IS NULL
+	              OR [Name] LIKE CONCAT('%', @Search, '%')
+                ORDER BY Id
+                OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
+            ";
+
+            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<RawProfile>(query, Page, PageSize, Search).ToListAsync();
+        }
+
+        public async Task<RawProfile?> GetProfilesByIdAsync(Guid id)
+        {
+            var query = @"
+                SELECT 
+	                 [Id]
+                    ,[Name]
+                    ,[Value]
+                FROM [GPA].[Security].[GPAProfiles]
+                WHERE 
+                    Id = @Id    
+            ";
+
+            return await _context.Database.SqlQueryRaw<RawProfile>(query, new SqlParameter("@Id", id)).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> GetProfilesCountAsync(RequestFilterDto filter)
+        {
+            var query = @"
+                SELECT 
+	                 COUNT(1) AS [Value]
+                FROM [GPA].[Security].[GPAProfiles]
+                WHERE 
+	              @Search IS NULL
+	              OR [Name] LIKE CONCAT('%', @Search, '%')
+            ";
+            var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
         }
     }
 }
