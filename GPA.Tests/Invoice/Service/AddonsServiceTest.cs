@@ -34,7 +34,7 @@ namespace GPA.Tests.Invoice.Service
                 .Create();
 
             var dto = await _addonService.AddAsync(addon);
-            var existing = await _addonService.GetByIdAsync(dto.Id.Value);
+            var existing = await _addonService.GetAddonsAsync(dto.Id.Value);
 
             Assert.Equal(dto.Id, existing?.Id);
         }
@@ -52,7 +52,7 @@ namespace GPA.Tests.Invoice.Service
                 await _addonService.AddAsync(addon);
             }
 
-            var availables = await _addonService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _addonService.GetAddonsAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 
@@ -81,13 +81,13 @@ namespace GPA.Tests.Invoice.Service
                 .Create();
 
             var added = await _addonService.AddAsync(addon);
-            var existing = await _addonService.GetByIdAsync(added.Id.Value);
+            var existing = await _addonService.GetAddonsAsync(added.Id.Value);
 
             existing.Concept = "Modified Name";
 
             await _addonService.UpdateAsync(existing);
 
-            var updated = await _addonService.GetByIdAsync(added.Id.Value);
+            var updated = await _addonService.GetAddonsAsync(added.Id.Value);
 
             Assert.NotEqual(updated.Concept, added.Concept);
         }
@@ -102,7 +102,7 @@ namespace GPA.Tests.Invoice.Service
 
             var added = await _addonService.AddAsync(addon);
             await _addonService.RemoveAsync(added.Id.Value);
-            var existing = await _addonService.GetByIdAsync(added.Id.Value);
+            var existing = await _addonService.GetAddonsAsync(added.Id.Value);
 
             Assert.Null(existing);
         }

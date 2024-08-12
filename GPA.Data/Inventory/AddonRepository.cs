@@ -103,7 +103,7 @@ namespace GPA.Data.Inventory
                 ,[Type]
                 ,[Value]
               FROM [GPA].[Inventory].[Addons]
-              WHER Id = @Id
+              WHERE Id = @Id
                     ";
 
             return await _context.Database

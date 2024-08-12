@@ -55,6 +55,7 @@ namespace GPA.Tests
 
             services.AddScoped<IAesHelper, AesHelper>();
             services.AddScoped<IEmailProviderHelper, EmailProviderHelper>();
+            services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 
             //ToDo: move this to a extension method.
             services.AddUtils();

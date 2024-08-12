@@ -1,4 +1,5 @@
 ﻿using GPA.Utils.Permissions;
+using System.Security;
 using System.Text;
 
 namespace GPA.Utils.Profiles
@@ -307,6 +308,14 @@ namespace GPA.Utils.Profiles
                         {
                             Permissions.UpdateUserProfile
                         }
+                    },
+                    new Component
+                    {
+                        Id = Components.Blob,
+                        Permissions = new List<string>
+                        {
+                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Upload
+                        }
                     }
                 }
             };
@@ -343,6 +352,7 @@ namespace GPA.Utils.Profiles
         public const string ReadTransactions = "read-transactions";
         public const string Return = "return";
         public const string Send = "send";
+        public const string Upload = "upload";
     }
 
     public class Apps
@@ -376,5 +386,6 @@ namespace GPA.Utils.Profiles
         public const string Profile = "profile";
         public const string Auth = "auth";
         public const string Email = "email";
+        public const string Blob = "blob";
     }
 }

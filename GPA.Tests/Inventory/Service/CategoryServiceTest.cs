@@ -29,7 +29,7 @@ namespace GPA.Tests.Inventory.Service
                 .Create();
 
             var dto = await _categoryService.AddAsync(category);
-            var existing = await _categoryService.GetByIdAsync(dto.Id.Value);
+            var existing = await _categoryService.GetCategoryAsync(dto.Id.Value);
 
             Assert.Equal(dto.Id, existing?.Id);
         }
@@ -47,7 +47,7 @@ namespace GPA.Tests.Inventory.Service
                 await _categoryService.AddAsync(category);
             }
 
-            var availables = await _categoryService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _categoryService.GetCategoriesAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 
@@ -72,13 +72,13 @@ namespace GPA.Tests.Inventory.Service
                 .Create();
 
             var added = await _categoryService.AddAsync(category);
-            var existing = await _categoryService.GetByIdAsync(added.Id.Value);
+            var existing = await _categoryService.GetCategoryAsync(added.Id.Value);
 
             existing.Name = "Modified Name";
 
             await _categoryService.UpdateAsync(existing);
 
-            var updated = await _categoryService.GetByIdAsync(added.Id.Value);
+            var updated = await _categoryService.GetCategoryAsync(added.Id.Value);
 
             Assert.NotEqual(updated.Name, added.Name);
         }
@@ -93,7 +93,7 @@ namespace GPA.Tests.Inventory.Service
 
             var added = await _categoryService.AddAsync(category);
             await _categoryService.RemoveAsync(added.Id.Value);
-            var existing = await _categoryService.GetByIdAsync(added.Id.Value);
+            var existing = await _categoryService.GetCategoryAsync(added.Id.Value);
 
             Assert.Null(existing);
         }

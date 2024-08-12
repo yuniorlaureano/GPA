@@ -16,6 +16,10 @@ namespace GPA.Bussiness.Services.General.Mappers
             CreateMap<EmailConfigurationCreationDto, EmailConfiguration>();
             CreateMap<EmailConfigurationUpdateDto, EmailConfiguration>();
             CreateMap<EmailConfiguration, EmailConfigurationDto>();
+
+            CreateMap<BlobStorageConfigurationCreationDto, BlobStorageConfiguration>();
+            CreateMap<BlobStorageConfigurationUpdateDto, BlobStorageConfiguration>();
+            CreateMap<BlobStorageConfiguration, BlobStorageConfigurationDto>();
         }
     }
 

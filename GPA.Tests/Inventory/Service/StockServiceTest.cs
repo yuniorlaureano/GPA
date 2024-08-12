@@ -129,7 +129,7 @@ namespace GPA.Tests.Inventory.Service
                 await _stockService.AddAsync(stock);
             }
 
-            var availables = await _stockService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _stockService.GetStocksAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 

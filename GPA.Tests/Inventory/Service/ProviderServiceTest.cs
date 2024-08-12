@@ -38,7 +38,7 @@ namespace GPA.Tests.Inventory.Service
                 .Create();
 
             var dto = await _providerService.AddAsync(provider);
-            var existing = await _providerService.GetByIdAsync(dto.Id.Value);
+            var existing = await _providerService.GetProviderByIdAsync(dto.Id.Value);
 
             Assert.Equal(dto.Id, existing?.Id);
         }
@@ -65,7 +65,7 @@ namespace GPA.Tests.Inventory.Service
                 await _providerService.AddAsync(provider);
             }
 
-            var availables = await _providerService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _providerService.GetProvidersAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 
@@ -108,13 +108,13 @@ namespace GPA.Tests.Inventory.Service
                 .Create();
 
             var added = await _providerService.AddAsync(provider);
-            var existing = await _providerService.GetByIdAsync(added.Id.Value);
+            var existing = await _providerService.GetProviderByIdAsync(added.Id.Value);
 
             existing.Name = "Modified Name";
 
             await _providerService.UpdateAsync(existing);
 
-            var updated = await _providerService.GetByIdAsync(added.Id.Value);
+            var updated = await _providerService.GetProviderByIdAsync(added.Id.Value);
 
             Assert.NotEqual(updated.Name, added.Name);
         }
@@ -138,7 +138,7 @@ namespace GPA.Tests.Inventory.Service
 
             var added = await _providerService.AddAsync(provider);
             await _providerService.RemoveAsync(added.Id.Value);
-            var existing = await _providerService.GetByIdAsync(added.Id.Value);
+            var existing = await _providerService.GetProviderByIdAsync(added.Id.Value);
 
             Assert.Null(existing);
         }

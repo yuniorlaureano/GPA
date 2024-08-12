@@ -103,7 +103,7 @@ namespace GPA.Utils
         private bool SmtpCredentialsChanged(string newOptions, string savedOptions)
         { 
             var newOptionsObject = JsonSerializer.Deserialize<SmtpEmailOptions>(newOptions, serializerOptions);
-            var savedOptionsObject = JsonSerializer.Deserialize<SmtpEmailOptions>(newOptions, serializerOptions);
+            var savedOptionsObject = JsonSerializer.Deserialize<SmtpEmailOptions>(savedOptions, serializerOptions);
 
             return newOptionsObject.Password != savedOptionsObject.Password;
         }
@@ -111,7 +111,7 @@ namespace GPA.Utils
         private bool SendGridCredentialsChanged(string newOptions, string savedOptions)
         {
             var newOptionsObject = JsonSerializer.Deserialize<SendGridEmailOptions>(newOptions, serializerOptions);
-            var savedOptionsObject = JsonSerializer.Deserialize<SendGridEmailOptions>(newOptions, serializerOptions);
+            var savedOptionsObject = JsonSerializer.Deserialize<SendGridEmailOptions>(savedOptions, serializerOptions);
 
             return newOptionsObject.Apikey != savedOptionsObject.Apikey;
         }

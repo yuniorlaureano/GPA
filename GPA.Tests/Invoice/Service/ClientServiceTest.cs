@@ -44,7 +44,7 @@ namespace GPA.Tests.Invoice.Service
                 .Create();
 
             var dto = await _clientService.AddAsync(client);
-            var existing = await _clientService.GetByIdAsync(dto.Id.Value);
+            var existing = await _clientService.GetClientAsync(dto.Id.Value);
 
             Assert.Equal(dto.Id, existing?.Id);
         }
@@ -62,7 +62,7 @@ namespace GPA.Tests.Invoice.Service
                 await _clientService.AddAsync(client);
             }
 
-            var availables = await _clientService.GetAllAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
+            var availables = await _clientService.GetClientsAsync(new GPA.Common.DTOs.RequestFilterDto { Page = 1, PageSize = 3 });
             Assert.Equal(availables?.Data?.Count(), 3);
         }
 
@@ -117,13 +117,13 @@ namespace GPA.Tests.Invoice.Service
                 .Create();
 
             var added = await _clientService.AddAsync(client);
-            var existing = await _clientService.GetByIdAsync(added.Id.Value);
+            var existing = await _clientService.GetClientAsync(added.Id.Value);
 
             existing.Name = "Modified Name";
 
             await _clientService.UpdateAsync(existing);
 
-            var updated = await _clientService.GetByIdAsync(added.Id.Value);
+            var updated = await _clientService.GetClientAsync(added.Id.Value);
 
             Assert.NotEqual(updated.Name, added.Name);
         }
@@ -138,7 +138,7 @@ namespace GPA.Tests.Invoice.Service
 
             var added = await _clientService.AddAsync(client);
             await _clientService.RemoveAsync(added.Id.Value);
-            var existing = await _clientService.GetByIdAsync(added.Id.Value);
+            var existing = await _clientService.GetClientAsync(added.Id.Value);
 
             Assert.Null(existing);
         }

@@ -107,6 +107,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAesHelper, AesHelper>();
 builder.Services.AddScoped<IEmailProviderHelper, EmailProviderHelper>();
+builder.Services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 
 //ToDo: move this to a extension method.
 builder.Services.AddUtils();

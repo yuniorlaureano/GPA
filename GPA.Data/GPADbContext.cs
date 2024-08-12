@@ -64,5 +64,6 @@ namespace GPA.Data
         public DbSet<Delivery> Deliveries { get; set; }
         public DbSet<Unit> Units { get; set; }
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
+        public DbSet<BlobStorageConfiguration> BlobStorageConfigurations { get; set; }
     }
 }

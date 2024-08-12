@@ -42,7 +42,10 @@ namespace GPA.Business.Services.Invoice
             var client = await _repository.GetClientAsync(id);
 
             var clientDto = _mapper.Map<ClientDto>(client);
-            clientDto.Debits = await GetClientDebit(id, client);
+            if (client is not null)
+            {
+                clientDto.Debits = await GetClientDebit(id, client);
+            }
             return clientDto;
         }
 
