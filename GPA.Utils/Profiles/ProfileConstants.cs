@@ -314,7 +314,7 @@ namespace GPA.Utils.Profiles
                         Id = Components.Blob,
                         Permissions = new List<string>
                         {
-                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Upload
+                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Upload, Permissions.Download
                         }
                     }
                 }
@@ -353,6 +353,7 @@ namespace GPA.Utils.Profiles
         public const string Return = "return";
         public const string Send = "send";
         public const string Upload = "upload";
+        public const string Download = "download";
     }
 
     public class Apps

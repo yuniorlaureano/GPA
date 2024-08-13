@@ -18,6 +18,8 @@ namespace GPA.Business.General.Extensions
             services.AddTransient<IEmailProviderService, EmailProviderService>();
             services.AddTransient<IBlobStorageConfigurationService, BlobStorageConfigurationService>();
             services.AddTransient<IBlobStorageService, AWSS3Service>();
+            services.AddTransient<IBlobStorageService, GCPBucketService>();
+            services.AddTransient<IBlobStorageService, AzureBlobService>();
             services.AddTransient<IBlobStorageServiceFactory, BlobStorageServiceFactory>();
         }
     }

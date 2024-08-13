@@ -1,56 +1,53 @@
-﻿using Amazon.S3;
-using Amazon.S3.Transfer;
+﻿using Azure.Storage.Blobs;
 using GPA.Dtos.General;
 using GPA.Utils;
 using Microsoft.AspNetCore.Http;
 
 namespace GPA.Services.General.BlobStorage
 {
-    public class AWSS3Service : IBlobStorageService
+    public class AzureBlobService : IBlobStorageService
     {
-        public string Provider => BlobStorageConstants.AWS;
+        public string Provider => BlobStorageConstants.AZURE;
         private readonly IBlobStorageHelper _blobStorageProviderHelper;
-        private IAmazonS3 _s3Client;
-        private AWSS3Options _aWSS3Options;
+        private BlobServiceClient _blobServiceClient;
+        private AzureBlobOptions _azureBlobOptions;
 
-        public AWSS3Service(IBlobStorageHelper blobStorageProviderHelper)
+        public AzureBlobService(IBlobStorageHelper blobStorageProviderHelper)
         {
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
         public async Task DeleteFile(string options, string fileName)
         {
-            if (_s3Client is null)
+            if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
 
-            var fileTransferUtility = new TransferUtility(_s3Client);
-            await _s3Client.DeleteObjectAsync(_aWSS3Options.Bucket, fileName);
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            var blobClient = containerClient.GetBlobClient(fileName);
+
+            await blobClient.DeleteIfExistsAsync();
         }
 
         public async Task<Stream> DownloadFile(string options, string fileName)
         {
-            if (_s3Client is null)
+            if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
 
-            var filePath = Path.GetTempFileName();
-            var fileTransferUtility = new TransferUtility(_s3Client);
-            await fileTransferUtility.DownloadAsync(filePath, _aWSS3Options.Bucket, fileName);
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            var blobClient = containerClient.GetBlobClient(fileName);
+
             var memoryStream = new MemoryStream();
-            using (var file = new FileStream(filePath, FileMode.Open)) 
-            {
-                file.CopyTo(memoryStream);
-            }
-            File.Delete(filePath);
+            await blobClient.DownloadToAsync(memoryStream);
             return memoryStream;
         }
 
         public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "")
         {
-            if (_s3Client is null)
+            if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
@@ -69,8 +66,15 @@ namespace GPA.Services.General.BlobStorage
             }
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
-            var fileTransferUtility = new TransferUtility(_s3Client);
-            await fileTransferUtility.UploadAsync(filePath, _aWSS3Options.Bucket, fileResult.UniqueFileName);
+
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            var blobClient = containerClient.GetBlobClient(fileResult.UniqueFileName);
+
+            using (var fileStream = File.OpenRead(filePath))
+            {
+                await blobClient.UploadAsync(fileStream, true);
+            }
+
             File.Delete(filePath);
 
             return fileResult;
@@ -78,13 +82,8 @@ namespace GPA.Services.General.BlobStorage
 
         public Task Configure(string options)
         {
-            _aWSS3Options = (AWSS3Options)_blobStorageProviderHelper.DecryptCredentialsInOptions(options, BlobStorageConstants.AWS);
-            var config = new AmazonS3Config()
-            {
-                RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(_aWSS3Options.Region)
-            };
-
-            _s3Client = new AmazonS3Client(_aWSS3Options.AccessKeyId, _aWSS3Options.SecretAccessKey, config);
+            _azureBlobOptions = (AzureBlobOptions)_blobStorageProviderHelper.DecryptCredentialsInOptions(options, BlobStorageConstants.AZURE);
+            _blobServiceClient = new BlobServiceClient(_azureBlobOptions.ConnectionString);
             return Task.FromResult(0);
         }
     }
