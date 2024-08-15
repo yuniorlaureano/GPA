@@ -3,6 +3,7 @@ using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Dtos.Inventory;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -60,6 +61,19 @@ namespace GPA.Inventory.Api.Controllers
             }
 
             await _ProductService.UpdateAsync(product);
+            return NoContent();
+        }
+
+        [HttpPost("photo/upload")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Product}", permission: Permissions.Create)]
+        public async Task<IActionResult> UploadPhoto([FromForm]ProductUploadPhotoDto product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _ProductService.SavePhoto(product);
             return NoContent();
         }
 

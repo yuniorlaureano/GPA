@@ -3,6 +3,8 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.Inventory;
+using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using System.Text;
 
@@ -11,14 +13,11 @@ namespace GPA.Business.Services.Inventory
     public interface IProductService
     {
         Task<ProductDto?> GetProductAsync(Guid id);
-
         Task<ResponseDto<ProductDto>> GetProductsAsync(RequestFilterDto filter);
-
         Task<ProductDto?> AddAsync(ProductCreationDto ProductDto);
-
         Task UpdateAsync(ProductCreationDto ProductDto);
-
         Task RemoveAsync(Guid id);
+        Task SavePhoto(ProductUploadPhotoDto dto);
     }
 
     public class ProductService : IProductService
@@ -27,17 +26,20 @@ namespace GPA.Business.Services.Inventory
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
         private readonly IAddonRepository _addonRepository;
+        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
 
         public ProductService(
             IProductRepository repository,
             IUserContextService userContextService,
             IMapper mapper,
-            IAddonRepository addonRepository)
+            IAddonRepository addonRepository,
+            IBlobStorageServiceFactory blobStorageServiceFactory)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
             _addonRepository = addonRepository;
+            _blobStorageServiceFactory = blobStorageServiceFactory;
         }
 
         public async Task<ProductDto?> GetProductAsync(Guid id)
@@ -101,6 +103,18 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+        }
+
+        public async Task SavePhoto(ProductUploadPhotoDto dto)
+        {
+            var savedProduct = await _repository.GetProductAsync(dto.ProductId);
+            if (savedProduct is null)
+            {
+                throw new InvalidOperationException("El producto no existe");
+            }
+
+            var uploadResult = await _blobStorageServiceFactory.UploadFile(dto.Photo, folder: "products/");
+            await _repository.SavePhoto(uploadResult.UniqueFileName, savedProduct.Id);
         }
 
         public async Task RemoveAsync(Guid id)

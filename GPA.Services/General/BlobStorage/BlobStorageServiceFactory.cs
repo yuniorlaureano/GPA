@@ -6,7 +6,7 @@ namespace GPA.Services.General.BlobStorage
 {
     public interface IBlobStorageServiceFactory
     {
-        Task<BlobStorageFileResult> UploadFile(IFormFile file);
+        Task<BlobStorageFileResult> UploadFile(IFormFile file, string folder = "");
         Task<Stream?> DownloadFile(string fileName);
         Task DeleteFile(string fileName);
     }
@@ -24,7 +24,7 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageServices = blobStorageServices;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file)
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string folder = "")
         {
             var config = await _blobStorageConfigurationRepository.GetByIdAsync(query => query, x => x.Current);
             if (config is null)
@@ -39,7 +39,7 @@ namespace GPA.Services.General.BlobStorage
                 throw new ArgumentException("No se ha encontrado el proveedor de archivos");
             }
 
-            return await blobService.UploadFile(file, config.Value);
+            return await blobService.UploadFile(file, config.Value, folder);
         }
 
         public async Task<Stream?> DownloadFile(string fileName)

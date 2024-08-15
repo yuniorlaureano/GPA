@@ -19,6 +19,6 @@
         public string Category { get; set; }
 
         public Guid? ProductLocationId { get; set; }
-        public string ProductLocation { get; set; }
+        public string? ProductLocation { get; set; }
     }
 }

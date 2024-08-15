@@ -13,6 +13,7 @@ namespace GPA.Data.Inventory
         Task<IEnumerable<RawProduct>> GetProductsAsync(RequestFilterDto filter);
         Task<int> GetProductsCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawProduct>> GetProductsAsync(List<Guid> ids);
+        Task SavePhoto(string fullFileName, Guid productId);
     }
 
     public class ProductRepository : Repository<Product>, IProductRepository
@@ -143,6 +144,17 @@ namespace GPA.Data.Inventory
             ";
 
             return await _context.Database.SqlQueryRaw<RawProduct>(query).ToListAsync();
+        }
+
+        public async Task SavePhoto(string fullFileName, Guid productId)
+        {
+            var query = @$"
+                UPDATE [GPA].[Inventory].[Products]
+                SET Photo = @Photo 
+                WHERE Id = @Id 
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter("@Photo", fullFileName), new SqlParameter("@Id", productId));
         }
     }
 }
