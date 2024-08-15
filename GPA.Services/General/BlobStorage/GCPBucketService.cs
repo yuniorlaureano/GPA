@@ -19,17 +19,17 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
-        public async Task DeleteFile(string options, string fileName)
+        public async Task DeleteFile(string options, string fileName, string bucketOrContainer)
         {
             if (_storageClient is null)
             {
                 await Configure(options);
             }
 
-            await _storageClient.DeleteObjectAsync(_gCPBucketOptions.Bucket, fileName);
+            await _storageClient.DeleteObjectAsync(bucketOrContainer, fileName);
         }
 
-        public async Task<Stream> DownloadFile(string options, string fileName)
+        public async Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer)
         {
             if (_storageClient is null)
             {
@@ -37,11 +37,11 @@ namespace GPA.Services.General.BlobStorage
             }
 
             var memoryStream = new MemoryStream();
-            await _storageClient.DownloadObjectAsync(_gCPBucketOptions.Bucket, fileName, memoryStream);
+            await _storageClient.DownloadObjectAsync(bucketOrContainer, fileName, memoryStream);
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "")
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
         {
             if (_storageClient is null)
             {
@@ -58,14 +58,14 @@ namespace GPA.Services.General.BlobStorage
             {
                 await file.CopyToAsync(stream);
                 fileResult.FileName = file.FileName;
-                fileResult.FileSize = file.Length;
             }
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
 
-            using (var fileStream = File.OpenRead(filePath)) 
-            {            
-                await _storageClient.UploadObjectAsync(_gCPBucketOptions.Bucket, fileResult.UniqueFileName, file.ContentType, fileStream);
+            using (var fileStream = File.OpenRead(filePath))
+            {
+                fileResult.BucketOrContainer = isPublic ? _gCPBucketOptions.PublicBucket : _gCPBucketOptions.PrivateBucket;
+                await _storageClient.UploadObjectAsync(fileResult.BucketOrContainer, fileResult.UniqueFileName, file.ContentType, fileStream);
             }
             File.Delete(filePath);
 

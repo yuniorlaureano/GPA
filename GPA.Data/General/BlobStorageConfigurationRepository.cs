@@ -33,6 +33,7 @@ namespace GPA.Data.General
                 (
                      [Identifier]
                     ,[Provider]
+                    ,[PublicUrl]
                     ,[Value]
                     ,[Current]
                     ,[CreatedBy]
@@ -44,6 +45,7 @@ namespace GPA.Data.General
                 (
                     @Identifier,
                     @Provider,
+                    @PublicUrl,
                     @Value,
                     @Current,
                     @CreatedBy,
@@ -56,6 +58,7 @@ namespace GPA.Data.General
             {
                 new SqlParameter("@Identifier", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Identifier },
                 new SqlParameter("@Provider", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Provider },
+                new SqlParameter("@PublicUrl", SqlDbType.NVarChar) { Value = blobStorageConfiguration.PublicUrl },
                 new SqlParameter("@Value", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Value },
                 new SqlParameter("@Current", SqlDbType.Bit) { Value = blobStorageConfiguration.Current },
                 new SqlParameter("@CreatedBy", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.CreatedBy },
@@ -81,6 +84,7 @@ namespace GPA.Data.General
                             SET 
                                  [Identifier] = @Identifier
                                 ,[Provider] = @Provider
+                                ,[PublicUrl] = @PublicUrl
                                 ,[Value] = @Value
                                 ,[Current] = @Current
                                 ,[UpdatedBy] = @UpdatedBy
@@ -94,6 +98,7 @@ namespace GPA.Data.General
                 new SqlParameter("@Id", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.Id },
                 new SqlParameter("@Identifier", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Identifier },
                 new SqlParameter("@Provider", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Provider },
+                new SqlParameter("@PublicUrl", SqlDbType.NVarChar) { Value = blobStorageConfiguration.PublicUrl },
                 new SqlParameter("@Value", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Value },
                 new SqlParameter("@Current", SqlDbType.Bit) { Value = blobStorageConfiguration.Current },
                 new SqlParameter("@UpdatedBy", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.CreatedBy },

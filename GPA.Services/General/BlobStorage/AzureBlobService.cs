@@ -17,27 +17,27 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
-        public async Task DeleteFile(string options, string fileName)
+        public async Task DeleteFile(string options, string fileName, string bucketOrContainer)
         {
             if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
 
-            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            var containerClient = _blobServiceClient.GetBlobContainerClient(bucketOrContainer);
             var blobClient = containerClient.GetBlobClient(fileName);
 
             await blobClient.DeleteIfExistsAsync();
         }
 
-        public async Task<Stream> DownloadFile(string options, string fileName)
+        public async Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer)
         {
             if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
 
-            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            var containerClient = _blobServiceClient.GetBlobContainerClient(bucketOrContainer);
             var blobClient = containerClient.GetBlobClient(fileName);
 
             var memoryStream = new MemoryStream();
@@ -45,7 +45,7 @@ namespace GPA.Services.General.BlobStorage
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "")
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
         {
             if (_blobServiceClient is null)
             {
@@ -62,12 +62,12 @@ namespace GPA.Services.General.BlobStorage
             {
                 await file.CopyToAsync(stream);
                 fileResult.FileName = file.FileName;
-                fileResult.FileSize = file.Length;
             }
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
 
-            var containerClient = _blobServiceClient.GetBlobContainerClient(_azureBlobOptions.Container);
+            fileResult.BucketOrContainer = isPublic ? _azureBlobOptions.PublicContainer : _azureBlobOptions.PrivateContainer;
+            var containerClient = _blobServiceClient.GetBlobContainerClient(fileResult.BucketOrContainer);
             var blobClient = containerClient.GetBlobClient(fileResult.UniqueFileName);
 
             using (var fileStream = File.OpenRead(filePath))

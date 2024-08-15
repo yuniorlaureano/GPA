@@ -5,8 +5,8 @@ namespace GPA.Dtos.General
     public interface IBlobStorageService
     {
         public string Provider { get; }
-        Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "");
-        Task<Stream> DownloadFile(string options, string fileName);
-        Task DeleteFile(string options, string fileName);
+        Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false);
+        Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer);
+        Task DeleteFile(string options, string fileName, string bucketOrContainer);
     }
 }

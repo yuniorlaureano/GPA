@@ -18,7 +18,7 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
-        public async Task DeleteFile(string options, string fileName)
+        public async Task DeleteFile(string options, string fileName, string bucketOrContainer)
         {
             if (_s3Client is null)
             {
@@ -26,10 +26,10 @@ namespace GPA.Services.General.BlobStorage
             }
 
             var fileTransferUtility = new TransferUtility(_s3Client);
-            await _s3Client.DeleteObjectAsync(_aWSS3Options.Bucket, fileName);
+            await _s3Client.DeleteObjectAsync(bucketOrContainer, fileName);
         }
 
-        public async Task<Stream> DownloadFile(string options, string fileName)
+        public async Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer)
         {
             if (_s3Client is null)
             {
@@ -38,7 +38,7 @@ namespace GPA.Services.General.BlobStorage
 
             var filePath = Path.GetTempFileName();
             var fileTransferUtility = new TransferUtility(_s3Client);
-            await fileTransferUtility.DownloadAsync(filePath, _aWSS3Options.Bucket, fileName);
+            await fileTransferUtility.DownloadAsync(filePath, bucketOrContainer, fileName);
             var memoryStream = new MemoryStream();
             using (var file = new FileStream(filePath, FileMode.Open)) 
             {
@@ -48,7 +48,7 @@ namespace GPA.Services.General.BlobStorage
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "")
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
         {
             if (_s3Client is null)
             {
@@ -65,12 +65,12 @@ namespace GPA.Services.General.BlobStorage
             {
                 await file.CopyToAsync(stream);
                 fileResult.FileName = file.FileName;
-                fileResult.FileSize = file.Length;
             }
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
             var fileTransferUtility = new TransferUtility(_s3Client);
-            await fileTransferUtility.UploadAsync(filePath, _aWSS3Options.Bucket, fileResult.UniqueFileName);
+            fileResult.BucketOrContainer = isPublic ? _aWSS3Options.PublicBucket : _aWSS3Options.PrivateBucket;
+            await fileTransferUtility.UploadAsync(filePath, fileResult.BucketOrContainer, fileResult.UniqueFileName);
             File.Delete(filePath);
 
             return fileResult;
