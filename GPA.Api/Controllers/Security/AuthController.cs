@@ -170,6 +170,14 @@ namespace GPA.Api.Controllers.Security
         public async Task<IActionResult> EditProfile([FromRoute] Guid userId, [FromBody] UserProfileDto model)
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
+            var userByEmail = await _userManager.FindByEmailAsync(model.Email);
+
+            if (userByEmail is not null && userByEmail.Id != userId)
+            {
+                ModelState.AddModelError("usuario", "El correo ya está registrado");
+                return BadRequest(ModelState);
+            }
+            
             if (user is null)
             {
                 ModelState.AddModelError("usuario", "El usuario no existe");
@@ -247,7 +255,15 @@ namespace GPA.Api.Controllers.Security
             user.TOTPAccessCodeAttemptsDate = DateTimeOffset.Now;
             await _userManager.UpdateAsync(user);
 
-            await _emailServiceFactory.SendMessageAsync(message);
+            try
+            {
+                await _emailServiceFactory.SendMessageAsync(message);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("usuario", "Error enviando el correo");
+                return BadRequest(ModelState);
+            }
 
             return Ok();
         }

@@ -20,7 +20,7 @@ namespace GPA.Data.Security
         Task<List<RawProfile>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
         Task<bool> ProfileExists(Guid userId);
-        Task<string?> GetProfileValue(Guid profileId);
+        Task<(Guid id, string? value)?> GetProfileValue(Guid profileId);
     }
 
     public class GPAProfileRepository : Repository<GPAProfile>, IGPAProfileRepository
@@ -148,12 +148,18 @@ namespace GPA.Data.Security
             return await _context.UserProfile.AnyAsync(x => x.UserId == userId);
         }
 
-        public async Task<string?> GetProfileValue(Guid profileId)
+        public async Task<(Guid id, string? value)?> GetProfileValue(Guid profileId)
         {
-            return await _context.Profiles
+            var profile =  await _context.Profiles
                 .Where(x => x.Id == profileId)
-                .Select(x => x.Value)
                 .FirstOrDefaultAsync();
+
+            if (profile is null)
+            {
+                return null;
+            }
+
+            return (profile.Id, profile.Value);
         }
 
         public async Task<IEnumerable<RawProfile>> GetProfilesAsync(RequestFilterDto filter)

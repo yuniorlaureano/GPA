@@ -50,7 +50,6 @@ namespace GPA.Api.Utils.Filters
 
         private async Task<string?> GetProfile(IGPAProfileRepository profileRepo, string? profileId, AuthorizationFilterContext context, string? userId)
         {
-            string? profile = null;
             if (profileId is { Length: 0 })
             {
                 permissionMessage.Message = "No tiene un perfil asociado, debe elegir el perfir.";
@@ -61,7 +60,7 @@ namespace GPA.Api.Utils.Filters
                 return null;
             }
 
-            profile = await profileRepo.GetProfileValue(Guid.Parse(profileId));
+            var profile = await profileRepo.GetProfileValue(Guid.Parse(profileId));
             if (profile is null)
             {
                 permissionMessage.Message = "No tiene perfil asignado. Comunicarse con el administrador";
@@ -70,8 +69,16 @@ namespace GPA.Api.Utils.Filters
                     StatusCode = StatusCodes.Status403Forbidden
                 };
             }
+            else if(string.IsNullOrEmpty(profile?.value))
+            {
+                permissionMessage.Message = "El perfil que está utilizando no tiene permisos asignados. Comunicarse con el administrador";
+                context.Result = new ObjectResult(permissionMessage)
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
+            }
 
-            return profile;
+            return profile?.value;
         }
 
         private PermissionPathWithValue SetPermissionPath(string[] pathTokens, string permission)

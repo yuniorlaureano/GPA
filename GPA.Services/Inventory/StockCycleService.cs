@@ -35,7 +35,9 @@ namespace GPA.Business.Services.Inventory
         public async Task<StockCycleDto?> GetStockCycleAsync(Guid id)
         {
             var stockCycle = await _repository.GetStockCycleAsync(id);
-            return _mapper.Map<StockCycleDto>(stockCycle);
+            var dto = _mapper.Map<StockCycleDto>(stockCycle);
+            await MapStockCycleDetails(dto);
+            return dto;
         }
 
         public async Task<ResponseDto<StockCycleDto>> GetStockCyclesAsync(RequestFilterDto search)
@@ -64,8 +66,16 @@ namespace GPA.Business.Services.Inventory
 
         public async Task RemoveAsync(Guid id)
         {
-            var newStockCycle = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(newStockCycle);
+            await _repository.SoftDeleteStockCycleAsync(id, _userContextService.GetCurrentUserId());
+        }
+
+        private async Task MapStockCycleDetails(StockCycleDto dto)
+        {
+            if (dto is not null)
+            {
+                var stockCycleDetails = await _repository.GetStockCycleDetailsAsync(dto.Id.Value);
+                dto.StockCycleDetails = _mapper.Map<ICollection<StockCycleDetailDto>>(stockCycleDetails);
+            }
         }
     }
 }

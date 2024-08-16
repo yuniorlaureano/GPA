@@ -1,5 +1,4 @@
-﻿using Azure;
-using GPA.Common.DTOs;
+﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Inventory;
 using GPA.Dtos.Inventory;
 using GPA.Entities.General;
@@ -15,10 +14,12 @@ namespace GPA.Data.Inventory
     public interface IStockCycleRepository : IRepository<StockCycle>
     {
         Task<RawStockCycle?> GetStockCycleAsync(Guid id);
+        Task<IEnumerable<RawStockCycleDetails>> GetStockCycleDetailsAsync(Guid id);
         Task<IEnumerable<RawStockCycle>> GetStockCyclesAsync(RequestFilterDto filter);
         Task<int> GetStockCycleCountAsync(RequestFilterDto filter);
         Task<Guid> OpenCycleAsync(StockCycle model);
-		Task CloseCycleAsync(Guid id, Guid updatedBy);
+        Task CloseCycleAsync(Guid id, Guid updatedBy);
+        Task SoftDeleteStockCycleAsync(Guid id, Guid createdBy);
     }
 
     public class StockCycleRepository : Repository<StockCycle>, IStockCycleRepository
@@ -29,7 +30,7 @@ namespace GPA.Data.Inventory
 
         public async Task<Guid> OpenCycleAsync(StockCycle model)
         {
-           await _context.Database.OpenConnectionAsync();
+            await _context.Database.OpenConnectionAsync();
             using var command = _context.Database.GetDbConnection().CreateCommand();
 
             var insert = @"
@@ -174,9 +175,9 @@ namespace GPA.Data.Inventory
             command.Parameters.AddRange(new SqlParameter[]
                    {
                         new ("@CycleId", System.Data.SqlDbType.UniqueIdentifier) { Value = id },
-                        new ("@CycleType", System.Data.SqlDbType.TinyInt) { Value = (byte)CycleType.Final },                        
-                        new ("@UpdatedBy", System.Data.SqlDbType.UniqueIdentifier) { Value = updatedBy },                        
-                        new ("@UpdatedAt", System.Data.SqlDbType.DateTimeOffset) { Value = DateTimeOffset.UtcNow },                        
+                        new ("@CycleType", System.Data.SqlDbType.TinyInt) { Value = (byte)CycleType.Final },
+                        new ("@UpdatedBy", System.Data.SqlDbType.UniqueIdentifier) { Value = updatedBy },
+                        new ("@UpdatedAt", System.Data.SqlDbType.DateTimeOffset) { Value = DateTimeOffset.UtcNow },
                    }
                 );
 
@@ -194,12 +195,35 @@ namespace GPA.Data.Inventory
                     ,[EndDate]
                     ,[IsClose]
                 FROM [GPA].[Inventory].[StockCycles]
-                WHER Id = @Id
+                WHERE Id = @Id AND Deleted = 0
                     ";
 
             return await _context.Database
                 .SqlQueryRaw<RawStockCycle>(query, new SqlParameter("@Id", id))
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<RawStockCycleDetails>> GetStockCycleDetailsAsync(Guid id)
+        {
+            var query = @"
+                SELECT 
+                     [Id]
+                    ,[ProductId]
+                    ,[ProductPrice]
+                    ,[ProductName]
+                    ,[ProductType]
+                    ,[Stock]
+                    ,[Input]
+                    ,[Output]
+                    ,[Type]
+                    ,[StockCycleId]
+                FROM [GPA].[Inventory].[StockCycleDetails]
+                WHERE StockCycleId = @StockCycleId
+                    ";
+
+            return await _context.Database
+                .SqlQueryRaw<RawStockCycleDetails>(query, new SqlParameter("@StockCycleId", id))
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<RawStockCycle>> GetStockCyclesAsync(RequestFilterDto filter)
@@ -214,7 +238,7 @@ namespace GPA.Data.Inventory
                     ,[EndDate]
                     ,[IsClose]
                 FROM [GPA].[Inventory].[StockCycles]
-                WHERE 1 = 1 
+                WHERE Deleted = 0 
                     {DateFilter}
                     {IsCloseFilter}
                 ORDER BY Id
@@ -225,7 +249,7 @@ namespace GPA.Data.Inventory
             var (From, To, IsClose) = GetFilterParameter(StockCycleFilter);
             var parameters = new List<SqlParameter>();
             parameters.AddRange([Page, PageSize]);
-           
+
             if (DateFilter is { Length: > 0 })
             {
                 parameters.AddRange([From, To]);
@@ -246,14 +270,14 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[StockCycles]
-                WHERE 1 = 1 
+                WHERE Deleted = 0
                     {DateFilter}
                     {IsCloseFilter}
                     ";
 
             var (From, To, IsClose) = GetFilterParameter(StockCycleFilter);
             var parameters = new List<SqlParameter>();
-            
+
             if (DateFilter is { Length: > 0 })
             {
                 parameters.AddRange([From, To]);
@@ -269,7 +293,7 @@ namespace GPA.Data.Inventory
         {
             var from = new SqlParameter("@From", DetailedDateUtil.GetDetailedDate(stockCycleFilter?.From));
             var to = new SqlParameter("@To", DetailedDateUtil.GetDetailedDate(stockCycleFilter?.To));
-            var isClose = new SqlParameter("@IsClose", stockCycleFilter?.IsClose  == -1 ? null : stockCycleFilter?.IsClose);
+            var isClose = new SqlParameter("@IsClose", stockCycleFilter?.IsClose == -1 ? null : stockCycleFilter?.IsClose);
             from.DbType = System.Data.DbType.Date;
             to.DbType = System.Data.DbType.Date;
             isClose.DbType = System.Data.DbType.Boolean;
@@ -304,6 +328,24 @@ namespace GPA.Data.Inventory
             var dateFilter = stockCycleListFilter?.From is null || stockCycleListFilter?.To is null ? "" : $"AND {dateField} BETWEEN @From AND @To";
             var isCloseFilter = stockCycleListFilter?.IsClose is null || stockCycleListFilter?.IsClose == -1 ? "" : "AND IsClose = @IsClose";
             return (dateFilter, isCloseFilter, stockCycleListFilter);
+        }
+
+        public async Task SoftDeleteStockCycleAsync(Guid id, Guid createdBy)
+        {
+            var query = @"
+                UPDATE [GPA].[Inventory].[StockCycles]
+                SET 
+	                Deleted = 1,
+	                DeletedAt = GETUTCDATE(),
+	                DeletedBy = @DeletedBy
+                WHERE Id = @Id
+                    ";
+
+            await _context.Database
+                .ExecuteSqlRawAsync(
+                    query,
+                    new SqlParameter("@Id", id),
+                    new SqlParameter("@DeletedBy", createdBy));
         }
     }
 }

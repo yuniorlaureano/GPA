@@ -168,6 +168,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<StockCycleDetail, StockCycleDetailDto>();
             CreateMap<StockCycleDetailDto, StockCycleDetail>();
+            CreateMap<RawStockCycleDetails, StockCycleDetailDto>();
 
             CreateMap<StockCycleDetail, StockCycleCreationDetailDto>();
             CreateMap<StockCycleCreationDetailDto, StockCycleDetail>();
