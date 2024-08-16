@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Dtos.Inventory;
+using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using System.Text;
@@ -45,14 +46,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<ProductDto?> GetProductAsync(Guid id)
         {
             var product = await _repository.GetProductAsync(id);
-            var productDto = _mapper.Map<ProductDto>(await _repository.GetProductAsync(id));
-
-            if (product is not null)
-            {
-                var addons = await _addonRepository.GetAddonsByProductId(product.Id);
-                productDto.Addons = _mapper.Map<AddonDto[]>(addons);
-            }
-
+            var productDto = _mapper.Map<ProductDto>(product);
+            productDto.Addons = await GetAddons(product);
             return productDto;
         }
 
@@ -69,10 +64,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<ProductDto> AddAsync(ProductCreationDto dto)
         {
             var newProduct = _mapper.Map<Product>(dto);
-            if (dto.Addons is { Length: > 0 })
-            {
-                newProduct.ProductAddons = dto.Addons.Select(addon => new ProductAddon { AddonId = addon }).ToList();
-            }
+
+            MapAddons(newProduct, dto.Addons);
             newProduct.CreatedBy = _userContextService.GetCurrentUserId();
             newProduct.CreatedAt = DateTimeOffset.UtcNow;
             var savedProduct = await _repository.AddAsync(newProduct);
@@ -81,27 +74,23 @@ namespace GPA.Business.Services.Inventory
 
         public async Task UpdateAsync(ProductCreationDto dto)
         {
-            if (dto.Id is null)
+            var savedProduct = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
+            if (dto.Id is null || savedProduct is null)
             {
                 throw new ArgumentNullException();
             }
 
             var newProduct = _mapper.Map<Product>(dto);
             newProduct.Id = dto.Id.Value;
-            var savedProduct = await _repository.GetByIdAsync(query => query, x => x.Id == dto.Id.Value);
 
-            await _addonRepository.DeleteAddonsByProductId(dto.Id.Value);
-
-            if (dto.Addons is { Length: > 0 })
-            {
-                newProduct.ProductAddons = dto.Addons.Select(
-                    addon => new ProductAddon { AddonId = addon }).ToList();
-            }
+            await MapAddons(newProduct, dto.Addons, dto.Id.Value);
             newProduct.UpdatedBy = _userContextService.GetCurrentUserId();
             newProduct.UpdatedAt = DateTimeOffset.UtcNow;
+
             await _repository.UpdateAsync(savedProduct, newProduct, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;
+                entityState.Property(x => x.Photo).IsModified = false;
             });
         }
 
@@ -113,14 +102,42 @@ namespace GPA.Business.Services.Inventory
                 throw new InvalidOperationException("El producto no existe");
             }
 
-            var uploadResult = await _blobStorageServiceFactory.UploadFile(dto.Photo, folder: "products/");
-            await _repository.SavePhoto(uploadResult.UniqueFileName, savedProduct.Id);
+            var uploadResult = await _blobStorageServiceFactory.UploadFile(dto.Photo, folder: "products/", isPublic: true);
+            await _repository.SavePhoto(uploadResult.AsJson(), savedProduct.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
-            var newProduct = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(newProduct);
+            await _repository.SoftDelete(id);
+        }
+
+        private async Task<AddonDto[]?> GetAddons(RawProduct? product)
+        {
+            if (product == null)
+            {
+                return null;
+            }
+            var addons = await _addonRepository.GetAddonsByProductId(product.Id);
+            return _mapper.Map<AddonDto[]>(addons);
+        }
+
+        private void MapAddons(Product product, Guid[]? addons)
+        {
+            if (addons is { Length: > 0 })
+            {
+                product.ProductAddons = addons.Select(addon => new ProductAddon { AddonId = addon }).ToList();
+            }
+        }
+
+        private async Task MapAddons(Product product, Guid[]? addons, Guid productId)
+        {
+            await _addonRepository.DeleteAddonsByProductId(productId);
+
+            if (addons is { Length: > 0 })
+            {
+                product.ProductAddons = addons.Select(
+                    addon => new ProductAddon { AddonId = addon }).ToList();
+            }
         }
     }
 }

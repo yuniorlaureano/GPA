@@ -64,6 +64,7 @@ namespace GPA.Services.General
             dto.Value = _blobStorageProviderHelper.SerializeOptions(value, dto.Provider);
             var blobStorageConfiguration = _mapper.Map<BlobStorageConfiguration>(dto);
             blobStorageConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
+            blobStorageConfiguration.CreatedAt = DateTimeOffset.UtcNow;
             await _repository.CreateConfigurationAsync(blobStorageConfiguration);
         }
 
@@ -82,7 +83,8 @@ namespace GPA.Services.General
             dto.Value = _blobStorageProviderHelper.SerializeOptions(value, dto.Provider);
 
             var blobStorageConfiguration = _mapper.Map<BlobStorageConfiguration>(dto);
-            blobStorageConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
+            blobStorageConfiguration.UpdatedBy = _userContextService.GetCurrentUserId();
+            blobStorageConfiguration.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateConfigurationAsync(blobStorageConfiguration);
         }
 

@@ -39,7 +39,7 @@ namespace GPA.Services.General.BlobStorage
                 throw new ArgumentException("No se ha encontrado el proveedor de archivos");
             }
 
-            return await blobService.UploadFile(file, config.Value, folder, isPublic);
+            return await blobService.UploadFile(file, config.Value, folder, isPublic, config.PublicUrl);
         }
 
         public async Task<Stream?> DownloadFile(string fileName, string bucketOrContainer)

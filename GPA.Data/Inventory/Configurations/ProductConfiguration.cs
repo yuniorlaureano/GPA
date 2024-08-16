@@ -16,7 +16,9 @@ namespace GPA.Data.Inventory.Configurations
 
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.Property(x => x.Code).HasMaxLength(50);
-            builder.Property(x => x.Photo).HasMaxLength(300);
+            builder.Property(x => x.Name).HasMaxLength(200);
+            builder.Property(x => x.Photo);
+            builder.Property(x => x.Price).HasColumnType("decimal(10,2)");
             builder.Property(x => x.Description).HasMaxLength(300);
 
             builder.HasOne(x => x.Category)

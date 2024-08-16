@@ -48,17 +48,14 @@ namespace GPA.Services.General.BlobStorage
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false, string publicUrl = "")
         {
             if (_s3Client is null)
             {
                 await Configure(options);
             }
 
-            var fileResult = new BlobStorageFileResult()
-            {
-                Provider = Provider
-            };
+            var fileResult = new BlobStorageFileResult();
             var filePath = Path.GetTempFileName();
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -68,9 +65,15 @@ namespace GPA.Services.General.BlobStorage
             }
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
+            
+            if (isPublic)
+            {
+                fileResult.FileUrl = $"{publicUrl}/{fileResult.UniqueFileName}";
+            }
+
             var fileTransferUtility = new TransferUtility(_s3Client);
-            fileResult.BucketOrContainer = isPublic ? _aWSS3Options.PublicBucket : _aWSS3Options.PrivateBucket;
-            await fileTransferUtility.UploadAsync(filePath, fileResult.BucketOrContainer, fileResult.UniqueFileName);
+            var bucket = isPublic ? _aWSS3Options.PublicBucket : _aWSS3Options.PrivateBucket;
+            await fileTransferUtility.UploadAsync(filePath, bucket, fileResult.UniqueFileName);
             File.Delete(filePath);
 
             return fileResult;

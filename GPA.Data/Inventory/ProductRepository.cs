@@ -14,6 +14,7 @@ namespace GPA.Data.Inventory
         Task<int> GetProductsCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawProduct>> GetProductsAsync(List<Guid> ids);
         Task SavePhoto(string fullFileName, Guid productId);
+        Task SoftDelete(Guid productId);
     }
 
     public class ProductRepository : Repository<Product>, IProductRepository
@@ -49,7 +50,7 @@ namespace GPA.Data.Inventory
                         ON PRO.CategoryId = CA.Id AND CA.Deleted = 0
                     LEFT JOIN [GPA].[Inventory].[ProductLocations] PL
                         ON PL.Id = PRO.ProductLocationId AND PL.Deleted = 0
-                WHERE PRO.Id = @Id 
+                WHERE PRO.Id = @Id AND PRO.Deleted = 0
             ";
 
             return await _context.Database.SqlQueryRaw<RawProduct>(
@@ -86,9 +87,10 @@ namespace GPA.Data.Inventory
 	                LEFT JOIN [GPA].[Inventory].[ProductLocations] PL
 		                ON PL.Id = PRO.ProductLocationId AND PL.Deleted = 0
                 WHERE 
+                  PRO.Deleted = 0 AND (
 	              @Search IS NULL
 	              OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-	              OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
+	              OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
                 ORDER BY PRO.Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -104,10 +106,10 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Products] PRO
-                WHERE 
+                WHERE PRO.Deleted = 0 AND (
 	                @Search IS NULL
 	                OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%') 
+	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
@@ -140,7 +142,7 @@ namespace GPA.Data.Inventory
                         ON PRO.CategoryId = CA.Id AND CA.Deleted = 0
                     LEFT JOIN [GPA].[Inventory].[ProductLocations] PL
                         ON PL.Id = PRO.ProductLocationId AND PL.Deleted = 0
-                WHERE PRO.Id IN({string.Join(",", ids.Select(id => $"'{id}'"))}) 
+                WHERE PRO.Id IN({string.Join(",", ids.Select(id => $"'{id}'"))}) AND PRO.Deleted = 0
             ";
 
             return await _context.Database.SqlQueryRaw<RawProduct>(query).ToListAsync();
@@ -155,6 +157,14 @@ namespace GPA.Data.Inventory
             ";
 
             await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter("@Photo", fullFileName), new SqlParameter("@Id", productId));
+        }
+
+        public async Task SoftDelete(Guid productId)
+        {
+            await _context.Products.Where(x => x.Id == productId).ExecuteUpdateAsync(
+                x => x.SetProperty(p => p.Deleted, true)
+                      .SetProperty(p => p.DeletedAt, DateTimeOffset.UtcNow)
+                );
         }
     }
 }

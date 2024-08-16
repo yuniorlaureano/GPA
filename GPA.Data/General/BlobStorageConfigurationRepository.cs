@@ -20,9 +20,6 @@ namespace GPA.Data.General
         public async Task CreateConfigurationAsync(BlobStorageConfiguration blobStorageConfiguration)
         {
             var query = @"
-                DECLARE 
-                    @CreatedAt DATETIMEOFFSET = SYSDATETIMEOFFSET();
-
                 IF(@Current = 1)
                 BEGIN
                     UPDATE [GPA].[General].[BlobStorageConfigurations] 
@@ -62,6 +59,7 @@ namespace GPA.Data.General
                 new SqlParameter("@Value", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Value },
                 new SqlParameter("@Current", SqlDbType.Bit) { Value = blobStorageConfiguration.Current },
                 new SqlParameter("@CreatedBy", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.CreatedBy },
+                new SqlParameter("@CreatedAt", SqlDbType.DateTimeOffset) { Value = blobStorageConfiguration.CreatedAt },
             };
 
             await _context.Database.ExecuteSqlRawAsync(query, parameters);
@@ -70,8 +68,6 @@ namespace GPA.Data.General
         public async Task UpdateConfigurationAsync(BlobStorageConfiguration blobStorageConfiguration)
         {
             var query = @"
-                    @UpdatedAt DATETIMEOFFSET = SYSDATETIMEOFFSET();
-
                     IF EXISTS(SELECT 1 FROM [GPA].[General].[BlobStorageConfigurations] WHERE Id = @Id)
                     BEGIN
                         IF(@Current = 1)
@@ -101,7 +97,8 @@ namespace GPA.Data.General
                 new SqlParameter("@PublicUrl", SqlDbType.NVarChar) { Value = blobStorageConfiguration.PublicUrl },
                 new SqlParameter("@Value", SqlDbType.NVarChar) { Value = blobStorageConfiguration.Value },
                 new SqlParameter("@Current", SqlDbType.Bit) { Value = blobStorageConfiguration.Current },
-                new SqlParameter("@UpdatedBy", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.CreatedBy },
+                new SqlParameter("@UpdatedBy", SqlDbType.UniqueIdentifier) { Value = blobStorageConfiguration.UpdatedBy },
+                new SqlParameter("@UpdatedAt", SqlDbType.DateTimeOffset) { Value = blobStorageConfiguration.UpdatedAt },
             };
 
             await _context.Database.ExecuteSqlRawAsync(query, parameters);

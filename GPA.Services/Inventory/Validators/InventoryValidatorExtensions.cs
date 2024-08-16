@@ -10,6 +10,7 @@ namespace GPA.Bussiness.Services.Inventory.Validator
         {
             services.AddScoped<IValidator<CategoryDto>, CategoryValidator>();
             services.AddScoped<IValidator<CategoryDto>, CategoryCreationValidator>();
+            services.AddScoped<IValidator<ProductCreationDto>, ProductCreationValidator>();
         }
     }
 }

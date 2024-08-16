@@ -45,17 +45,14 @@ namespace GPA.Services.General.BlobStorage
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false, string publicUrl = "")
         {
             if (_blobServiceClient is null)
             {
                 await Configure(options);
             }
 
-            var fileResult = new BlobStorageFileResult()
-            {
-                Provider = Provider
-            };
+            var fileResult = new BlobStorageFileResult();
             var filePath = Path.GetTempFileName();
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -66,8 +63,13 @@ namespace GPA.Services.General.BlobStorage
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
 
-            fileResult.BucketOrContainer = isPublic ? _azureBlobOptions.PublicContainer : _azureBlobOptions.PrivateContainer;
-            var containerClient = _blobServiceClient.GetBlobContainerClient(fileResult.BucketOrContainer);
+            if (isPublic)
+            {
+                fileResult.FileUrl = $"{publicUrl}/{_azureBlobOptions.PublicContainer}/{fileResult.UniqueFileName}";
+            }
+
+            var container = isPublic ? _azureBlobOptions.PublicContainer : _azureBlobOptions.PrivateContainer;
+            var containerClient = _blobServiceClient.GetBlobContainerClient(container);
             var blobClient = containerClient.GetBlobClient(fileResult.UniqueFileName);
 
             using (var fileStream = File.OpenRead(filePath))

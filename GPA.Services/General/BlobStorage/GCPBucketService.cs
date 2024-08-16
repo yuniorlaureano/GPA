@@ -41,17 +41,14 @@ namespace GPA.Services.General.BlobStorage
             return memoryStream;
         }
 
-        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false)
+        public async Task<BlobStorageFileResult> UploadFile(IFormFile file, string options, string folder = "", bool isPublic = false, string publicUrl = "")
         {
             if (_storageClient is null)
             {
                 await Configure(options);
             }
 
-            var fileResult = new BlobStorageFileResult()
-            {
-                Provider = Provider
-            };
+            var fileResult = new BlobStorageFileResult();
             var filePath = Path.GetTempFileName();
 
             using (var stream = new FileStream(filePath, FileMode.Create))
@@ -62,10 +59,15 @@ namespace GPA.Services.General.BlobStorage
 
             fileResult.UniqueFileName = $"{folder}{Guid.NewGuid()}-{file.FileName}";
 
+            if (isPublic)
+            {
+                fileResult.FileUrl = $"{publicUrl}/{_gCPBucketOptions.PublicBucket}/{fileResult.UniqueFileName}";
+            }
+
             using (var fileStream = File.OpenRead(filePath))
             {
-                fileResult.BucketOrContainer = isPublic ? _gCPBucketOptions.PublicBucket : _gCPBucketOptions.PrivateBucket;
-                await _storageClient.UploadObjectAsync(fileResult.BucketOrContainer, fileResult.UniqueFileName, file.ContentType, fileStream);
+                var bucket = isPublic ? _gCPBucketOptions.PublicBucket : _gCPBucketOptions.PrivateBucket;
+                await _storageClient.UploadObjectAsync(bucket, fileResult.UniqueFileName, file.ContentType, fileStream);
             }
             File.Delete(filePath);
 
