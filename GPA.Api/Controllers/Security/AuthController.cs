@@ -4,7 +4,9 @@ using GPA.Business.Security;
 using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
+using GPA.Dtos.General;
 using GPA.Dtos.Security;
+using GPA.Services.General.BlobStorage;
 using GPA.Services.General.Email;
 using GPA.Services.General.Security;
 using GPA.Utils.Constants.Claims;
@@ -30,6 +32,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IValidator<SignUpDto> _signUpValidator;
         private readonly IEmailServiceFactory _emailServiceFactory;
         private readonly IAesHelper _aesHelper;
+        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
 
         public AuthController(
             IGPAJwtService jwtService,
@@ -38,7 +41,8 @@ namespace GPA.Api.Controllers.Security
             IGPAProfileService gPAProfileService,
             IValidator<SignUpDto> signUpValidator,
             IEmailServiceFactory emailServiceFactory,
-            IAesHelper aesHelper)
+            IAesHelper aesHelper,
+            IBlobStorageServiceFactory blobStorageServiceFactory)
         {
             _jwtService = jwtService;
             _userManager = userManager;
@@ -47,6 +51,7 @@ namespace GPA.Api.Controllers.Security
             _signUpValidator = signUpValidator;
             _emailServiceFactory = emailServiceFactory;
             _aesHelper = aesHelper;
+            _blobStorageServiceFactory = blobStorageServiceFactory;
         }
 
         [AllowAnonymous]
@@ -73,12 +78,15 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            BlobStorageFileResult? photo = GetUserPhoto(user);
+
             var claims = new List<Claim>
             {
                 new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(GPAClaimTypes.UserId, user.Id.ToString())
+                new Claim(GPAClaimTypes.UserId, user.Id.ToString()),
+                new Claim(GPAClaimTypes.Photo, photo?.FileUrl ?? "")
             };
 
             var profileId = await AssignProfileAsClaimIfUserHasOnlyOneProfile(user.Id, claims);
@@ -203,9 +211,13 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
-            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName).ToList();
-            cliams.Add(new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"));
+            BlobStorageFileResult? photo = GetUserPhoto(user);
+            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName && 
+                                                x.Type != GPAClaimTypes.Photo).ToList();
 
+            cliams.Add(new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"));
+            cliams.Add(new Claim(GPAClaimTypes.Photo, photo?.FileUrl ?? ""));
+            
             var token = _jwtService.GenerateToken(new TokenDescriptorDto
             {
                 Algorithm = SecurityAlgorithms.HmacSha256Signature,
@@ -313,6 +325,66 @@ namespace GPA.Api.Controllers.Security
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
             await _userManager.UpdateAsync(user);
             return Ok();
+        }
+
+        [HttpPost("{userId}/photo/upload")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Auth}", permission: Permissions.Upload)]
+        public async Task<IActionResult> UploadPhoto([FromRoute] Guid userId, [FromForm] IFormFile photo)
+        {
+            if (photo is null)
+            {
+                ModelState.AddModelError("model", "Debe proveer la foto");
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user is null)
+            {
+                ModelState.AddModelError("model", "El usuario no existe");
+                return BadRequest(ModelState);
+            }
+
+            var uploadResult = await _blobStorageServiceFactory.UploadFile(photo, folder: "users/", isPublic: true);
+            user.Photo = uploadResult.AsJson();
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("usuario", "Error modificando el usuario");
+                return BadRequest(ModelState);
+            }
+
+            BlobStorageFileResult? blobStorage = GetUserPhoto(user);
+            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName &&
+                                                x.Type != GPAClaimTypes.Photo).ToList();
+
+            cliams.Add(new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"));
+            cliams.Add(new Claim(GPAClaimTypes.Photo, blobStorage?.FileUrl ?? ""));
+
+            var token = _jwtService.GenerateToken(new TokenDescriptorDto
+            {
+                Algorithm = SecurityAlgorithms.HmacSha256Signature,
+                Claims = cliams.ToArray()
+            });
+
+            var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
+
+            return Ok(new { token = token, permissions = permissions });
+        }
+
+        private static BlobStorageFileResult? GetUserPhoto(GPAUser? user)
+        {
+            BlobStorageFileResult? photo = null;
+            if (user?.Photo is not null)
+            {
+                photo = JsonSerializer.Deserialize<BlobStorageFileResult>(user.Photo, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                });
+            }
+
+            return photo;
         }
 
         private async Task UpdateTOTPCodeAttempts(GPAUser user)

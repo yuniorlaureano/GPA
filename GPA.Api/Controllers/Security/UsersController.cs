@@ -19,7 +19,11 @@ namespace GPA.Api.Controllers.Security
         private readonly UserManager<GPAUser> _userManager;
         private readonly IMapper _mapper;
         private readonly IGPAUserService _gPAUserService;
-        public UsersController(UserManager<GPAUser> userManager, IMapper mapper, IGPAUserService gPAUserService)
+
+        public UsersController(
+            UserManager<GPAUser> userManager,
+            IMapper mapper,
+            IGPAUserService gPAUserService)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -96,7 +100,7 @@ namespace GPA.Api.Controllers.Security
 
             savedEntity.FirstName = model.FirstName;
             savedEntity.LastName = model.LastName;
-            savedEntity.Email  = model.Email;
+            savedEntity.Email = model.Email;
             savedEntity.UserName = model.UserName;
 
             await _userManager.UpdateAsync(savedEntity);

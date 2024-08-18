@@ -52,6 +52,7 @@ namespace GPA.Data.Security
 	                FirstName,
 	                LastName,
 	                UserName,
+	                Photo,
 	                Email,
 	                Deleted
                 FROM [GPA].[Security].[GPAUsers]

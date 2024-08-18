@@ -114,7 +114,6 @@ namespace GPA.Tests.Inventory.Service
                 .Build<ProductCreationDto>()
                 .With(x => x.Name, "Faldo de botellitas")
                 .With(x => x.Code, "RPOD-FDB")
-                .With(x => x.Photo)
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
@@ -122,6 +121,7 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Without(x => x.Addons)
+                .Without(x => x.Photo)
                 .Create();
 
             var added = await _productService.AddAsync(product);
@@ -144,13 +144,13 @@ namespace GPA.Tests.Inventory.Service
             var product = _fixture
                 .Build<ProductCreationDto>()
                 .With(x => x.Code)
-                .With(x => x.Photo)
                 .With(x => x.UnitId, productDependencies.UnitId)
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
                 .With(x => x.Type, 2)
                 .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
+                .Without(x => x.Photo)
                 .Without(x => x.Addons)
                 .Create();
 

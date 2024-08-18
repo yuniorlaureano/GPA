@@ -306,7 +306,7 @@ namespace GPA.Utils.Profiles
                         Id = Components.Auth,
                         Permissions = new List<string>
                         {
-                            Permissions.UpdateUserProfile
+                            Permissions.UpdateUserProfile, Permissions.Upload
                         }
                     },
                     new Component

@@ -174,10 +174,6 @@ namespace GPA.Api.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                    b.Property<string>("BarCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
@@ -208,9 +204,6 @@ namespace GPA.Api.Migrations
 
                     b.Property<DateTime?>("ExpirationDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<float?>("ITBIS")
-                        .HasColumnType("real");
 
                     b.Property<string>("Name")
                         .IsRequired()
