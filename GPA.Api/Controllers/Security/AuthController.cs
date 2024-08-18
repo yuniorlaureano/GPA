@@ -328,7 +328,7 @@ namespace GPA.Api.Controllers.Security
         }
 
         [HttpPost("{userId}/photo/upload")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.Auth}", permission: Permissions.Upload)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Auth}", permission: Permissions.Upload)]
         public async Task<IActionResult> UploadPhoto([FromRoute] Guid userId, [FromForm] IFormFile photo)
         {
             if (photo is null)
@@ -378,10 +378,17 @@ namespace GPA.Api.Controllers.Security
             BlobStorageFileResult? photo = null;
             if (user?.Photo is not null)
             {
-                photo = JsonSerializer.Deserialize<BlobStorageFileResult>(user.Photo, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                });
+                try 
+                { 
+                    photo = JsonSerializer.Deserialize<BlobStorageFileResult>(user.Photo, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    });
+                }
+                catch 
+                { 
+                    photo = null; 
+                }
             }
 
             return photo;
