@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
+using GPA.Services.General.BlobStorage;
+using GPA.Services.Security;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,15 +22,27 @@ namespace GPA.Api.Controllers.Security
         private readonly UserManager<GPAUser> _userManager;
         private readonly IMapper _mapper;
         private readonly IGPAUserService _gPAUserService;
+        private readonly IUserContextService _userContextService;
+        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly IValidator<GPAUserCreationDto> _creationValidator;
+        private readonly IValidator<GPAUserUpdateDto> _updateValidator;
 
         public UsersController(
             UserManager<GPAUser> userManager,
             IMapper mapper,
-            IGPAUserService gPAUserService)
+            IGPAUserService gPAUserService,
+            IUserContextService userContextService,
+            IBlobStorageServiceFactory blobStorageServiceFactory,
+            IValidator<GPAUserCreationDto> creationValidator,
+            IValidator<GPAUserUpdateDto> updateValidator)
         {
             _userManager = userManager;
             _mapper = mapper;
             _gPAUserService = gPAUserService;
+            _userContextService = userContextService;
+            _blobStorageServiceFactory = blobStorageServiceFactory;
+            _creationValidator = creationValidator;
+            _updateValidator = updateValidator;
         }
 
         [HttpGet("{id}")]
@@ -46,11 +61,12 @@ namespace GPA.Api.Controllers.Security
 
         [HttpPost()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Create)]
-        public async Task<IActionResult> Post(GPAUserUpdateDto model)
+        public async Task<IActionResult> Post(GPAUserCreationDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _creationValidator.ValidateAsync(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             if (model is null)
@@ -62,6 +78,8 @@ namespace GPA.Api.Controllers.Security
             var entity = _mapper.Map<GPAUser>(model);
             entity.Id = Guid.Empty;
             entity.Deleted = false;
+            entity.CreatedAt = DateTimeOffset.UtcNow;
+            entity.CreatedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.CreateAsync(entity, $"Dummy-Password-{Guid.NewGuid().ToString()}*-$#$%");
 
             if (!result.Succeeded)
@@ -72,16 +90,17 @@ namespace GPA.Api.Controllers.Security
                 }
                 return BadRequest(ModelState);
             }
-            return Created();
+            return Created($"/{entity.Id}", new { Id = entity.Id, Email = entity.Email, UserName = entity.UserName });
         }
 
         [HttpPut()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
         public async Task<IActionResult> Put(GPAUserUpdateDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _updateValidator.ValidateAsync(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             if (model is null)
@@ -102,9 +121,41 @@ namespace GPA.Api.Controllers.Security
             savedEntity.LastName = model.LastName;
             savedEntity.Email = model.Email;
             savedEntity.UserName = model.UserName;
-
+            savedEntity.UpdatedAt = DateTimeOffset.UtcNow;
+            savedEntity.UpdatedBy = _userContextService.GetCurrentUserId();
             await _userManager.UpdateAsync(savedEntity);
             return NoContent();
+        }
+
+        [HttpPost("{userId}/photo/upload")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Upload)]
+        public async Task<IActionResult> UploadPhoto([FromRoute] Guid userId, [FromForm] IFormFile photo)
+        {
+            if (photo is null)
+            {
+                ModelState.AddModelError("model", "Debe proveer la foto");
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user is null)
+            {
+                ModelState.AddModelError("model", "El usuario no existe");
+                return BadRequest(ModelState);
+            }
+
+            var uploadResult = await _blobStorageServiceFactory.UploadFile(photo, folder: "users/", isPublic: true);
+            user.Photo = uploadResult.AsJson();
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError("usuario", "Error modificando el usuario");
+                return BadRequest(ModelState);
+            }
+
+            return Ok();
         }
 
         [HttpDelete("{id}")]
@@ -124,6 +175,8 @@ namespace GPA.Api.Controllers.Security
             }
 
             entity.Deleted = true;
+            entity.DeletedAt = DateTimeOffset.UtcNow;
+            entity.DeletedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.UpdateAsync(entity);
 
             if (!result.Succeeded)

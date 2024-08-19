@@ -28,14 +28,16 @@ namespace GPA.Data.Security
 	                FirstName,
 	                LastName,
 	                UserName,
+	                Photo,
 	                Email,
 	                Deleted
                 FROM [GPA].[Security].[GPAUsers]
                 WHERE 
+                  Deleted = 0 AND (
 	              @Search IS NULL
 	              OR CONCAT(FirstName, ' ', LastName) LIKE CONCAT('%', @Search, '%')
 	              OR UserName LIKE CONCAT('%', @Search, '%')
-	              OR Email LIKE CONCAT('%', @Search, '%')
+	              OR Email LIKE CONCAT('%', @Search, '%'))
                 ORDER BY Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -58,6 +60,7 @@ namespace GPA.Data.Security
                 FROM [GPA].[Security].[GPAUsers]
                 WHERE 
                     Id = @Id    
+                    AND Deleted = 0
             ";
 
             return await _context.Database.SqlQueryRaw<RawUser>(query, new SqlParameter("@Id", id)).FirstOrDefaultAsync();
@@ -70,10 +73,11 @@ namespace GPA.Data.Security
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Security].[GPAUsers]
                 WHERE 
+                  Deleted = 0 AND (  
 	              @Search IS NULL
 	              OR CONCAT(FirstName, ' ', LastName) LIKE CONCAT('%', @Search, '%')
 	              OR UserName LIKE CONCAT('%', @Search, '%')
-	              OR Email LIKE CONCAT('%', @Search, '%')
+	              OR Email LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();

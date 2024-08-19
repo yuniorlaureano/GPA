@@ -14,8 +14,8 @@ namespace GPA.Data.Security
         Task<IEnumerable<RawProfile>> GetProfilesAsync(RequestFilterDto filter);
         Task AssignProfileToUser(Guid profileId, Guid userId, Guid createdBy);
         Task<List<RawUserProfile>> GetProfilesByUserId(List<Guid> userIds);
-        Task<List<RawUser>> GetUsers(Guid profileId, int page, int pageSize);
-        Task<int> GetUsersCount();
+        Task<List<RawUser>> GetUsers(Guid profileId, RequestFilterDto filter);
+        Task<int> GetUsersCount(RequestFilterDto filter);
         Task UnAssignProfileFromUser(Guid profileId, Guid userId);
         Task<List<RawProfile>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
@@ -43,7 +43,7 @@ namespace GPA.Data.Security
 	                SELECT 1 FROM [GPA].[Security].[GPAUserProfiles]
 	                WHERE
 		                [UserId] = @UserId AND
-		                [UserId] = @ProfileId
+		                [ProfileId] = @ProfileId
                 ) BEGIN
 	                INSERT INTO [GPA].[Security].[GPAUserProfiles]
 	                (
@@ -74,7 +74,7 @@ namespace GPA.Data.Security
                 ", new SqlParameter("@userIds", string.Join(",", userIds.ToArray()))).ToListAsync();
         }
 
-        public async Task<List<RawUser>> GetUsers(Guid profileId, int page, int pageSize)
+        public async Task<List<RawUser>> GetUsers(Guid profileId, RequestFilterDto filter)
         {
             var query = @$"
               SELECT 
@@ -82,6 +82,7 @@ namespace GPA.Data.Security
                 ,USR.[FirstName]
                 ,USR.[LastName]
                 ,USR.[Deleted]
+                ,USR.[Photo]
                 ,USR.[UserName]
                 ,USR.[Email]
 	            ,CAST(IIF(USRP.ProfileId IS NULL, 0, 1) AS BIT) AS IsAssigned
@@ -89,20 +90,38 @@ namespace GPA.Data.Security
 	            LEFT JOIN [GPA].[Security].[GPAUserProfiles] USRP
 		            ON USR.Id = USRP.UserId AND
 		               USRP.ProfileId = @ProfileId
+              WHERE 
+                  USR.Deleted = 0 AND (
+	                  @Search IS NULL
+	                  OR CONCAT(USR.FirstName, ' ', USR.LastName) LIKE CONCAT('%', @Search, '%')
+	                  OR USR.UserName LIKE CONCAT('%', @Search, '%')
+	                  OR USR.Email LIKE CONCAT('%', @Search, '%'))  
               ORDER BY 7 desc,USRP.Id
               OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY";
 
+            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<RawUser>(
                   query,
                   new SqlParameter("@ProfileId", profileId),
-                  new SqlParameter("@Page", pageSize * Math.Abs(page - 1)),
-                  new SqlParameter("@PageSize", pageSize)
+                  query, Page, PageSize, Search
               ).ToListAsync();
         }
 
-        public async Task<int> GetUsersCount()
+        public async Task<int> GetUsersCount(RequestFilterDto filter)
         {
-            return await _context.Users.CountAsync();
+            var query = @"
+                SELECT 
+	                 COUNT(1) AS [Value]
+                FROM [GPA].[Security].[GPAUsers]
+                WHERE 
+                  Deleted = 0 AND (  
+	              @Search IS NULL
+	              OR CONCAT(FirstName, ' ', LastName) LIKE CONCAT('%', @Search, '%')
+	              OR UserName LIKE CONCAT('%', @Search, '%')
+	              OR Email LIKE CONCAT('%', @Search, '%'))
+            ";
+            var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
         }
 
         public async Task UnAssignProfileFromUser(Guid profileId, Guid userId)

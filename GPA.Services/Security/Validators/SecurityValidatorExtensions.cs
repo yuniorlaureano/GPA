@@ -9,6 +9,8 @@ namespace GPA.Services.Security.Validators
         public static void AddSecurityValidators(this IServiceCollection collections)
         {
             collections.AddScoped<IValidator<SignUpDto>, SignUpValidator>();
+            collections.AddScoped<IValidator<GPAUserUpdateDto>, GPAUserUpdateValidator>();
+            collections.AddScoped<IValidator<GPAUserCreationDto>, GPAUserCreationValidator>();
         }
     }
 }

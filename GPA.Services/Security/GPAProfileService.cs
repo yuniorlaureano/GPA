@@ -126,16 +126,17 @@ namespace GPA.Business.Services.Security
 
         public async Task AssignProfileToUser(Guid profileId, Guid userId)
         {
-            var createdBy = Guid.Empty;
+            var createdBy = _userContextService.GetCurrentUserId();
             await _repository.AssignProfileToUser(profileId, userId, createdBy);
         }
 
-        public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto search)
+        public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto filter)
         {
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
             return new ResponseDto<RawUser>
             {
-                Count = await _repository.GetUsersCount(),
-                Data = await _repository.GetUsers(profileId, search.Page, search.PageSize)
+                Count = await _repository.GetUsersCount(filter),
+                Data = await _repository.GetUsers(profileId, filter)
             };
         }
 

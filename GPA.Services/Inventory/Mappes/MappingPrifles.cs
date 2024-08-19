@@ -133,7 +133,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                 })
                 .ForMember(dest => dest.EndDate, opt =>
                 {
-                    opt.MapFrom(src => new DetailedDate(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                    opt.MapFrom(src => new DetailedDate(src.EndDate.Value.Year, src.EndDate.Value.Month, src.EndDate.Value.Day));
                 });
 
             CreateMap<RawStockCycle, StockCycleDto>()
@@ -153,7 +153,7 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
                 })
                 .ForMember(dest => dest.EndDate, opt =>
                 {
-                    opt.MapFrom(src => new DetailedDate(src.EndDate.Year, src.EndDate.Month, src.EndDate.Day));
+                    opt.MapFrom(src => new DetailedDate(src.EndDate.Value.Year, src.EndDate.Value.Month, src.EndDate.Value.Day));
                 });
 
             CreateMap<StockCycleCreationDto, StockCycle>()

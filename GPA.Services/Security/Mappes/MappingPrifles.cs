@@ -16,6 +16,7 @@ namespace GPA.Bussiness.Services.Security.Mappers
             CreateMap<GPAUser, GPAUserUpdateDto>();
             CreateMap<GPAUserDto, GPAUser>();
             CreateMap<GPAUserUpdateDto, GPAUser>();
+            CreateMap<GPAUserCreationDto, GPAUser>();
             CreateMap<RawUser, GPAUserDto>();
 
             CreateMap<RawProfile, RawProfileDto>();
