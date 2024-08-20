@@ -18,15 +18,18 @@ namespace GPA.Inventory.Api.Controllers
         private readonly IStockService _stockService;
         private readonly IMapper _mapper;
         private readonly IValidator<OutputCreationDto> _outputCreationValidator;
+        private readonly IValidator<StockCreationDto> _stockCreationValidator;
 
         public StocksController(
             IStockService StockService, 
             IMapper mapper,
-            IValidator<OutputCreationDto> outputCreationValidator)
+            IValidator<OutputCreationDto> outputCreationValidator,
+            IValidator<StockCreationDto> stockCreationValidator)
         {
             _stockService = StockService;
             _mapper = mapper;
             _outputCreationValidator = outputCreationValidator;
+            _stockCreationValidator = stockCreationValidator;
         }
 
         [HttpGet("{id}")]
@@ -61,9 +64,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.RegisterInput)]
         public async Task<IActionResult> RegisterInput(StockCreationDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _stockCreationValidator.Validate(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _stockService.AddAsync(model);
@@ -88,9 +92,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.UpdateInput)]
         public async Task<IActionResult> UpdateInput(StockCreationDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _stockCreationValidator.Validate(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _stockService.UpdateInputAsync(model);
@@ -101,22 +106,16 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.UpdateOutput)]
         public async Task<IActionResult> UpdateOutput(OutputCreationDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _outputCreationValidator.Validate(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _stockService.UpdateOutputAsync(model.AsStoCreationDto);
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Delete)]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _stockService.RemoveAsync(id);
-            return NoContent();
-        }
 
         [HttpPut("{id}/cancel")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Cancel)]
