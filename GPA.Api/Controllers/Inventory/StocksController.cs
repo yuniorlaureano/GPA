@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -16,11 +17,16 @@ namespace GPA.Inventory.Api.Controllers
     {
         private readonly IStockService _stockService;
         private readonly IMapper _mapper;
+        private readonly IValidator<OutputCreationDto> _outputCreationValidator;
 
-        public StocksController(IStockService StockService, IMapper mapper)
+        public StocksController(
+            IStockService StockService, 
+            IMapper mapper,
+            IValidator<OutputCreationDto> outputCreationValidator)
         {
             _stockService = StockService;
             _mapper = mapper;
+            _outputCreationValidator = outputCreationValidator;
         }
 
         [HttpGet("{id}")]
@@ -44,7 +50,7 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockService.GetProductCatalogAsync(filter.Page, filter.PageSize));
         }
 
-        [HttpGet("existance")]
+        [HttpGet("existence")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadExistence)]
         public async Task<IActionResult> GetExistence([FromQuery] RequestFilterDto filter)
         {
@@ -68,9 +74,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.RegisterOutput)]
         public async Task<IActionResult> RegisterOutput(OutputCreationDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = _outputCreationValidator.Validate(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _stockService.AddAsync(model.AsStoCreationDto);

@@ -19,15 +19,10 @@ namespace GPA.Business.Services.Invoice
     public interface IInvoiceService
     {
         public Task<InvoiceListDto?> GetInvoiceByIdAsync(Guid id);
-
         public Task<ResponseDto<InvoiceListDto>> GetInvoicesAsync(RequestFilterDto search);
-
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
-
         public Task UpdateAsync(InvoiceUpdateDto invoiceDto);
-
         public Task RemoveAsync(Guid id);
-
         Task CancelAsync(Guid id);
     }
 
@@ -267,7 +262,7 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task UpdatePricesByAddons(List<InvoiceDetailUpdateDto> invoiceDetail, Dictionary<Guid, List<RawAddons>> addons)
+        private void UpdatePricesByAddons(List<InvoiceDetailUpdateDto> invoiceDetail, Dictionary<Guid, List<RawAddons>> addons)
         {
             foreach (var detail in invoiceDetail)
             {

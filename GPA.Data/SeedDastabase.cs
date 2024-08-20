@@ -92,6 +92,7 @@ namespace GPA.Data
                 new Reason { Id = 5, NormalizedName = "DamagedProduct", Name = "Producto defectuoso" , Description = "Producto defectuoso", TransactionType = TransactionType.Output },
                 new Reason { Id = 6, NormalizedName = "ExpiredProduct", Name = "Producto expirado" , Description = "Producto expirado", TransactionType = TransactionType.Output },
                 new Reason { Id = 7, NormalizedName = "RawMaterial", Name = "Materia prima" , Description = "Materia prima", TransactionType = TransactionType.Output },
+                new Reason { Id = 8, NormalizedName = "CanceledOutput", Name = "Salida cancelada" , Description = "Salida cancelada", TransactionType = TransactionType.Input },
             };
 
             modelBuilder.Entity<Reason>().HasData(reasons);

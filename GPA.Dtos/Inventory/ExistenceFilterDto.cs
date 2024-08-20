@@ -2,7 +2,7 @@
 {
     public class ExistenceFilterDto
     {
-        public string Term { get; set; }
-        public int Type { get; set; }
+        public string? Term { get; set; }
+        public int? Type { get; set; }
     }
 }

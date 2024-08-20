@@ -45,6 +45,10 @@ namespace GPA.Data.Inventory
 
         public async Task<List<RawAddons>> GetAddonsByProductId(List<Guid> productIds)
         {
+            if (productIds is { Count: 0 })
+            {
+                return new List<RawAddons>();
+            }
 #pragma warning disable EF1002 // Possible SQL injection vulnerability.
             return await _context.Database.SqlQueryRaw<RawAddons>
                     (

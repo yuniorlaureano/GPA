@@ -17,6 +17,8 @@ namespace GPA.Data.Inventory.Configurations
                 .IsRequired();
 
             builder.Property(x => x.Deleted).IsRequired().HasDefaultValue(false);
+            builder.Property(x => x.Description).IsRequired(false).HasMaxLength(300);
+            builder.Property(x => x.Status).IsRequired();
 
             builder.HasOne(x => x.Provider)
                 .WithMany(x => x.Stocks)

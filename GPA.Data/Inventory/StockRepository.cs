@@ -7,7 +7,6 @@ using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace GPA.Data.Inventory
@@ -227,20 +226,26 @@ namespace GPA.Data.Inventory
 
         public async Task CancelAsync(Guid id, Guid updatedBy)
         {
-            var stock = await _context.Stocks.FirstAsync(x => x.Id == id);
+            var stock = await _context.Stocks.Include(x => x.StockDetails).FirstAsync(x => x.Id == id);
             var canCancel =
                 stock.ReasonId != (int)ReasonTypes.Sale &&
                 (stock.Status == StockStatus.Draft || stock.Status == StockStatus.Saved);
-            if (canCancel)
+
+            if (!canCancel)
             {
-                await _context.Stocks.Where(x => x.Id == id)
+                return;
+            }
+
+            await _context.Stocks.Where(x => x.Id == id)
                     .ExecuteUpdateAsync(setter =>
                         setter
                             .SetProperty(x => x.Status, StockStatus.Canceled)
                             .SetProperty(x => x.UpdatedAt, DateTimeOffset.Now)
                             .SetProperty(x => x.UpdatedBy, updatedBy)
                         );
-            }
+
+            await CreateNewStockForCanceledOutput(updatedBy, stock);
+
         }
 
         public async Task<IEnumerable<RawStockDetails>> GetStockDetailsByStockIdAsync(Guid stockId)
@@ -280,7 +285,7 @@ namespace GPA.Data.Inventory
                 FROM [GPA].[Inventory].[Stocks] ST
 	                LEFT JOIN [GPA].[Inventory].[Providers] PROV ON ST.ProviderId = PROV.Id
 	                JOIN [GPA].[Inventory].[Reasons] RS ON ST.ReasonId = RS.Id
-	                JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
+	                LEFT JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
                 WHERE ST.[Id] = @Id 
             ";
 
@@ -310,7 +315,7 @@ namespace GPA.Data.Inventory
                 FROM [GPA].[Inventory].[Stocks] ST
 	                LEFT JOIN [GPA].[Inventory].[Providers] PROV ON ST.ProviderId = PROV.Id
 	                JOIN [GPA].[Inventory].[Reasons] RS ON ST.ReasonId = RS.Id
-	                JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
+	                LEFT JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
                 WHERE 1 = 1  
                     {termFilter}
                     {statusFilter}
@@ -365,7 +370,7 @@ namespace GPA.Data.Inventory
             }
 
             var termFilter = existenceFilterDto?.Term is { Length: > 0 } ? "AND ([p].[Code] LIKE CONCAT('%', @Term, '%') OR [p].[Name] LIKE CONCAT('%', @Term, '%'))" : "";
-            var typeFilter = existenceFilterDto?.Type != 0 ? "AND [P].[Type] = @Type" : "";
+            var typeFilter = existenceFilterDto?.Type != -1 && existenceFilterDto?.Type is not null ? "AND [P].[Type] = @Type" : "";
 
             return (existenceFilterDto, termFilter, typeFilter);
         }
@@ -397,7 +402,7 @@ namespace GPA.Data.Inventory
             var termFilter = transactionsFilterDto?.Term is { Length: > 0 } ? "AND PROV.[Name] LIKE CONCAT('%', @Term, '%')" : "";
             var statusFilter = transactionsFilterDto?.Status != -1 ? "AND ST.[Status] = @Status" : "";
             var transactionTypeFilter = transactionsFilterDto?.TransactionType != -1 ? "AND ST.[TransactionType] = @TransactionType" : "";
-            var reasonFilter = transactionsFilterDto?.Reason != -1 ? "AND ST.[Status] = @Reason" : "";
+            var reasonFilter = transactionsFilterDto?.Reason != -1 ? "AND ST.[ReasonId] = @Reason" : "";
 
             return (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter);
         }
@@ -422,6 +427,34 @@ namespace GPA.Data.Inventory
             if (reasonFilter is { Length: > 0 })
             {
                 parameters.Add(new SqlParameter("@Reason", transactionsFilterDto?.Reason));
+            }
+        }
+
+        private async Task CreateNewStockForCanceledOutput(Guid updatedBy, Stock stock)
+        {
+            if (stock.TransactionType == TransactionType.Output)
+            {
+                //when cancelling an output, we need to create a new input with the same details
+                var newStock = new Stock
+                {
+                    TransactionType = TransactionType.Input,
+                    Description = "Cancelación de salida",
+                    Date = DateTime.UtcNow,
+                    ReasonId = (int)ReasonTypes.OutputCancellation,
+                    Status = StockStatus.Saved,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedBy = updatedBy,
+                    StockDetails = stock.StockDetails.Select(x => new StockDetails
+                    {
+                        Quantity = x.Quantity,
+                        ProductId = x.ProductId,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        CreatedBy = updatedBy
+                    }).ToList()
+                };
+
+                _context.Stocks.Add(newStock);
+                await _context.SaveChangesAsync();
             }
         }
     }

@@ -6,7 +6,7 @@ namespace GPA.Common.Entities.Inventory
     public class Stock : Entity<Guid>
     {
         public TransactionType TransactionType { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public DateTime? Date { get; set; }
         public StockStatus Status { get; set; }
         public Guid? ProviderId { get; set; }
