@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -16,11 +17,16 @@ namespace GPA.Inventory.Api.Controllers
     {
         private readonly IAddonService _addonService;
         private readonly IMapper _mapper;
+        private readonly IValidator<AddonDto> _validator;
 
-        public AddonsController(IAddonService addonService, IMapper mapper)
+        public AddonsController(
+            IAddonService addonService, 
+            IMapper mapper,
+            IValidator<AddonDto> validator)
         {
             _addonService = addonService;
             _mapper = mapper;
+            _validator = validator;
         }
 
         [HttpGet("{id}")]
@@ -41,9 +47,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(AddonDto addon)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(addon);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _addonService.AddAsync(addon);
@@ -54,9 +61,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(AddonDto addon)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(addon);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _addonService.UpdateAsync(addon);

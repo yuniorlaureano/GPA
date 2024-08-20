@@ -7,8 +7,13 @@ namespace GPA.Bussiness.Services.Inventory.Validator
     {
         public CategoryCreationValidator()
         {
-            RuleFor(x => x.Name).NotEmpty().NotNull();
-            RuleFor(x => x.Description).NotEmpty().NotNull();
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("El campo Nombre es requerido.")
+                .NotNull().WithMessage("El campo Nombre es requerido.");
+            
+            RuleFor(x => x.Description)
+                .NotEmpty().WithMessage("El campo Descripción es requerido.")
+                .NotNull().WithMessage("El campo Descripción es requerido.");
         }
     }
 }

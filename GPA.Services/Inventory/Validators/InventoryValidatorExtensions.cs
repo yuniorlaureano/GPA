@@ -12,6 +12,7 @@ namespace GPA.Bussiness.Services.Inventory.Validator
             services.AddScoped<IValidator<CategoryDto>, CategoryCreationValidator>();
             services.AddScoped<IValidator<ProductCreationDto>, ProductCreationValidator>();
             services.AddScoped<IValidator<StockCycleCreationDto>, StockCycleCreationValidator>();
+            services.AddScoped<IValidator<AddonDto>, AddonValidator>();
         }
     }
 }

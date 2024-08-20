@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -17,11 +18,16 @@ namespace GPA.Inventory.Api.Controllers
     {
         private readonly IProductService _ProductService;
         private readonly IMapper _mapper;
+        private readonly IValidator<ProductCreationDto> _validator;
 
-        public ProductsController(IProductService ProductService, IMapper mapper)
+        public ProductsController(
+            IProductService ProductService,
+            IMapper mapper,
+            IValidator<ProductCreationDto> validator)
         {
             _ProductService = ProductService;
             _mapper = mapper;
+            _validator = validator;
         }
 
         [HttpGet("{id}")]
@@ -42,9 +48,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Product}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(ProductCreationDto product)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(product);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _ProductService.AddAsync(product);
@@ -55,9 +62,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Product}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(ProductCreationDto product)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(product);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _ProductService.UpdateAsync(product);

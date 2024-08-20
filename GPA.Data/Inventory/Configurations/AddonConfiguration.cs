@@ -17,6 +17,8 @@ namespace GPA.Data.Inventory.Configurations
                 .IsRequired();
 
             builder.Property(x => x.Concept).HasMaxLength(50).IsRequired();
+            builder.Property(x => x.Value).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(x => x.Type).IsRequired();
 
             builder.HasMany(x => x.ProductAddons)
                 .WithOne(x => x.Addon)

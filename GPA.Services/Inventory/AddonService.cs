@@ -81,8 +81,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task RemoveAsync(Guid id)
         {
-            var savedAddon = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedAddon);
+            await _repository.SoftDeleteAddonAsync(id);
         }
     }
 }

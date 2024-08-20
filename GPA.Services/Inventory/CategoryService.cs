@@ -78,8 +78,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task RemoveAsync(Guid id)
         {
-            var savedCategory = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedCategory);
+            await _repository.SoftDeleteCategoryAsync(id);
         }
     }
 }

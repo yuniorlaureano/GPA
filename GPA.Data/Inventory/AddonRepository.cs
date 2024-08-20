@@ -19,6 +19,7 @@ namespace GPA.Data.Inventory
         Task<List<RawAddons>> GetAddonsByProductId(List<Guid> productIds);
         Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByProductIdAsDictionary(List<Guid> productIds);
         Task DeleteAddonsByProductId(Guid productId);
+        Task SoftDeleteAddonAsync(Guid id);
     }
 
     public class AddonRepository : Repository<Addon>, IAddonRepository
@@ -38,7 +39,7 @@ namespace GPA.Data.Inventory
                             SELECT AddonId 
                             FROM [GPA].[Inventory].[ProductAddons]
                             WHERE ProductId = {0}
-                        )", productId)
+                        ) AND Deleted = 0", productId)
                  .ToListAsync();
         }
 
@@ -58,6 +59,7 @@ namespace GPA.Data.Inventory
                         FROM [GPA].[Inventory].[Addons] AD
 	                        JOIN [GPA].[Inventory].[ProductAddons] PAD ON PAD.AddonId = AD.Id
                             WHERE PAD.ProductId in ({string.Join(",", productIds.Select(id => $"'{id}'"))})
+                            AND AD.Deleted = 0
                     ").ToListAsync();
         }
 
@@ -103,7 +105,7 @@ namespace GPA.Data.Inventory
                 ,[Type]
                 ,[Value]
               FROM [GPA].[Inventory].[Addons]
-              WHERE Id = @Id
+              WHERE Id = @Id AND Deleted = 0
                     ";
 
             return await _context.Database
@@ -122,7 +124,7 @@ namespace GPA.Data.Inventory
                 ,[Type]
                 ,[Value]
               FROM [GPA].[Inventory].[Addons]
-                WHERE 1 = 1 
+                WHERE Deleted = 0
                     {conceptFilter}
                     {isDiscountFilter}
                     {typeFilter}
@@ -146,7 +148,7 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Addons]
-                WHERE 1 = 1 
+                WHERE Deleted = 0
                     {conceptFilter}
                     {isDiscountFilter}
                     {typeFilter}
@@ -194,5 +196,16 @@ namespace GPA.Data.Inventory
             }
         }
 
+        public async Task SoftDeleteAddonAsync(Guid id)
+        {
+            var query = @"
+              UPDATE [GPA].[Inventory].[Addons]
+              SET Deleted = 1
+              WHERE Id = @Id
+                    ";
+
+            await _context.Database
+                .ExecuteSqlRawAsync(query, new SqlParameter("@Id", id));
+        }
     }
 }

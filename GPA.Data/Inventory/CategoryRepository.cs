@@ -12,6 +12,7 @@ namespace GPA.Data.Inventory
         Task<RawCategory?> GetCategoryAsync(Guid id);
         Task<IEnumerable<RawCategory>> GetCategoriesAsync(RequestFilterDto filter);
         Task<int> GetCategoriesCountAsync(RequestFilterDto filter);
+        Task SoftDeleteCategoryAsync(Guid categoryId);
     }
 
     public class CategoryRepository : Repository<Category>, ICategoryRepository
@@ -29,7 +30,7 @@ namespace GPA.Data.Inventory
                     ,[Description]
                     ,[Deleted]
                 FROM [GPA].[Inventory].[Categories]
-                WHERE Id = @Id
+                WHERE Id = @Id AND Deleted = 0
             ";
 
             return await _context.Database.SqlQueryRaw<RawCategory>(
@@ -47,9 +48,9 @@ namespace GPA.Data.Inventory
                     ,[Description]
                     ,[Deleted]
                 FROM [GPA].[Inventory].[Categories]
-                WHERE 
+                WHERE Deleted = 0 AND (
                     @Search IS NULL
-                    OR [Name] LIKE CONCAT('%', @Search, '%')
+                    OR [Name] LIKE CONCAT('%', @Search, '%'))
                 ORDER BY Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -65,12 +66,24 @@ namespace GPA.Data.Inventory
                 SELECT
 	                COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Categories]
-                WHERE 
+                WHERE Deleted = 0 AND (
                     @Search IS NULL
-                    OR [Name] LIKE CONCAT('%', @Search, '%')
+                    OR [Name] LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
+        }
+
+        public async Task SoftDeleteCategoryAsync(Guid categoryId)
+        {
+            var query = @"
+                UPDATE [GPA].[Inventory].[Categories] 
+                    SET [Deleted] = 1
+                WHERE Id = @Id";
+
+            await _context.Database.ExecuteSqlRawAsync(
+                query,
+                new SqlParameter("@Id", categoryId));
         }
     }
 }

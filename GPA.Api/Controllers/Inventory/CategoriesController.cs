@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -16,11 +17,16 @@ namespace GPA.Inventory.Api.Controllers
     {
         private readonly ICategoryService _categoryService;
         private readonly IMapper _mapper;
+        private readonly IValidator<CategoryDto> _validator;
 
-        public CategoriesController(ICategoryService categoryService, IMapper mapper)
+        public CategoriesController(
+            ICategoryService categoryService,
+            IMapper mapper,
+            IValidator<CategoryDto> validator)
         {
             _categoryService = categoryService;
             _mapper = mapper;
+            _validator = validator;
         }
 
         [HttpGet("{id}")]
@@ -41,9 +47,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Category}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(CategoryDto category)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(category);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _categoryService.AddAsync(category);
@@ -54,9 +61,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Category}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(CategoryDto category)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(category);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _categoryService.UpdateAsync(category);
