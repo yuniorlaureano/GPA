@@ -18,24 +18,26 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
-        public async Task DeleteFile(string options, string fileName, string bucketOrContainer)
+        public async Task DeleteFile(string options, string fileName, bool isPublic = false)
         {
             if (_s3Client is null)
             {
                 await Configure(options);
             }
 
+            var bucketOrContainer = isPublic ? _aWSS3Options.PublicBucket : _aWSS3Options.PrivateBucket;
             var fileTransferUtility = new TransferUtility(_s3Client);
             await _s3Client.DeleteObjectAsync(bucketOrContainer, fileName);
         }
 
-        public async Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer)
+        public async Task<Stream> DownloadFile(string options, string fileName, bool isPublic = false)
         {
             if (_s3Client is null)
             {
                 await Configure(options);
             }
 
+            var bucketOrContainer = isPublic ? _aWSS3Options.PublicBucket : _aWSS3Options.PrivateBucket;
             var filePath = Path.GetTempFileName();
             var fileTransferUtility = new TransferUtility(_s3Client);
             await fileTransferUtility.DownloadAsync(filePath, bucketOrContainer, fileName);

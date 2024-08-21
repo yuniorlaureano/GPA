@@ -84,27 +84,27 @@ namespace GPA.General.Api.Controllers
 
         [HttpGet("blob-storage/download")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Blob}", permission: Permissions.Download)]
-        public async Task<IActionResult> DownloadFile(string fullFileName, string bucketOrCotainer)
+        public async Task<IActionResult> DownloadFile(string fullFileName, string bucketOrCotainer, bool isPublic = false)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var fileResult = await _blobStorageServiceFactory.DownloadFile(fullFileName, bucketOrCotainer);
+            var fileResult = await _blobStorageServiceFactory.DownloadFile(fullFileName, isPublic);
             return File(fileResult, "application/octet-stream", fullFileName);
         }
 
         [HttpDelete("blob-storage/remove")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Blob}", permission: Permissions.Download)]
-        public async Task<IActionResult> DeleteFile(string fullFileName, string bucketOrCotainer)
+        public async Task<IActionResult> DeleteFile(string fullFileName, bool isPublic)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            await _blobStorageServiceFactory.DeleteFile(fullFileName, bucketOrCotainer);
+            await _blobStorageServiceFactory.DeleteFile(fullFileName, isPublic);
             return Ok();
         }
 

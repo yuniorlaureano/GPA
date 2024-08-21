@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.General;
 using GPA.Dtos.Inventory;
 using GPA.Entities.General;
 using GPA.Entities.Inventory;
@@ -11,6 +12,7 @@ using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
 using System.Linq.Expressions;
 using System.Text.Json;
@@ -30,6 +32,7 @@ namespace GPA.Business.Services.Inventory
         Task CancelAsync(Guid id);
         Task SaveAttachment(Guid stockId, IFormFile file);
         Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId);
+        Task<(Stream? file, string fileName)> DownloadAttachmentAsync(Guid id);
     }
 
     public class StockService : IStockService
@@ -220,6 +223,30 @@ namespace GPA.Business.Services.Inventory
         {
             var attachments = await _stockAttachmentRepository.GetAttachmentByStockIdAsync(stockId);
             return _mapper.Map<IEnumerable<StockAttachmentDto>>(attachments);
+        }
+
+        public async Task<(Stream? file, string fileName)> DownloadAttachmentAsync(Guid id)
+        {
+            var attachment = await _stockAttachmentRepository.GetAttachmentByIdAsync(id);
+            if (attachment is null)
+            {
+                throw new AttachmentNotFoundException("Attachment not found");
+            }
+
+            BlobStorageFileResult? fileResult = null;
+
+            try
+            {
+                fileResult = JsonSerializer.Deserialize<BlobStorageFileResult>(attachment.File, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+                    ?? throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+            catch (Exception e)
+            {
+                throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+
+            var file = await _blobStorageServiceFactory.DownloadFile(fileResult.UniqueFileName);
+            return (file, fileResult.UniqueFileName);
         }
 
         private async Task MapAddonsToProduct(IEnumerable<ProductCatalogDto> products)

@@ -140,6 +140,32 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(await _stockService.GetAttachmentByStockIdAsync(stockId));
         }
 
+        [HttpPost("attachments/{attachmentId}/download")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Blob}", permission: Permissions.Download)]
+        public async Task<IActionResult> DownloadFile([FromRoute] Guid attachmentId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var (file, fileName) = await _stockService.DownloadAttachmentAsync(attachmentId);
+                if (file is not null)
+                {
+                    return File(file, "application/octet-stream", fileName);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+
+            return NotFound("No se encontró el archivo.");
+        }
+
         [HttpPut("{id}/cancel")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Cancel)]
         public async Task<IActionResult> Cancel([FromRoute] Guid id)

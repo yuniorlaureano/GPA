@@ -19,17 +19,18 @@ namespace GPA.Services.General.BlobStorage
             _blobStorageProviderHelper = blobStorageProviderHelper;
         }
 
-        public async Task DeleteFile(string options, string fileName, string bucketOrContainer)
+        public async Task DeleteFile(string options, string fileName, bool isPublic = false)
         {
             if (_storageClient is null)
             {
                 await Configure(options);
             }
 
+            var bucketOrContainer = isPublic ? _gCPBucketOptions.PublicBucket : _gCPBucketOptions.PrivateBucket;
             await _storageClient.DeleteObjectAsync(bucketOrContainer, fileName);
         }
 
-        public async Task<Stream> DownloadFile(string options, string fileName, string bucketOrContainer)
+        public async Task<Stream> DownloadFile(string options, string fileName, bool isPublic = false)
         {
             if (_storageClient is null)
             {
@@ -37,6 +38,7 @@ namespace GPA.Services.General.BlobStorage
             }
 
             var memoryStream = new MemoryStream();
+            var bucketOrContainer = isPublic ? _gCPBucketOptions.PublicBucket : _gCPBucketOptions.PrivateBucket;
             await _storageClient.DownloadObjectAsync(bucketOrContainer, fileName, memoryStream);
             return memoryStream;
         }

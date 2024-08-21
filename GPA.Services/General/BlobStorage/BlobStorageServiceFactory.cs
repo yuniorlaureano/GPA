@@ -7,8 +7,8 @@ namespace GPA.Services.General.BlobStorage
     public interface IBlobStorageServiceFactory
     {
         Task<BlobStorageFileResult> UploadFile(IFormFile file, string folder = "", bool isPublic = false);
-        Task<Stream?> DownloadFile(string fileName, string bucketOrContainer);
-        Task DeleteFile(string fileName, string bucketOrContainer);
+        Task<Stream?> DownloadFile(string fileName, bool isPublic = false);
+        Task DeleteFile(string fileName, bool isPublic = false);
     }
 
     public class BlobStorageServiceFactory : IBlobStorageServiceFactory
@@ -42,7 +42,7 @@ namespace GPA.Services.General.BlobStorage
             return await blobService.UploadFile(file, config.Value, folder, isPublic, config.PublicUrl);
         }
 
-        public async Task<Stream?> DownloadFile(string fileName, string bucketOrContainer)
+        public async Task<Stream?> DownloadFile(string fileName, bool isPublic = false)
         {
             var config = await _blobStorageConfigurationRepository.GetByIdAsync(query => query, x => x.Current);
             if (config is null)
@@ -57,7 +57,7 @@ namespace GPA.Services.General.BlobStorage
                 throw new ArgumentException("No se ha encontrado el proveedor de archivos");
             }
 
-            var stream = await blobService.DownloadFile(config.Value, fileName, bucketOrContainer);
+            var stream = await blobService.DownloadFile(config.Value, fileName, isPublic);
             if (stream is null)
             {
                 return null;
@@ -67,7 +67,7 @@ namespace GPA.Services.General.BlobStorage
             return stream;
         }
 
-        public async Task DeleteFile(string fileName, string bucketOrContainer)
+        public async Task DeleteFile(string fileName, bool isPublic = false)
         {
             var config = await _blobStorageConfigurationRepository.GetByIdAsync(query => query, x => x.Current);
             if (config is null)
@@ -82,7 +82,7 @@ namespace GPA.Services.General.BlobStorage
                 throw new ArgumentException("No se ha encontrado el proveedor de archivos");
             }
 
-            await blobService.DeleteFile(config.Value, fileName, bucketOrContainer);
+            await blobService.DeleteFile(config.Value, fileName, isPublic);
         }
     }
 }
