@@ -4,6 +4,7 @@ using GPA.Common.Entities.Invoice;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
+using GPA.Entities.Inventory;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -44,6 +45,7 @@ namespace GPA.Data
         public DbSet<StockCycleDetail> StockCycleDetails { get; set; }
         public DbSet<Addon> Addons { get; set; }
         public DbSet<ProductAddon> ProductAddons { get; set; }
+        public DbSet<StockAttachment> StockAttachments { get; set; }
 
         //INVOICE
         public DbSet<Client> Client { get; set; }

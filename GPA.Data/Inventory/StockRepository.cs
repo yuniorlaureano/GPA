@@ -358,6 +358,17 @@ namespace GPA.Data.Inventory
             return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
         }
 
+        public async Task SavePhoto(string fullFileName, Guid productId)
+        {
+            var query = @$"
+                UPDATE [GPA].[Inventory].[Products]
+                SET Photo = @Photo 
+                WHERE Id = @Id 
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter("@Photo", fullFileName), new SqlParameter("@Id", productId));
+        }
+
         private (ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter) SetExistenceFilterParametersIfNotEmpty(RequestFilterDto filter)
         {
             var existenceFilterDto = new ExistenceFilterDto();

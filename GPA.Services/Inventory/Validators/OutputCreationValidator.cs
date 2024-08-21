@@ -12,7 +12,6 @@ namespace GPA.Bussiness.Services.Inventory.Validator
                 .MaximumLength(300).WithMessage("La descripción solo admite 300 caracteres.");
 
             RuleFor(x => x.TransactionType)
-                .Must(x => x > 0).WithMessage("El tipo de transacción es requerido.")
                 .Must(x => x == 1).WithMessage("El tipo de transacción debe ser '1', que equivale a salida.");
 
             RuleFor(x => x.Status)

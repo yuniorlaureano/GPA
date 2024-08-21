@@ -26,6 +26,12 @@ namespace GPA.Data.Inventory.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            builder.HasMany(x => x.StockAttachments)
+                .WithOne(x => x.Stock)
+                .HasForeignKey(x => x.StockId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
             builder.HasMany(x => x.StockDetails)
                 .WithOne(x => x.Stock)
                 .HasForeignKey(x => x.StockId)

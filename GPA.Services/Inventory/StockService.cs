@@ -4,11 +4,16 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.Inventory;
 using GPA.Entities.General;
+using GPA.Entities.Inventory;
 using GPA.Entities.Unmapped.Inventory;
+using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils;
+using Microsoft.AspNetCore.Http;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace GPA.Business.Services.Inventory
 {
@@ -23,6 +28,8 @@ namespace GPA.Business.Services.Inventory
         public Task UpdateOutputAsync(StockCreationDto dto);
         public Task RemoveAsync(Guid id);
         Task CancelAsync(Guid id);
+        Task SaveAttachment(Guid stockId, IFormFile file);
+        Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId);
     }
 
     public class StockService : IStockService
@@ -31,6 +38,8 @@ namespace GPA.Business.Services.Inventory
         private readonly IProductRepository _productRepository;
         private readonly IUserContextService _userContextService;
         private readonly IStockRepository _repository;
+        private readonly IStockAttachmentRepository _stockAttachmentRepository;
+        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IMapper _mapper;
 
         public StockService(
@@ -38,12 +47,16 @@ namespace GPA.Business.Services.Inventory
             IAddonRepository addonRepository,
             IUserContextService userContextService,
             IStockRepository repository,
+            IStockAttachmentRepository stockAttachmentRepository,
+            IBlobStorageServiceFactory blobStorageServiceFactory,
             IMapper mapper)
         {
             _addonRepository = addonRepository;
             _productRepository = productRepository;
             _userContextService = userContextService;
             _repository = repository;
+            _stockAttachmentRepository = stockAttachmentRepository;
+            _blobStorageServiceFactory = blobStorageServiceFactory;
             _mapper = mapper;
         }
 
@@ -184,6 +197,29 @@ namespace GPA.Business.Services.Inventory
         public async Task CancelAsync(Guid id)
         {
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
+        }
+
+        public async Task SaveAttachment(Guid stockId, IFormFile file)
+        {
+            var fileResult = await _blobStorageServiceFactory.UploadFile(file, "stock/", isPublic: false);
+            var jsonFileResult = JsonSerializer.Serialize(fileResult, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            var attachment = new StockAttachment
+            {
+                StockId = stockId,
+                File = jsonFileResult,
+                UploadedAt = DateTimeOffset.UtcNow,
+                UploadedBy = _userContextService.GetCurrentUserId()
+            };
+            await _stockAttachmentRepository.SaveAttachmentAsync(attachment);
+        }
+
+        public async Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId)
+        {
+            var attachments = await _stockAttachmentRepository.GetAttachmentByStockIdAsync(stockId);
+            return _mapper.Map<IEnumerable<StockAttachmentDto>>(attachments);
         }
 
         private async Task MapAddonsToProduct(IEnumerable<ProductCatalogDto> products)

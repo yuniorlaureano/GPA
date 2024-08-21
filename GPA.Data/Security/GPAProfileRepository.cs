@@ -40,12 +40,12 @@ namespace GPA.Data.Security
 
             await _context.Database.ExecuteSqlRawAsync(
               @"IF NOT EXISTS (
-	                SELECT 1 FROM [GPA].[Security].[GPAUserProfiles]
+	                SELECT 1 FROM [GPA].[Security].[UserProfiles]
 	                WHERE
 		                [UserId] = @UserId AND
 		                [ProfileId] = @ProfileId
                 ) BEGIN
-	                INSERT INTO [GPA].[Security].[GPAUserProfiles]
+	                INSERT INTO [GPA].[Security].[UserProfiles]
 	                (
 		                 [UserId]
 		                ,[ProfileId]
@@ -68,7 +68,7 @@ namespace GPA.Data.Security
               @$"SELECT [Id]
                       ,[UserId]
                       ,[ProfileId]
-                  FROM [GPA].[Security].[GPAUserProfiles]
+                  FROM [GPA].[Security].[UserProfiles]
                   WHERE 
 	                [UserId] IN (SELECT value FROM STRING_SPLIT(@userIds, ','))
                 ", new SqlParameter("@userIds", string.Join(",", userIds.ToArray()))).ToListAsync();
@@ -86,8 +86,8 @@ namespace GPA.Data.Security
                 ,USR.[UserName]
                 ,USR.[Email]
 	            ,CAST(IIF(USRP.ProfileId IS NULL, 0, 1) AS BIT) AS IsAssigned
-              FROM [GPA].[Security].[GPAUsers] USR
-	            LEFT JOIN [GPA].[Security].[GPAUserProfiles] USRP
+              FROM [GPA].[Security].[Users] USR
+	            LEFT JOIN [GPA].[Security].[UserProfiles] USRP
 		            ON USR.Id = USRP.UserId AND
 		               USRP.ProfileId = @ProfileId
               WHERE 
@@ -112,7 +112,7 @@ namespace GPA.Data.Security
             var query = @"
                 SELECT 
 	                 COUNT(1) AS [Value]
-                FROM [GPA].[Security].[GPAUsers]
+                FROM [GPA].[Security].[Users]
                 WHERE 
                   Deleted = 0 AND (  
 	              @Search IS NULL
@@ -133,7 +133,7 @@ namespace GPA.Data.Security
             };
 
             await _context.Database.ExecuteSqlRawAsync(
-              @"DELETE FROM [GPA].[Security].[GPAUserProfiles]
+              @"DELETE FROM [GPA].[Security].[UserProfiles]
                 WHERE
 	                [UserId] = @UserId AND
 	                [ProfileId] = @ProfileId", parameters);
@@ -146,8 +146,8 @@ namespace GPA.Data.Security
 	                 P.[Id],
 	                 P.[Name],
 	                 P.[Value]
-                FROM [GPA].[Security].[GPAProfiles] P
-	                JOIN [GPA].[Security].[GPAUserProfiles] USRP
+                FROM [GPA].[Security].[Profiles] P
+	                JOIN [GPA].[Security].[UserProfiles] USRP
 		                ON P.Id = USRP.ProfileId AND
 		                   USRP.UserId = @UserId";
 
@@ -188,7 +188,7 @@ namespace GPA.Data.Security
 	                 [Id]
                     ,[Name]
                     ,[Value]
-                FROM [GPA].[Security].[GPAProfiles]
+                FROM [GPA].[Security].[Profiles]
                 WHERE 
 	              @Search IS NULL
 	              OR [Name] LIKE CONCAT('%', @Search, '%')
@@ -207,7 +207,7 @@ namespace GPA.Data.Security
 	                 [Id]
                     ,[Name]
                     ,[Value]
-                FROM [GPA].[Security].[GPAProfiles]
+                FROM [GPA].[Security].[Profiles]
                 WHERE 
                     Id = @Id    
             ";
@@ -220,7 +220,7 @@ namespace GPA.Data.Security
             var query = @"
                 SELECT 
 	                 COUNT(1) AS [Value]
-                FROM [GPA].[Security].[GPAProfiles]
+                FROM [GPA].[Security].[Profiles]
                 WHERE 
 	              @Search IS NULL
 	              OR [Name] LIKE CONCAT('%', @Search, '%')

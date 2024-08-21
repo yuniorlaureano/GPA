@@ -9,7 +9,7 @@ namespace GPA.Data.Security.Configurations
     {
         public void Configure(EntityTypeBuilder<GPAProfile> builder)
         {
-            builder.ToTable("GPAProfiles", GPASchema.SECURITY);
+            builder.ToTable("Profiles", GPASchema.SECURITY);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
             builder.HasMany(p => p.Users) 

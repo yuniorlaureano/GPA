@@ -16,6 +16,7 @@ namespace GPA.Data.Inventory.Extensions
             services.AddTransient<IReasonRepository, ReasonRepository>();
             services.AddTransient<IStockCycleRepository, StockCycleRepository>();
             services.AddTransient<IAddonRepository, AddonRepository>();
+            services.AddTransient<IStockAttachmentRepository, StockAttachmentRepository>();
 
         }
     }

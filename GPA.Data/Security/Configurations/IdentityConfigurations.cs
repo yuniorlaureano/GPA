@@ -10,7 +10,7 @@ namespace GPA.Data.Security.Configurations
         {
             modelBuilder.Entity<GPAUser>(b =>
             {
-                b.ToTable("GPAUsers", GPASchema.SECURITY);
+                b.ToTable("Users", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.Property(b => b.UserName).HasMaxLength(100);
@@ -33,7 +33,7 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPAUserProfile>(b =>
             {
-                b.ToTable("GPAUserProfiles", GPASchema.SECURITY);
+                b.ToTable("UserProfiles", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
@@ -43,13 +43,13 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPAUserClaim>(b =>
             {
-                b.ToTable("GPAUserClaims", GPASchema.SECURITY);
+                b.ToTable("UserClaims", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
             });
 
             modelBuilder.Entity<GPAUserLogin>(b =>
             {
-                b.ToTable("GPAUserLogin", GPASchema.SECURITY);
+                b.ToTable("UserLogin", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
@@ -59,7 +59,7 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPAUserToken>(b =>
             {
-                b.ToTable("GPAUserToken", GPASchema.SECURITY);
+                b.ToTable("UserToken", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
@@ -69,7 +69,7 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPARole>(b =>
             {
-                b.ToTable("GPARoles", GPASchema.SECURITY);
+                b.ToTable("Roles", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasMany(p => p.UserRoles)
@@ -84,7 +84,7 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPARoleClaim>(b =>
             {
-                b.ToTable("GPARoleClaims", GPASchema.SECURITY);
+                b.ToTable("RoleClaims", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).UseIdentityColumn();
 
@@ -96,7 +96,7 @@ namespace GPA.Data.Security.Configurations
 
             modelBuilder.Entity<GPAUserRole>(b =>
             {
-                b.ToTable("GPAUserRoles", GPASchema.SECURITY);
+                b.ToTable("UserRoles", GPASchema.SECURITY);
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 //b.HasOne(p => p.Role)

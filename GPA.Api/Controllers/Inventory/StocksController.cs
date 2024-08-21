@@ -21,7 +21,7 @@ namespace GPA.Inventory.Api.Controllers
         private readonly IValidator<StockCreationDto> _stockCreationValidator;
 
         public StocksController(
-            IStockService StockService, 
+            IStockService StockService,
             IMapper mapper,
             IValidator<OutputCreationDto> outputCreationValidator,
             IValidator<StockCreationDto> stockCreationValidator)
@@ -116,6 +116,29 @@ namespace GPA.Inventory.Api.Controllers
             return NoContent();
         }
 
+        [HttpPost("{stockId}/attachment/upload")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Create)]
+        public async Task<IActionResult> UploadAttachment(Guid stockId, [FromForm] IFormCollection files)
+        {
+            if (files?.Files is { Count: 0 })
+            {
+                return BadRequest(new string[] { "No contiene archivos para subir." });
+            }
+
+            foreach (var file in files.Files)
+            {
+                await _stockService.SaveAttachment(stockId, file);
+            }
+
+            return NoContent();
+        }
+
+        [HttpGet("{stockId}/attachments")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Create)]
+        public async Task<IActionResult> GetAttachmentsAsync(Guid stockId)
+        {
+            return Ok(await _stockService.GetAttachmentByStockIdAsync(stockId));
+        }
 
         [HttpPut("{id}/cancel")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Cancel)]

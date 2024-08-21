@@ -31,7 +31,7 @@ namespace GPA.Data.Security
 	                Photo,
 	                Email,
 	                Deleted
-                FROM [GPA].[Security].[GPAUsers]
+                FROM [GPA].[Security].[Users]
                 WHERE 
                   Deleted = 0 AND (
 	              @Search IS NULL
@@ -57,7 +57,7 @@ namespace GPA.Data.Security
 	                Photo,
 	                Email,
 	                Deleted
-                FROM [GPA].[Security].[GPAUsers]
+                FROM [GPA].[Security].[Users]
                 WHERE 
                     Id = @Id    
                     AND Deleted = 0
@@ -71,7 +71,7 @@ namespace GPA.Data.Security
             var query = @"
                 SELECT 
 	                 COUNT(1) AS [Value]
-                FROM [GPA].[Security].[GPAUsers]
+                FROM [GPA].[Security].[Users]
                 WHERE 
                   Deleted = 0 AND (  
 	              @Search IS NULL

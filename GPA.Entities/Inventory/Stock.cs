@@ -1,5 +1,6 @@
 ﻿using GPA.Entities;
 using GPA.Entities.General;
+using GPA.Entities.Inventory;
 
 namespace GPA.Common.Entities.Inventory
 {
@@ -19,5 +20,6 @@ namespace GPA.Common.Entities.Inventory
         public Invoice.Invoice? Invoice { get; set; }
 
         public ICollection<StockDetails> StockDetails { get; set; }
+        public ICollection<StockAttachment> StockAttachments{ get; set; }
     }
 }

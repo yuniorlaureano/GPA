@@ -2,6 +2,8 @@
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
+using GPA.Dtos.Inventory;
+using GPA.Entities.Inventory;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using Microsoft.Extensions.DependencyInjection;
@@ -175,6 +177,9 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<Stock, OutputCreationDto>();
             CreateMap<OutputCreationDto, Stock>();
+
+            CreateMap<StockAttachment, StockAttachmentDto>();
+            CreateMap<StockAttachmentDto, StockAttachment>();
         }
     }
 
