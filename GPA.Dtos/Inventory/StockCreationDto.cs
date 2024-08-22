@@ -9,7 +9,6 @@
         public Guid? ProviderId { get; set; }
         public Guid? StoreId { get; set; }
         public int ReasonId { get; set; }
-        public DetailedDate Date { get; set; }
 
         public IEnumerable<StockCreationDetailDto> StockDetails { get; set; }
     }

@@ -23,7 +23,6 @@
                    Status = this.Status,
                    StoreId = this.StoreId,
                    ReasonId = this.ReasonId,
-                   Date = new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day),
                    StockDetails = this.StockDetails.Select(x => new StockCreationDetailDto
                    {
                        ProductId = x.ProductId,

@@ -65,49 +65,19 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<RawProviders, ProviderDto>();
             CreateMap<ProviderDto, Provider>();
 
-            CreateMap<Stock, StockDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
-                });
+            CreateMap<Stock, StockDto>();
 
-            CreateMap<RawStock, StockDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
-                });
+            CreateMap<RawStock, StockDto>();
 
             CreateMap<StockDto, Stock>();
 
-            CreateMap<Stock, StockCreationDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
-                });
+            CreateMap<Stock, StockCreationDto>();
 
-            CreateMap<StockCreationDto, Stock>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                }).ForMember(dest => dest.StockDetails, opt => opt.Ignore());
+            CreateMap<StockCreationDto, Stock>();
 
-            CreateMap<Stock, StockWithDetailDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
-                });
+            CreateMap<Stock, StockWithDetailDto>();
 
-            CreateMap<RawStock, StockWithDetailDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.PreCondition(src => src.Date is not null);
-                    opt.MapFrom(src => new DetailedDate(src.Date.Value.Year, src.Date.Value.Month, src.Date.Value.Day));
-                });
+            CreateMap<RawStock, StockWithDetailDto>();
 
             CreateMap<StockDetails, StockDetailsDto>();
             CreateMap<RawStockDetails, StockDetailsDto>();

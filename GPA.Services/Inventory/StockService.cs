@@ -122,6 +122,7 @@ namespace GPA.Business.Services.Inventory
             newStock.StockDetails = _mapper.Map<ICollection<StockDetails>>(dto.StockDetails);
             newStock.CreatedBy = _userContextService.GetCurrentUserId();
             newStock.CreatedAt = DateTimeOffset.UtcNow;
+            newStock.Date = DateTime.UtcNow;
             var savedStock = await _repository.AddAsync(newStock);
             return _mapper.Map<StockDto>(savedStock);
         }
@@ -153,6 +154,7 @@ namespace GPA.Business.Services.Inventory
                 }
                 newStock.UpdatedBy = _userContextService.GetCurrentUserId();
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
+                newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
             }
         }
@@ -187,6 +189,7 @@ namespace GPA.Business.Services.Inventory
                 }
                 newStock.UpdatedBy = _userContextService.GetCurrentUserId();
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
+                newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
             }
         }

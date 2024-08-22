@@ -76,7 +76,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
                 .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -122,7 +121,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
                 .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -167,7 +165,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
                 .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -211,7 +208,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
                 .With(x => x.Status, (int)StockStatus.Draft)
                 .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
@@ -264,7 +260,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.ProviderId, stockDependencies.ProviderId)
                 .With(x => x.ReasonId, stockDependencies.ReasonId)
                 .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .With(x => x.Date, new DetailedDate(2023, 1, 1))
                 .Without(x => x.Id)
                 .Create();
 
