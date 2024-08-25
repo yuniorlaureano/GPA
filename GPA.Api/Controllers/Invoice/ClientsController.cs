@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Invoice;
 using GPA.Common.DTOs;
@@ -15,11 +16,16 @@ namespace GPA.Invoice.Api.Controllers
     public class ClientsController : ControllerBase
     {
         private readonly IClientService _clientService;
+        private readonly IValidator<ClientDto> _validator;
         private readonly IMapper _mapper;
 
-        public ClientsController(IClientService clientService, IMapper mapper)
+        public ClientsController(
+            IClientService clientService,
+            IValidator<ClientDto> validator,
+            IMapper mapper)
         {
             _clientService = clientService;
+            _validator = validator;
             _mapper = mapper;
         }
 
@@ -41,9 +47,10 @@ namespace GPA.Invoice.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Client}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(ClientDto client)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(client);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _clientService.AddAsync(client);

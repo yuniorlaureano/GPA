@@ -45,7 +45,9 @@ namespace GPA.Business.Services.Invoice
             if (client is not null)
             {
                 clientDto.Debits = await GetClientDebit(id, client);
+                clientDto.Credits = await GetClientCredits(id);
             }
+
             return clientDto;
         }
 
@@ -87,8 +89,7 @@ namespace GPA.Business.Services.Invoice
 
         public async Task RemoveAsync(Guid id)
         {
-            var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedClient);
+            await _repository.SoftDeleteClientAsync(id, _userContextService.GetCurrentUserId());
         }
 
         public async Task<List<ClientCreditDto>> GetCredits(Guid clientId)
@@ -117,6 +118,12 @@ namespace GPA.Business.Services.Invoice
                     client.Credits = creditsDictionary.ContainsKey(client.Id.Value) ? creditsDictionary[client.Id.Value].ToArray() : [];
                 }
             }
+        }
+
+        private async Task<ClientCreditDto[]> GetClientCredits(Guid clientId)
+        {
+            var credits = await _repository.GetCreditsByClientIdAsync(new List<Guid> { clientId });
+            return _mapper.Map<ClientCreditDto[]>(credits) ?? [];
         }
 
         private async Task<ClientDebitDto[]> GetClientDebit(Guid id, RawClient? client)

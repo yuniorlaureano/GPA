@@ -16,6 +16,7 @@ namespace GPA.Data.Invoice
         Task<IEnumerable<RawClient>> GetClientsByIdsAsync(IEnumerable<Guid> clientIds);
         Task UpdateAsync(Client client);
         Task<IEnumerable<RawCredit>> GetCreditsByClientIdAsync(List<Guid> clientIds);
+        Task SoftDeleteClientAsync(Guid clientId, Guid createdBy);
     }
 
     public class ClientRepository : Repository<Client>, IClientRepository
@@ -33,7 +34,6 @@ namespace GPA.Data.Invoice
                         ,[Identification]
                         ,[IdentificationType]
                         ,[Phone]
-                        ,[AvailableCredit]
                         ,[Email]
                         ,[Street]
                         ,[BuildingNumber]
@@ -41,6 +41,9 @@ namespace GPA.Data.Invoice
                         ,[State]
                         ,[Country]
                         ,[PostalCode]
+                        ,[FormattedAddress] 
+                        ,[Latitude]
+                        ,[Longitude]
                 FROM [GPA].[Invoice].[Clients] C
                 WHERE C.Id = @ClientId";
 
@@ -56,7 +59,6 @@ namespace GPA.Data.Invoice
                         ,[Identification]
                         ,[IdentificationType]
                         ,[Phone]
-                        ,[AvailableCredit]
                         ,[Email]
                         ,[Street]
                         ,[BuildingNumber]
@@ -64,6 +66,9 @@ namespace GPA.Data.Invoice
                         ,[State]
                         ,[Country]
                         ,[PostalCode]
+                        ,[FormattedAddress]
+                        ,[Latitude]
+                        ,[Longitude]
                 FROM [GPA].[Invoice].[Clients]
                 WHERE C.Id IN ({string.Join(",", clientIds.Select(clientId => $"'{clientId}'"))})";
 
@@ -81,7 +86,6 @@ namespace GPA.Data.Invoice
                     ,[Identification]
                     ,[IdentificationType]
                     ,[Phone]
-                    ,[AvailableCredit]
                     ,[Email]
                     ,[Street]
                     ,[BuildingNumber]
@@ -89,8 +93,12 @@ namespace GPA.Data.Invoice
                     ,[State]
                     ,[Country]
                     ,[PostalCode]
+                    ,[FormattedAddress]
+                    ,[Latitude]
+                    ,[Longitude]
                 FROM [GPA].[Invoice].[Clients] C
-                WHERE 1 = 1
+                WHERE
+                    Deleted = 0
                     {search}
                 ORDER BY C.Id
                 OFFSET @Page ROWS
@@ -116,7 +124,7 @@ namespace GPA.Data.Invoice
             var query = @$"SELECT 
                                COUNT(1) AS [Value]
                         FROM [GPA].[Invoice].[Clients] C
-                        WHERE 1 = 1
+                        WHERE Deleted = 0
                             {search}
                         ";
 
@@ -147,6 +155,24 @@ namespace GPA.Data.Invoice
                     WHERE [ClientId] IN({string.Join(",", clientIds.Select(clientId => $"'{clientId}'"))})";
 
             return await _context.Database.SqlQueryRaw<RawCredit>(query).ToListAsync();
+        }
+
+        public async Task SoftDeleteClientAsync(Guid clientId, Guid createdBy)
+        {
+            var query = @$"
+                UPDATE [GPA].[Invoice].[Clients] 
+                    SET Deleted = 1,
+                        DeletedAt = @DeletedAt,
+                        DeletedBy = @DeletedBy
+                WHERE 
+                    Id = @Id";
+
+            await _context.Database.ExecuteSqlRawAsync(
+                query,
+                new SqlParameter("@DeletedBy", createdBy),
+                new SqlParameter("@DeletedAt", DateTimeOffset.UtcNow),
+                new SqlParameter("@Id", clientId)
+                );
         }
     }
 }
