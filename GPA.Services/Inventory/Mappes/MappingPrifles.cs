@@ -2,7 +2,9 @@
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
+using GPA.Common.Entities.Invoice;
 using GPA.Dtos.Inventory;
+using GPA.Dtos.Invoice;
 using GPA.Entities.Inventory;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
@@ -25,6 +27,9 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
 
             CreateMap<ProductAddon, ProductAddonDto>();
             CreateMap<ProductAddonDto, ProductAddon>();
+
+            CreateMap<InvoiceAttachmentDto, InvoiceAttachment>();
+            CreateMap<InvoiceAttachment, InvoiceAttachmentDto>();
 
             //ToDo: Obtener estas descripciones desde la base de datos mediante un include
             CreateMap<Product, ProductDto>()

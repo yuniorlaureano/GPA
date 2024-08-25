@@ -23,45 +23,23 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
 
             CreateMap<RawPenddingPayment, ClientDebitDto>();
 
-            CreateMap<InvoiceDto, GPA.Common.Entities.Invoice.Invoice>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                }).ForMember(x => x.InvoiceDetails, opt => opt.Ignore());
+            CreateMap<InvoiceDto, GPA.Common.Entities.Invoice.Invoice>();
 
-            CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+            CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceDto>();
 
             CreateMap<InvoiceUpdateDto, GPA.Common.Entities.Invoice.Invoice>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                }).ForMember(x => x.InvoiceDetails, opt => opt.Ignore());
+                .ForMember(dest => dest.InvoiceDetails, opt => opt.Ignore());
 
             CreateMap<InvoiceDetailDto, InvoiceDetails>();
             CreateMap<InvoiceDetails, InvoiceDetailDto>();
 
             CreateMap<InvoiceDetailUpdateDto, InvoiceDetails>();
 
-            CreateMap<InvoiceListDto, GPA.Common.Entities.Invoice.Invoice>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
-            CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceListDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+            CreateMap<InvoiceListDto, GPA.Common.Entities.Invoice.Invoice>();
 
-            CreateMap<RawInvoice, InvoiceListDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+            CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceListDto>();
+
+            CreateMap<RawInvoice, InvoiceListDto>();
 
             CreateMap<InvoiceListDetailDto, InvoiceDetails>()
                 .ForMember(x => x.Id, opt => opt.Ignore());

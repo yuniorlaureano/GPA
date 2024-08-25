@@ -44,8 +44,8 @@ namespace GPA.Data.Invoice
                         ,[FormattedAddress] 
                         ,[Latitude]
                         ,[Longitude]
-                FROM [GPA].[Invoice].[Clients] C
-                WHERE C.Id = @ClientId";
+                FROM [GPA].[Invoice].[Clients]
+                WHERE Id = @ClientId";
 
             return await _context.Database.SqlQueryRaw<RawClient>(query, new SqlParameter("@ClientId", clientId)).FirstOrDefaultAsync();
         }
@@ -70,7 +70,7 @@ namespace GPA.Data.Invoice
                         ,[Latitude]
                         ,[Longitude]
                 FROM [GPA].[Invoice].[Clients]
-                WHERE C.Id IN ({string.Join(",", clientIds.Select(clientId => $"'{clientId}'"))})";
+                WHERE Id IN ({string.Join(",", clientIds.Select(clientId => $"'{clientId}'"))})";
 
             return await _context.Database.SqlQueryRaw<RawClient>(query).ToListAsync();
         }

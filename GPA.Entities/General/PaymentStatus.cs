@@ -1,6 +1,6 @@
 ﻿namespace GPA.Entities.General
 {
-    public enum PaymentStatus
+    public enum PaymentStatus : byte
     {
         Payed,
         Pending

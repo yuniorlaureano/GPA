@@ -14,21 +14,21 @@ using GPA.Services.Security;
 using GPA.Utils;
 using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
-using System.Linq.Expressions;
+using System.Text;
 using System.Text.Json;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IStockService
     {
-        public Task<StockWithDetailDto?> GetByIdAsync(Guid id);
-        public Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null);
-        public Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
+        Task<StockWithDetailDto?> GetByIdAsync(Guid id);
+        Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search);
+        Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(RequestFilterDto search);
         Task<ResponseDto<ExistanceDto>> GetExistenceAsync(RequestFilterDto filter);
-        public Task<StockDto?> AddAsync(StockCreationDto dto);
-        public Task UpdateInputAsync(StockCreationDto dto);
-        public Task UpdateOutputAsync(StockCreationDto dto);
-        public Task RemoveAsync(Guid id);
+        Task<StockDto?> AddAsync(StockCreationDto dto);
+        Task UpdateInputAsync(StockCreationDto dto);
+        Task UpdateOutputAsync(StockCreationDto dto);
+        Task RemoveAsync(Guid id);
         Task CancelAsync(Guid id);
         Task SaveAttachment(Guid stockId, IFormFile file);
         Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId);
@@ -79,7 +79,7 @@ namespace GPA.Business.Services.Inventory
             return stockDto;
         }
 
-        public async Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search, Expression<Func<Stock, bool>>? expression = null)
+        public async Task<ResponseDto<StockDto>> GetStocksAsync(RequestFilterDto search)
         {
             var stocks = await _repository.GetStocksAsync(search);
             return new ResponseDto<StockDto>
@@ -89,12 +89,13 @@ namespace GPA.Business.Services.Inventory
             };
         }
 
-        public async Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
+        public async Task<ResponseDto<ProductCatalogDto>> GetProductCatalogAsync(RequestFilterDto filter)
         {
-            var productCatalog = await _repository.GetProductCatalogAsync(page, pageSize);
+            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            var productCatalog = await _repository.GetProductCatalogAsync(filter);
             var productCatalogDto = new ResponseDto<ProductCatalogDto>
             {
-                Count = await _repository.GetProductCatalogCountAsync(),
+                Count = await _repository.GetProductCatalogCountAsync(filter),
                 Data = _mapper.Map<IEnumerable<ProductCatalogDto>>(productCatalog)
             };
 

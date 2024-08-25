@@ -50,7 +50,7 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.ReadProducts)]
         public async Task<IActionResult> GetProductCatalog([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _stockService.GetProductCatalogAsync(filter.Page, filter.PageSize));
+            return Ok(await _stockService.GetProductCatalogAsync(filter));
         }
 
         [HttpGet("existence")]
@@ -117,7 +117,7 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpPost("{stockId}/attachment/upload")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Create)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Upload)]
         public async Task<IActionResult> UploadAttachment(Guid stockId, [FromForm] IFormCollection files)
         {
             if (files?.Files is { Count: 0 })
@@ -134,14 +134,14 @@ namespace GPA.Inventory.Api.Controllers
         }
 
         [HttpGet("{stockId}/attachments")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Create)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Read)]
         public async Task<IActionResult> GetAttachmentsAsync(Guid stockId)
         {
             return Ok(await _stockService.GetAttachmentByStockIdAsync(stockId));
         }
 
         [HttpPost("attachments/{attachmentId}/download")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Blob}", permission: Permissions.Download)]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Download)]
         public async Task<IActionResult> DownloadFile([FromRoute] Guid attachmentId)
         {
             if (!ModelState.IsValid)

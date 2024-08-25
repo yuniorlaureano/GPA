@@ -8,11 +8,17 @@ using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using GPA.Dtos.General;
+using GPA.Dtos.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Invoice;
+using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.Exceptions;
+using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
 namespace GPA.Business.Services.Invoice
 {
@@ -23,6 +29,9 @@ namespace GPA.Business.Services.Invoice
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
         public Task UpdateAsync(InvoiceUpdateDto invoiceDto);
         public Task RemoveAsync(Guid id);
+        Task SaveAttachment(Guid invoiceId, IFormFile file);
+        Task<IEnumerable<InvoiceAttachmentDto>> GetAttachmentByInvoiceIdAsync(Guid invoiceId);
+        Task<(Stream? file, string fileName)> DownloadAttachmentAsync(Guid id);
         Task CancelAsync(Guid id);
     }
 
@@ -35,6 +44,8 @@ namespace GPA.Business.Services.Invoice
         private readonly IReceivableAccountRepository _receivableAccountRepository;
         private readonly IAddonRepository _addonRepository;
         private readonly IUserContextService _userContextService;
+        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly IInvoiceAttachmentRepository _invoiceAttachmentRepository;
         private readonly IMapper _mapper;
 
         public InvoiceService(
@@ -45,6 +56,8 @@ namespace GPA.Business.Services.Invoice
             IReceivableAccountRepository receivableAccountRepository,
             IAddonRepository addonRepository,
             IUserContextService userContextService,
+            IBlobStorageServiceFactory blobStorageServiceFactory,
+            IInvoiceAttachmentRepository invoiceAttachmentRepository,
             IMapper mapper)
         {
             _clientRepository = clientRepository;
@@ -54,6 +67,8 @@ namespace GPA.Business.Services.Invoice
             _receivableAccountRepository = receivableAccountRepository;
             _addonRepository = addonRepository;
             _userContextService = userContextService;
+            _blobStorageServiceFactory = blobStorageServiceFactory;
+            _invoiceAttachmentRepository = invoiceAttachmentRepository;
             _mapper = mapper;
         }
 
@@ -124,7 +139,7 @@ namespace GPA.Business.Services.Invoice
             var isCheckCredits = invoice.Status != InvoiceStatus.Draft;
             if (isCheckCredits)
             {
-                await CheckIfClientHasEnoughtCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails, addons);
+                await CheckIfClientHasEnoughCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails, addons);
             }
 
             InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
@@ -132,6 +147,7 @@ namespace GPA.Business.Services.Invoice
             invoice.PaymentStatus = GetPaymentStatus(invoice);
             invoice.CreatedBy = _userContextService.GetCurrentUserId();
             invoice.CreatedAt = DateTimeOffset.UtcNow;
+            invoice.Date = DateTime.UtcNow;
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(savedInvoice);
@@ -162,12 +178,14 @@ namespace GPA.Business.Services.Invoice
                 var isCheckCredits = newInvoice.Status != InvoiceStatus.Draft;
                 if (isCheckCredits)
                 {
-                    await CheckIfClientHasEnoughtCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails, addons);
+                    await CheckIfClientHasEnoughCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails, addons);
                 }
 
                 foreach (var detail in invoiceDetails)
                 {
                     detail.InvoiceId = newInvoice.Id;
+                    detail.CreatedBy = _userContextService.GetCurrentUserId();
+                    detail.CreatedAt = DateTimeOffset.UtcNow;
                 }
 
                 newInvoice.PaymentStatus = GetPaymentStatus(newInvoice, invoiceDetails);
@@ -175,6 +193,7 @@ namespace GPA.Business.Services.Invoice
                 InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
                 newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
                 newInvoice.UpdatedAt = DateTimeOffset.UtcNow;
+                newInvoice.Date = savedInvoice.Date;
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
@@ -191,6 +210,54 @@ namespace GPA.Business.Services.Invoice
         {
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
         }
+
+        public async Task SaveAttachment(Guid invoiceId, IFormFile file)
+        {
+            var fileResult = await _blobStorageServiceFactory.UploadFile(file, "invoice/", isPublic: false);
+            var jsonFileResult = JsonSerializer.Serialize(fileResult, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            var attachment = new InvoiceAttachment
+            {
+                InvoiceId = invoiceId,
+                File = jsonFileResult,
+                UploadedAt = DateTimeOffset.UtcNow,
+                UploadedBy = _userContextService.GetCurrentUserId()
+            };
+            await _invoiceAttachmentRepository.SaveAttachmentAsync(attachment);
+        }
+
+        public async Task<IEnumerable<InvoiceAttachmentDto>> GetAttachmentByInvoiceIdAsync(Guid invoiceId)
+        {
+            var attachments = await _invoiceAttachmentRepository.GetAttachmentByInvoiceIdAsync(invoiceId);
+            return _mapper.Map<IEnumerable<InvoiceAttachmentDto>>(attachments);
+        }
+
+        public async Task<(Stream? file, string fileName)> DownloadAttachmentAsync(Guid id)
+        {
+            var attachment = await _invoiceAttachmentRepository.GetAttachmentByIdAsync(id);
+            if (attachment is null)
+            {
+                throw new AttachmentNotFoundException("Attachment not found");
+            }
+
+            BlobStorageFileResult? fileResult = null;
+
+            try
+            {
+                fileResult = JsonSerializer.Deserialize<BlobStorageFileResult>(attachment.File, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+                    ?? throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+            catch (Exception e)
+            {
+                throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+
+            var file = await _blobStorageServiceFactory.DownloadFile(fileResult.UniqueFileName);
+            return (file, fileResult.UniqueFileName);
+        }
+
 
         private Stock ToStock(GPA.Common.Entities.Invoice.Invoice invoice)
         {
@@ -316,7 +383,7 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private async Task CheckIfClientHasEnoughtCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
+        private async Task CheckIfClientHasEnoughCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
         {
             var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(clientId);
             var credits = await _clientRepository.GetCreditsByClientIdAsync(new List<Guid> { clientId });

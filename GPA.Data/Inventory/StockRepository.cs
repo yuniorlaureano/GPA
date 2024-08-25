@@ -13,8 +13,8 @@ namespace GPA.Data.Inventory
 {
     public interface IStockRepository : IRepository<Stock>
     {
-        Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(int page = 1, int pageSize = 10);
-        Task<int> GetProductCatalogCountAsync();
+        Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(RequestFilterDto filter);
+        Task<int> GetProductCatalogCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds);
         Task UpdateAsync(Stock model, IEnumerable<StockDetails> stockDetails);
         Task<IEnumerable<Existence>> GetExistenceAsync(RequestFilterDto filter);
@@ -32,7 +32,7 @@ namespace GPA.Data.Inventory
         {
         }
 
-        public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(int page = 1, int pageSize = 10)
+        public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(RequestFilterDto filter)
         {
             var sqlQuery = @"SELECT 
 	                            SUM(CASE
@@ -64,7 +64,12 @@ namespace GPA.Data.Inventory
 		                               ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                             WHERE 
 	                            [p].[Deleted] = CAST(0 AS bit) AND
-	                            [p].[Type] = {2} 
+                                (
+                                         @Search IS NULL
+	                                  OR [p].[Code] LIKE CONCAT('%', @Search, '%')
+	                                  OR [p].[Name] LIKE CONCAT('%', @Search, '%')
+                                ) AND
+	                            [p].[Type] = @Type 
                             GROUP BY 
 	                            [p].[Id], 
 	                            [p].[Name], 
@@ -72,20 +77,30 @@ namespace GPA.Data.Inventory
 	                            [p].[CategoryId]
                             ORDER BY 
 	                            [p].[Name]
-                            OFFSET {0} ROWS FETCH NEXT {1} ROWS ONLY";
-            var productCatalog = await _context.Database.SqlQueryRaw<RawProductCatalog>(
-                    sqlQuery,
-                    pageSize * Math.Abs(page - 1),
-                    pageSize,
-                    (byte)ProductType.FinishedProduct
-                ).ToListAsync();
+                            OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY";
 
-            return productCatalog;
+            var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
+            var type = new SqlParameter("@Type", (byte)ProductType.FinishedProduct);
+            var parameters = new List<SqlParameter>()
+            {
+                Page, PageSize, Search, type
+            };
+            return await _context.Database.SqlQueryRaw<RawProductCatalog>(sqlQuery, parameters.ToArray()).ToListAsync();
         }
 
-        public async Task<int> GetProductCatalogCountAsync()
+        public async Task<int> GetProductCatalogCountAsync(RequestFilterDto filter)
         {
-            return await _context.Products.Where(x => x.Type == ProductType.FinishedProduct).CountAsync();
+            var query = @"
+                SELECT 
+	                 COUNT(1) AS [Value]
+                FROM [GPA].[Inventory].[Products] PRO
+                WHERE PRO.Deleted = 0 AND (
+	                @Search IS NULL
+	                OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
+	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
+            ";
+            var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
+            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Existence>> GetExistenceAsync(RequestFilterDto filter)

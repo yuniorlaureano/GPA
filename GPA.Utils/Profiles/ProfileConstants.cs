@@ -199,7 +199,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.Stock,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.ReadProducts, Permissions.ReadExistence, Permissions.RegisterInput, Permissions.RegisterOutput, Permissions.UpdateInput, Permissions.UpdateOutput, Permissions.Cancel, Permissions.ReadTransactions, Permissions.Upload
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.ReadProducts, Permissions.ReadExistence, Permissions.RegisterInput, Permissions.RegisterOutput, Permissions.UpdateInput, Permissions.UpdateOutput, Permissions.Cancel, Permissions.ReadTransactions, Permissions.Upload, Permissions.Download
                                 }
                             }
                         }
@@ -226,7 +226,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.Invoicing,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel, Permissions.Return
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel, Permissions.Return, Permissions.Upload, Permissions.Download
                                 }
                             },
                             new Component

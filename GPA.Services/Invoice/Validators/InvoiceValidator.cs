@@ -19,6 +19,15 @@ namespace GPA.Services.Invoice.Validators
                     return Enum.TryParse(typeof(InvoiceStatus), status.ToString(), out var _);
                 });
 
+            RuleFor(x => x.Type)
+                .Must((type) =>
+                {
+                    return Enum.TryParse(typeof(SaleType), type.ToString(), out var _);
+                });
+
+            RuleFor(x => x.Note)
+                .MaximumLength(300).WithMessage("La nota solo admite 300 caracteres.");
+
             RuleFor(x => x.ClientId)
                 .NotEmpty()
                 .NotNull()

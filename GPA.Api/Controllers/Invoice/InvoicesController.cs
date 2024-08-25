@@ -50,9 +50,10 @@ namespace GPA.Invoice.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(InvoiceDto invoice)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _createValidator.ValidateAsync(invoice);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             try
@@ -70,10 +71,10 @@ namespace GPA.Invoice.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(InvoiceUpdateDto invoice)
         {
-            var result = await _updateValidator.ValidateAsync(invoice);
-            if (!result.IsValid)
+            var validationResult = await _updateValidator.ValidateAsync(invoice);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(result.Errors);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             try
@@ -93,6 +94,56 @@ namespace GPA.Invoice.Api.Controllers
         {
             await _invoiceService.RemoveAsync(id);
             return NoContent();
+        }
+
+        [HttpPost("{invoiceId}/attachment/upload")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Upload)]
+        public async Task<IActionResult> UploadAttachment(Guid invoiceId, [FromForm] IFormCollection files)
+        {
+            if (files?.Files is { Count: 0 })
+            {
+                return BadRequest(new string[] { "No contiene archivos para subir." });
+            }
+
+            foreach (var file in files.Files)
+            {
+                await _invoiceService.SaveAttachment(invoiceId, file);
+            }
+
+            return NoContent();
+        }
+
+        [HttpGet("{invoiceId}/attachments")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetAttachmentsAsync(Guid invoiceId)
+        {
+            return Ok(await _invoiceService.GetAttachmentByInvoiceIdAsync(invoiceId));
+        }
+
+        [HttpPost("attachments/{attachmentId}/download")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Download)]
+        public async Task<IActionResult> DownloadFile([FromRoute] Guid attachmentId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var (file, fileName) = await _invoiceService.DownloadAttachmentAsync(attachmentId);
+                if (file is not null)
+                {
+                    return File(file, "application/octet-stream", fileName);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+
+            return NotFound("No se encontró el archivo.");
         }
 
         [HttpPut("cancel/{id}")]

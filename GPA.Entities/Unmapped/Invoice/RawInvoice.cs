@@ -3,9 +3,10 @@
     public class RawInvoice
     {
         public Guid? Id { get; set; }
-        public int Status { get; set; }
+        public byte Status { get; set; }
         public decimal Payment { get; set; }
-        public int Type { get; set; }
+        public byte PaymentStatus { get; set; }
+        public byte Type { get; set; }
         public DateTime Date { get; set; }
         public string? Note { get; set; }
         public Guid ClientId { get; set; }

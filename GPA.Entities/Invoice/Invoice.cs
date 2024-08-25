@@ -19,5 +19,6 @@ namespace GPA.Common.Entities.Invoice
         public required ICollection<InvoiceDetails> InvoiceDetails { get; set; }
         public ICollection<InvoiceDelivery>? InvoiceDeliveries { get; set; }
         public ICollection<ClientPaymentsDetails>? ClientPaymentsDetails { get; set; }
+        public ICollection<InvoiceAttachment> InvoiceAttachments { get; set; }
     }
 }

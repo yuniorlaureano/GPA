@@ -15,6 +15,19 @@ namespace GPA.Data.Invoice.Configurations
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
+            builder.Property(x => x.Payment).HasColumnType("decimal(18,2)").IsRequired();
+            builder.Property(x => x.Date).IsRequired();
+            builder.Property(x => x.Note).HasMaxLength(300);
+            builder.Property(x => x.Type).IsRequired();
+            builder.Property(x => x.Status).IsRequired();
+            builder.Property(x => x.PaymentStatus).IsRequired();
+
+            builder.HasMany(x => x.InvoiceAttachments)
+                .WithOne(x => x.Invoice)
+                .HasForeignKey(x => x.InvoiceId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
             builder.HasMany(x => x.ClientPaymentsDetails)
                 .WithOne(x => x.Invoice)
                 .HasForeignKey(x => x.InvoiceId);

@@ -1,6 +1,6 @@
 ﻿namespace GPA.Entities.General
 {
-    public enum InvoiceStatus
+    public enum InvoiceStatus : byte
     {
         Draft = 0,
         Saved = 1,

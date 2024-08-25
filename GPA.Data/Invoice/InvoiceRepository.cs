@@ -19,7 +19,7 @@ namespace GPA.Data.Invoice
         Task<int> GetInvoicesCountAsync(RequestFilterDto filter);
         Task UpdateAsync(GPA.Common.Entities.Invoice.Invoice model, IEnumerable<InvoiceDetails> invoiceDetails);
         Task CancelAsync(Guid id, Guid updatedBy);
-        Task<RawInvoiceDetails?> GetInvoiceDetailsByInvoiceIdAsync(Guid invoiceId);
+        Task<List<RawInvoiceDetails>> GetInvoiceDetailsByInvoiceIdAsync(Guid invoiceId);
     }
 
     public class InvoiceRepository : Repository<GPA.Common.Entities.Invoice.Invoice>, IInvoiceRepository
@@ -121,7 +121,7 @@ namespace GPA.Data.Invoice
             return await _context.Database.SqlQueryRaw<RawInvoice>(query, new SqlParameter("@Id", id)).FirstOrDefaultAsync();
         }
 
-        public async Task<RawInvoiceDetails?> GetInvoiceDetailsByInvoiceIdAsync(Guid invoiceId)
+        public async Task<List<RawInvoiceDetails>> GetInvoiceDetailsByInvoiceIdAsync(Guid invoiceId)
         {
             var query = @$"
                 SELECT 
@@ -131,8 +131,8 @@ namespace GPA.Data.Invoice
                     ,[ProductId]
                     ,[InvoiceId]
                 FROM [GPA].[Invoice].[InvoiceDetails]
-                WHERE INV.[Id] = @InvoiceId";
-            return await _context.Database.SqlQueryRaw<RawInvoiceDetails>(query, new SqlParameter("@InvoiceId", invoiceId)).FirstOrDefaultAsync();
+                WHERE [InvoiceId] = @InvoiceId";
+            return await _context.Database.SqlQueryRaw<RawInvoiceDetails>(query, new SqlParameter("@InvoiceId", invoiceId)).ToListAsync();
         }
 
         public async Task<IEnumerable<RawInvoice>> GetInvoicesAsync(RequestFilterDto filter)

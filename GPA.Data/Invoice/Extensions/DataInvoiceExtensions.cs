@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using GPA.Data.Inventory;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Data.Invoice.Extensions
 {
@@ -9,6 +10,7 @@ namespace GPA.Data.Invoice.Extensions
             services.AddTransient<IClientRepository, ClientRepository>();
             services.AddTransient<IInvoiceRepository, InvoiceRepository>();
             services.AddTransient<IReceivableAccountRepository, ReceivableAccountRepository>();
+            services.AddTransient<IInvoiceAttachmentRepository, InvoiceAttachmentRepository>();
         }
     }
 }
