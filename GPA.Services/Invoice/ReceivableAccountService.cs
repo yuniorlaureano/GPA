@@ -107,6 +107,7 @@ namespace GPA.Business.Services.Invoice
             var payment = _mapper.Map<ClientPaymentsDetails>(dto);
             payment.CreatedBy = _userContextService.GetCurrentUserId();
             payment.CreatedAt = DateTimeOffset.UtcNow;
+            payment.Date = DateTime.UtcNow;
             var savedClient = await _repository.AddAsync(payment);
             return _mapper.Map<ClientPaymentsDetailDto>(savedClient);
         }
@@ -153,7 +154,6 @@ namespace GPA.Business.Services.Invoice
             {
                 PendingPayment = pendingPayment,
                 InvoiceId = dto.InvoiceId,
-                Date = new GPA.Common.DTOs.Inventory.DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day),
                 Payment = 0.0M
             };
             await AddAsync(nextPayment);
@@ -174,7 +174,7 @@ namespace GPA.Business.Services.Invoice
         {
             var pendingPayment = paymentDetail.PendingPayment - dto.Payment;
             paymentDetail.Payment = dto.Payment;
-            paymentDetail.Date = new DateTime(dto.Date.Year, dto.Date.Month, dto.Date.Day);
+            paymentDetail.Date = DateTime.UtcNow;
             paymentDetail.UpdatedBy = _userContextService.GetCurrentUserId();
             paymentDetail.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(paymentDetail, paymentDetail, (entityState, _) =>

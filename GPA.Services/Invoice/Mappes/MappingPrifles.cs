@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.DTOs.Invoices;
 using GPA.Common.Entities.Invoice;
@@ -45,20 +44,12 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                 .ForMember(x => x.Id, opt => opt.Ignore());
 
             CreateMap<InvoiceDetails, InvoiceListDetailDto>();
-            
+
             CreateMap<RawInvoiceDetails, InvoiceListDetailDto>();
 
-            CreateMap<ClientPaymentsDetails, ClientPaymentsDetailDto>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DetailedDate(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+            CreateMap<ClientPaymentsDetails, ClientPaymentsDetailDto>();
 
-            CreateMap<ClientPaymentsDetailCreationDto, ClientPaymentsDetails>()
-                .ForMember(dest => dest.Date, opt =>
-                {
-                    opt.MapFrom(src => new DateTime(src.Date.Year, src.Date.Month, src.Date.Day));
-                });
+            CreateMap<ClientPaymentsDetailCreationDto, ClientPaymentsDetails>();
 
             CreateMap<ClientPaymentsDetailDto, ClientPaymentsDetailCreationDto>();
 
