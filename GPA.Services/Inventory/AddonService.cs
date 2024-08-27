@@ -3,21 +3,23 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.Security;
 
 namespace GPA.Business.Services.Inventory
 {
     public interface IAddonService
     {
-        public Task<AddonDto?> GetAddonsAsync(Guid id);
-
-        public Task<ResponseDto<AddonDto>> GetAddonsAsync(RequestFilterDto search);
-
-        public Task<AddonDto?> AddAsync(AddonDto addonDto);
-
-        public Task UpdateAsync(AddonDto addonDto);
-
-        public Task RemoveAsync(Guid id);
+        Task<AddonDto?> GetAddonsAsync(Guid id);
+        Task<ResponseDto<AddonDto>> GetAddonsAsync(RequestFilterDto search);
+        Task<AddonDto?> AddAsync(AddonDto addonDto);
+        Task UpdateAsync(AddonDto addonDto);
+        Task RemoveAsync(Guid id);
+        Task<ResponseDto<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter);
+        Task RemoveAddonFromProductAsync(Guid addonId, Guid productId);
+        Task AssignAddonToProductAsync(Guid addonId, Guid productId);
+        Task RemoveAddonFromAllProductAsync(Guid addonId);
+        Task AssignAddonToAllProductAsync(Guid addonId);
     }
 
     public class AddonService : IAddonService
@@ -44,11 +46,11 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<ResponseDto<AddonDto>> GetAddonsAsync(RequestFilterDto search)
         {
-            var categories = await _repository.GetAddonsAsync(search);
+            var addons = await _repository.GetAddonsAsync(search);
             return new ResponseDto<AddonDto>
             {
                 Count = await _repository.GetAddonsCountAsync(search),
-                Data = _mapper.Map<IEnumerable<AddonDto>>(categories)
+                Data = _mapper.Map<IEnumerable<AddonDto>>(addons)
             };
         }
 
@@ -77,6 +79,35 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+        }
+        
+        public async Task<ResponseDto<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter)
+        {
+            return new ResponseDto<RawProductByAddonId>
+            {
+               Data = await _repository.GetProductsByAddonIdAsync(addonId, filter),
+               Count = await _repository.GetProductsCountByAddonIdAsync(addonId, filter)
+            };
+        }
+
+        public Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
+        {
+            return _repository.RemoveAddonFromProductAsync(addonId, productId);
+        }
+
+        public Task AssignAddonToProductAsync(Guid addonId, Guid productId)
+        {
+            return _repository.AssignAddonToProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
+        }
+
+        public Task RemoveAddonFromAllProductAsync(Guid addonId)
+        {
+            return _repository.RemoveAddonFromAllProductAsync(addonId);
+        }
+
+        public Task AssignAddonToAllProductAsync(Guid addonId)
+        {
+            return _repository.AssignAddonToAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
         public async Task RemoveAsync(Guid id)

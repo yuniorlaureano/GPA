@@ -71,8 +71,47 @@ namespace GPA.Inventory.Api.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpGet("{addonId}/products")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Read)]
+        public async Task<IActionResult> Update([FromRoute] Guid addonId, [FromQuery] RequestFilterDto filter)
+        {
+            return Ok(await _addonService.GetProductsByAddonIdAsync(addonId, filter));
+        }
+
+        [HttpDelete("{addonId}/products/{productId}")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Delete)]
+        public async Task<IActionResult> RemoveAddonFromProductAsync(Guid addonId, Guid productId)
+        {
+            await _addonService.RemoveAddonFromProductAsync(addonId, productId);
+            return Ok();
+        }
+
+        [HttpPost("{addonId}/products/{productId}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Create)]
+        public async Task<IActionResult> AssignAddonToProductAsync(Guid addonId, Guid productId)
+        {
+            await _addonService.AssignAddonToProductAsync(addonId, productId);
+            return Ok();
+        }
+
+        [HttpDelete("{addonId}/products")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Delete)]
+        public async Task<IActionResult> RemoveAddonFromAllProductAsync(Guid addonId)
+        {
+            await _addonService.RemoveAddonFromAllProductAsync(addonId);
+            return Ok();
+        }
+
+        [HttpPost("{addonId}/products")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Create)]
+        public async Task<IActionResult> AssignAddonToAllProductAsync(Guid addonId)
+        {
+            await _addonService.AssignAddonToAllProductAsync(addonId);
+            return Ok();
+        }
+
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Addon}", permission: Permissions.Delete)]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _addonService.RemoveAsync(id);

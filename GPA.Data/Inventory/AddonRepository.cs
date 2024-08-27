@@ -20,6 +20,12 @@ namespace GPA.Data.Inventory
         Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByProductIdAsDictionary(List<Guid> productIds);
         Task DeleteAddonsByProductId(Guid productId);
         Task SoftDeleteAddonAsync(Guid id);
+        Task<int> GetProductsCountByAddonIdAsync(Guid addonId, RequestFilterDto filter);
+        Task<IEnumerable<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter);
+        Task RemoveAddonFromProductAsync(Guid addonId, Guid productId);
+        Task AssignAddonToProductAsync(Guid addonId, Guid productId, Guid createdBy);
+        Task RemoveAddonFromAllProductAsync(Guid addonId);
+        Task AssignAddonToAllProductAsync(Guid addonId, Guid createdBy);
     }
 
     public class AddonRepository : Repository<Addon>, IAddonRepository
@@ -39,7 +45,7 @@ namespace GPA.Data.Inventory
                             SELECT AddonId 
                             FROM [GPA].[Inventory].[ProductAddons]
                             WHERE ProductId = {0}
-                        ) AND Deleted = 0", productId)
+                        )", productId)
                  .ToListAsync();
         }
 
@@ -63,7 +69,6 @@ namespace GPA.Data.Inventory
                         FROM [GPA].[Inventory].[Addons] AD
 	                        JOIN [GPA].[Inventory].[ProductAddons] PAD ON PAD.AddonId = AD.Id
                             WHERE PAD.ProductId in ({string.Join(",", productIds.Select(id => $"'{id}'"))})
-                            AND AD.Deleted = 0
                     ").ToListAsync();
         }
 
@@ -109,7 +114,7 @@ namespace GPA.Data.Inventory
                 ,[Type]
                 ,[Value]
               FROM [GPA].[Inventory].[Addons]
-              WHERE Id = @Id AND Deleted = 0
+              WHERE Id = @Id
                     ";
 
             return await _context.Database
@@ -128,7 +133,7 @@ namespace GPA.Data.Inventory
                 ,[Type]
                 ,[Value]
               FROM [GPA].[Inventory].[Addons]
-                WHERE Deleted = 0
+                WHERE 1 = 1
                     {conceptFilter}
                     {isDiscountFilter}
                     {typeFilter}
@@ -152,7 +157,7 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Addons]
-                WHERE Deleted = 0
+                WHERE 1 = 1 
                     {conceptFilter}
                     {isDiscountFilter}
                     {typeFilter}
@@ -203,13 +208,173 @@ namespace GPA.Data.Inventory
         public async Task SoftDeleteAddonAsync(Guid id)
         {
             var query = @"
-              UPDATE [GPA].[Inventory].[Addons]
-              SET Deleted = 1
-              WHERE Id = @Id
+               DELETE FROM [GPA].[Inventory].[ProductAddons]
+               WHERE AddonId = @Id;
+
+               DELETE FROM [GPA].[Inventory].[Addons]
+               WHERE Id = @Id;
                     ";
 
             await _context.Database
                 .ExecuteSqlRawAsync(query, new SqlParameter("@Id", id));
+        }
+
+        public async Task<IEnumerable<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter)
+        {
+            var (productByAddonIdFilterDto, termFilter, selectedFilter) = SetProductByAddonFilterParametersIfNotEmpty(filter);
+
+            var query = $@"
+                SELECT 
+                     PRO.[Id]
+                    ,PRO.[Code]
+                    ,PRO.[Name]
+                    ,PRO.[Photo]
+                    ,PRO.[Price]
+                    ,PRO.[Description]
+	                ,CAST(IIF(PROADD.Id IS NULL, 0,1) AS BIT) AS IsSelected
+                FROM [GPA].[Inventory].[Products] PRO
+	                LEFT JOIN [GPA].[Inventory].[ProductAddons] PROADD ON 
+		                    PRO.Id = PROADD.ProductId 		                 
+		                AND PROADD.AddonId = @AddonId
+                WHERE 
+	                PRO.Deleted = 0 
+                    AND PRO.[Type] = 1
+	                {termFilter}
+	                {selectedFilter}
+                ORDER BY PRO.Id
+	                OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY  
+            ";
+
+            List<SqlParameter> parameters = new();
+            var (Page, PageSize, _) = PagingHelper.GetPagingParameter(filter);
+            AddProductByAddonFilterParameters(productByAddonIdFilterDto, termFilter, selectedFilter, parameters);
+
+            parameters.AddRange([Page, PageSize, new SqlParameter("@AddonId", addonId)]);
+            return await _context.Database.SqlQueryRaw<RawProductByAddonId>(query, parameters.ToArray()).ToListAsync();
+        }
+
+        public async Task<int> GetProductsCountByAddonIdAsync(Guid addonId, RequestFilterDto filter)
+        {
+            var (productByAddonIdFilterDto, termFilter, selectedFilter) = SetProductByAddonFilterParametersIfNotEmpty(filter);
+
+            var query = @$"
+                SELECT 
+                    COUNT(1) AS [Value]
+                FROM [GPA].[Inventory].[Products] PRO
+	                LEFT JOIN [GPA].[Inventory].[ProductAddons] PROADD ON 
+		                    PRO.Id = PROADD.ProductId 
+		                AND PROADD.AddonId = @AddonId
+                WHERE 
+	                PRO.Deleted = 0 
+		            AND PRO.[Type] = 1 
+	                {termFilter}
+	                {selectedFilter}
+            ";
+            List<SqlParameter> parameters = new() { new SqlParameter("@AddonId", addonId) };
+            AddProductByAddonFilterParameters(productByAddonIdFilterDto, termFilter, selectedFilter, parameters);
+            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
+        }
+
+        public async Task AssignAddonToProductAsync(Guid addonId, Guid productId, Guid createdBy)
+        {
+            var query = @$"
+                IF(NOT EXISTS(SELECT 1 FROM [GPA].[Inventory].[ProductAddons] WHERE ProductId = @ProductId AND AddonId = @AddonId ))
+                BEGIN
+	                INSERT INTO [GPA].[Inventory].[ProductAddons]([ProductId], [AddonId], [CreatedBy], [CreatedAt], Deleted)
+	                VALUES(@ProductId, @AddonId, @CreatedBy, GETUTCDATE(), 0);
+                END
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
+            {
+                new SqlParameter() { ParameterName = "@ProductId", Value = productId },
+                new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy }
+            });
+        }
+
+        public async Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
+        {
+            var query = @$"
+                DELETE FROM [GPA].[Inventory].[ProductAddons]
+                WHERE ProductId = @ProductId AND AddonId = @AddonId
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
+            {
+                new SqlParameter() { ParameterName = "@ProductId", Value = productId },
+                new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+            });
+        }
+
+        public async Task AssignAddonToAllProductAsync(Guid addonId, Guid createdBy)
+        {
+            var query = @$"
+                INSERT INTO [GPA].[Inventory].[ProductAddons](ProductId, AddonId, CreatedAt, CreatedBy, Deleted)
+                SELECT 
+                     PRO.[Id]
+                    ,@AddonId
+                    ,GETUTCDATE()
+                    ,@CreatedBy
+                    ,0
+                FROM [GPA].[Inventory].[Products] PRO
+                    LEFT JOIN [GPA].[Inventory].[ProductAddons] PROADD ON 
+                            PRO.Id = PROADD.ProductId 
+                        AND PRO.[Type] = 1 
+                        AND PROADD.AddonId = @AddonId	
+                WHERE 
+	                PROADD.Id IS NULL
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
+            {
+                new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy }
+            });
+        }
+
+        public async Task RemoveAddonFromAllProductAsync(Guid addonId)
+        {
+            var query = @$"
+                DELETE FROM [GPA].[Inventory].[ProductAddons]
+                WHERE AddonId = @AddonId
+            ";
+
+            await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
+            {
+                new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+            });
+        }
+
+
+        private (ProductByAddonIdFilterDto? productByAddonIdFilterDto, string termFilter, string selectedFilter) SetProductByAddonFilterParametersIfNotEmpty(RequestFilterDto filter)
+        {
+            var productByAddonIdFilterDto = new ProductByAddonIdFilterDto();
+            if (filter.Search is { Length: > 0 })
+            {
+                productByAddonIdFilterDto = JsonSerializer.Deserialize<ProductByAddonIdFilterDto>(SearchHelper.ConvertSearchToString(filter), new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+            }
+
+            var termFilter = productByAddonIdFilterDto?.Term is { Length: > 0 } ? "AND (PRO.[Code] LIKE CONCAT('%', @Term, '%') OR PRO.[Name] LIKE CONCAT('%', @Term, '%'))" : "";
+            var selectedFilter = productByAddonIdFilterDto?.Selected is not null && productByAddonIdFilterDto?.Selected  != -1 ? "AND (@IsSelected IS NULL OR CAST(IIF(PROADD.Id IS NULL, 0,1) AS BIT) = @IsSelected)" : "";
+
+            return (productByAddonIdFilterDto, termFilter, selectedFilter);
+        }
+
+        private void AddProductByAddonFilterParameters(ProductByAddonIdFilterDto? productByAddonIdFilterDto, string termFilter, string selectedFilter, List<SqlParameter> parameters)
+        {
+            if (termFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@Term", productByAddonIdFilterDto?.Term));
+            }
+
+            if (selectedFilter is { Length: > 0 })
+            {
+                parameters.Add(new SqlParameter("@IsSelected", productByAddonIdFilterDto?.Selected));
+            }
         }
     }
 }
