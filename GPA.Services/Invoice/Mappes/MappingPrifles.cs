@@ -54,6 +54,7 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
             CreateMap<ClientPaymentsDetailDto, ClientPaymentsDetailCreationDto>();
 
             CreateMap<GPA.Common.Entities.Invoice.Invoice, InvoiceWithReceivableAccountsDto>()
+                .ForMember(dest => dest.ClientId, src => src.MapFrom(x => x.Client.Id))
                 .ForMember(dest => dest.ClientName, src => src.MapFrom(x => x.Client.Name + " " + x.Client.LastName))
                 .ForMember(dest => dest.ClientIdentification, src => src.MapFrom(x => x.Client.Identification))
                 .ForMember(dest => dest.ClientEmail, src => src.MapFrom(x => x.Client.Email))

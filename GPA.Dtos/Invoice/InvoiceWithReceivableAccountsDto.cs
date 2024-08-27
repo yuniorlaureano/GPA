@@ -9,6 +9,7 @@
         public string InvoiceNote { get; set; }
         public byte PaymentStatus { get; set; }
         public decimal Payment { get; set; }
+        public Guid ClientId { get; set; }
         public string ClientName { get; set; }
         public string ClientIdentification { get; set; }
         public string ClientEmail { get; set; }

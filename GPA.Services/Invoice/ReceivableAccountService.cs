@@ -62,7 +62,7 @@ namespace GPA.Business.Services.Invoice
 
             var invoiceWithReceivableAccounts = _mapper.Map<InvoiceWithReceivableAccountsDto>(invoice);
 
-            if (invoice.ClientPaymentsDetails is { Count: > 0 })
+            if (invoice?.ClientPaymentsDetails is { Count: > 0 })
             {
                 invoiceWithReceivableAccounts.PendingPayment = _mapper.Map<ClientPaymentsDetailDto>(
                     invoice.ClientPaymentsDetails.FirstOrDefault(

@@ -43,7 +43,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
                 .With(x => x.Type, new Random().Next(1, 2))
-                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Without(x => x.Addons)
                 .Create();
@@ -70,7 +69,6 @@ namespace GPA.Tests.Inventory.Service
                     .With(x => x.CategoryId, productDependencies.CategoryId)
                     .With(x => x.ProductLocationId, productDependencies.LocationId)
                     .With(x => x.Type, new Random().Next(1, 2))
-                    .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                     .Without(x => x.Id)
                     .Without(x => x.Addons)
                     .Create();
@@ -96,7 +94,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
                 .With(x => x.Type, new Random().Next(1, 2))
-                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Without(x => x.Addons)
                 .Create();
@@ -118,7 +115,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
                 .With(x => x.Type, 2)
-                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Without(x => x.Addons)
                 .Without(x => x.Photo)
@@ -148,7 +144,6 @@ namespace GPA.Tests.Inventory.Service
                 .With(x => x.CategoryId, productDependencies.CategoryId)
                 .With(x => x.ProductLocationId, productDependencies.LocationId)
                 .With(x => x.Type, 2)
-                .With(x => x.ExpirationDate, new DetailedDate(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day))
                 .Without(x => x.Id)
                 .Without(x => x.Photo)
                 .Without(x => x.Addons)

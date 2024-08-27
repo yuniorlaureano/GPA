@@ -8,7 +8,6 @@
         public string? Photo { get; set; }
         public decimal Price { get; set; }
         public string Description { get; set; }
-        public DateTime? ExpirationDate { get; set; }
         public byte Type { get; set; }
 
         public Guid UnitId { get; set; }
