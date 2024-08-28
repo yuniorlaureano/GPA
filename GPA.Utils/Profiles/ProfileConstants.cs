@@ -226,7 +226,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.Invoicing,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel, Permissions.Return, Permissions.Upload, Permissions.Download
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Cancel, Permissions.Return, Permissions.Upload, Permissions.Download, Permissions.Print
                                 }
                             },
                             new Component
@@ -354,6 +354,7 @@ namespace GPA.Utils.Profiles
         public const string Send = "send";
         public const string Upload = "upload";
         public const string Download = "download";
+        public const string Print = "print";
     }
 
     public class Apps

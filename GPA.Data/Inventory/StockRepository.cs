@@ -94,13 +94,14 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Products] PRO
-                WHERE PRO.Deleted = 0 AND (
+                WHERE PRO.Deleted = 0 AND PRO.[Type] = @Type AND (
 	                @Search IS NULL
 	                OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
 	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
-            return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
+            var type = new SqlParameter("@Type", (byte)ProductType.FinishedProduct);
+            return await _context.Database.SqlQueryRaw<int>(query, [Search, type]).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Existence>> GetExistenceAsync(RequestFilterDto filter)

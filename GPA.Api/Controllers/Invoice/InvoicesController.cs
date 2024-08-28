@@ -19,16 +19,19 @@ namespace GPA.Invoice.Api.Controllers
         private readonly IMapper _mapper;
         private readonly IValidator<InvoiceUpdateDto> _updateValidator;
         private readonly IValidator<InvoiceDto> _createValidator;
+        private readonly IInvoicePrintService _invoicePrintService;
 
         public InvoicesController(
             IInvoiceService invoiceService,
             IValidator<InvoiceUpdateDto> updateValidator,
             IValidator<InvoiceDto> createValidator,
+            IInvoicePrintService invoicePrintService,
             IMapper mapper)
         {
             _invoiceService = invoiceService;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
+            _invoicePrintService = invoicePrintService;
             _mapper = mapper;
         }
 
@@ -153,5 +156,14 @@ namespace GPA.Invoice.Api.Controllers
             await _invoiceService.CancelAsync(id);
             return NoContent();
         }
+
+        [HttpGet("{invoiceId}/print")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Print)]
+        public async Task<IActionResult> PrintInvoice(Guid invoiceId)
+        {
+            var invoice = await _invoicePrintService.PrintInvoice(invoiceId);
+            return File(invoice, "application/pdf", "invoice.pdf");
+        }
+
     }
 }

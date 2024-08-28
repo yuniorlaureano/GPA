@@ -5,6 +5,7 @@ using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
 using GPA.Entities.Inventory;
+using GPA.Entities.Invoice;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -68,5 +69,6 @@ namespace GPA.Data
         public DbSet<Unit> Units { get; set; }
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
         public DbSet<BlobStorageConfiguration> BlobStorageConfigurations { get; set; }
+        public DbSet<InvoicePrintConfiguration> InvoicePrintConfigurations { get; set; }
     }
 }
