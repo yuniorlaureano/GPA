@@ -10,18 +10,18 @@ using System;
 
 namespace GPA.Business.Services.Invoice
 {
-    public interface IInvoicePrintService
+    public interface IProofOfPaymentPrintService
     {
         Task<Stream> PrintInvoice(Guid invoiceId);
     }
 
-    public class InvoicePrintService : IInvoicePrintService
+    public class ProofOfPaymentPrintService : IProofOfPaymentPrintService
     {
         private readonly IInvoicePrintRepository _invoicePrintRepository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IUserContextService _userContextService;
 
-        public InvoicePrintService(
+        public ProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IUserContextService userContextService

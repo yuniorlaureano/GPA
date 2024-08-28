@@ -4,7 +4,7 @@ namespace GPA.Entities.Unmapped
 {
     public class InvoicePrintDetails
     {
-        public RawInvoiceDetails RawInvoiceDetails { get; set; }
+        public PrintRawInvoiceDetails RawInvoiceDetails { get; set; }
         public List<RawInvoiceDetailsAddon> RawInvoiceDetailsAddon { get; set; }
     }
 }

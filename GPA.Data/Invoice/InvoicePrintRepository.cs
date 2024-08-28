@@ -8,7 +8,7 @@ namespace GPA.Data.Invoice
     public interface IInvoicePrintRepository
     {
         Task<RawInvoice?> GetInvoiceById(Guid invoiceId);
-        Task<List<RawInvoiceDetails>> GetInvoiceDetailByInvoiceId(Guid invoiceId);
+        Task<List<PrintRawInvoiceDetails>> GetInvoiceDetailByInvoiceId(Guid invoiceId);
         Task<Dictionary<Guid, List<RawInvoiceDetailsAddon>>> GetInvoiceDetailAddonByInvoiceId(Guid invoiceId);
         Task<InvoicePrintConfiguration?> GetPrintConfiguration();
     }
@@ -41,7 +41,7 @@ namespace GPA.Data.Invoice
             return await _context.Database.SqlQueryRaw<RawInvoice>(query, new SqlParameter("@Id", invoiceId)).FirstOrDefaultAsync();
         }
 
-        public async Task<List<RawInvoiceDetails>> GetInvoiceDetailByInvoiceId(Guid invoiceId)
+        public async Task<List<PrintRawInvoiceDetails>> GetInvoiceDetailByInvoiceId(Guid invoiceId)
         {
             var query = @$"
                 SELECT 
@@ -57,7 +57,7 @@ namespace GPA.Data.Invoice
               WHERE [InvoiceId] = @Id 
                     ";
 
-            return await _context.Database.SqlQueryRaw<RawInvoiceDetails>(query, new SqlParameter("@Id", invoiceId)).ToListAsync();
+            return await _context.Database.SqlQueryRaw<PrintRawInvoiceDetails>(query, new SqlParameter("@Id", invoiceId)).ToListAsync();
         }
 
         public async Task<Dictionary<Guid, List<RawInvoiceDetailsAddon>>> GetInvoiceDetailAddonByInvoiceId(Guid invoiceId)

@@ -11,6 +11,7 @@ namespace GPA.Business.Invoice.Extensions
             services.AddTransient<IInvoiceService, InvoiceService>();
             services.AddTransient<IReceivableAccountService, ReceivableAccountService>();
             services.AddTransient<IInvoicePrintService, InvoicePrintService>();
+            services.AddTransient<IProofOfPaymentPrintService, ProofOfPaymentPrintService>();
         }
     }
 }

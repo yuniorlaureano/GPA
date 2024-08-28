@@ -165,5 +165,13 @@ namespace GPA.Invoice.Api.Controllers
             return File(invoice, "application/pdf", "invoice.pdf");
         }
 
+        [HttpGet("{invoiceId}/proof-of-payment/print")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Print)]
+        public async Task<IActionResult> PrintProofOfPaymentInvoice(Guid invoiceId)
+        {
+            var invoice = await _invoicePrintService.PrintInvoice(invoiceId);
+            return File(invoice, "application/pdf", "invoice.pdf");
+        }
+
     }
 }
