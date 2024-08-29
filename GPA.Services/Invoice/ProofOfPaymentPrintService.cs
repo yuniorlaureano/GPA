@@ -127,10 +127,10 @@ namespace GPA.Business.Services.Invoice
             var totalAddon = 0.0M;
             foreach (var item in invoicePrintData.InvoicePrintDetails)
             {
-                totalPrice += item.RawInvoiceDetails.Price;
+                totalPrice += (item.RawInvoiceDetails.Price  * item.RawInvoiceDetails.Quantity);
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
                 {
-                    var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price), 2);
+                    var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity), 2);
                     addonComputedValue = detailsAddon.IsDiscount ? -addonComputedValue : addonComputedValue;
                     totalAddon += addonComputedValue;
                     AddAccumulatedAddon(accumulatedAddons, detailsAddon.Concept, addonComputedValue);
@@ -138,18 +138,18 @@ namespace GPA.Business.Services.Invoice
             }
 
             WriteFileLine(gfx, "Monto:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, totalPrice.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
             
             foreach (var item in accumulatedAddons)
             {
                 WriteFileLine(gfx, item.Key, fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.Value.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+                WriteFileLine(gfx, item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             }
 
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, "Total", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, (totalPrice + totalAddon).ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, (totalPrice + totalAddon).ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
 
             WriteFileLine(gfx, "Concepto:", fontBold, XBrushes.Black, new XRect(6, y + 50, widthWithMargin, 20), XStringFormats.TopLeft, ref y);

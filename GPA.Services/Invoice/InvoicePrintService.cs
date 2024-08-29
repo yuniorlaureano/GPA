@@ -99,8 +99,8 @@ namespace GPA.Business.Services.Invoice
 
 
             WriteFileLine(gfx, invoicePrintData.User, font, XBrushes.Black, new XRect(8, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, invoicePrintData.Hour, font, XBrushes.Black, new XRect(0, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
-            WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(0, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, invoicePrintData.Hour, font, XBrushes.Black, new XRect(-6, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(-6, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             WriteFileLine(gfx, "Hora.:", font, XBrushes.Black, new XRect(8, y - 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Fecha.:", font, XBrushes.Black, new XRect(8, y + 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
@@ -114,15 +114,15 @@ namespace GPA.Business.Services.Invoice
             var itemsCount = invoicePrintData.InvoicePrintDetails.Count;
             foreach (var item in invoicePrintData.InvoicePrintDetails)
             {
-                totalPrice += item.RawInvoiceDetails.Price;
+                totalPrice += (item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity);
 
                 WriteFileLine(gfx, ShortenName(item.RawInvoiceDetails.ProductName), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
                 WriteFileLine(gfx, "CANT: " + item.RawInvoiceDetails.Quantity.ToString(), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
                 {
-                    var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price), 2);
+                    var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity), 2);
                     addonComputedValue = detailsAddon.IsDiscount ? -addonComputedValue : addonComputedValue;
                     WriteFileLine(gfx, $"{detailsAddon.Concept}: {addonComputedValue}", font, XBrushes.Black, new XRect(15, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
                     AddAccumulatedAddon(accumulatedAddons, detailsAddon.Concept, addonComputedValue);
@@ -134,17 +134,17 @@ namespace GPA.Business.Services.Invoice
 
             WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, totalPrice.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             foreach (var item in accumulatedAddons)
             {
                 WriteFileLine(gfx, item.Key, font, XBrushes.Black, new XRect(15, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.Value.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                WriteFileLine(gfx, item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, total.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, total.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             /// Generate QR Code
             var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
