@@ -6,7 +6,6 @@ using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using QRCoder;
-using System;
 
 namespace GPA.Business.Services.Invoice
 {
@@ -75,7 +74,7 @@ namespace GPA.Business.Services.Invoice
             page.Width = XUnit.FromMillimeter(80);
             XGraphics gfx = XGraphics.FromPdfPage(page);
 
-            var widthWithMargin = XUnit.FromMillimeter(75);
+            var widthWithMargin = XUnit.FromMillimeter(80);
             //set logo
             var logo = await _blobStorageServiceFactory.DownloadFile(invoicePrintData.CompanyLogo);
             var distanceFormImageHeader = 0;
@@ -90,12 +89,12 @@ namespace GPA.Business.Services.Invoice
             //write title
             XFont fontBold = new("Verdana", 10, XFontStyleEx.Bold);
             XFont font = new("Verdana", 10, XFontStyleEx.Regular);
-            WriteFileLine(gfx, invoicePrintData.CompanyName, fontBold, XBrushes.Black, new XRect(0, y, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyDocument, font, XBrushes.Black, new XRect(0, y + 20, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 12, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyName, fontBold, XBrushes.Black, new XRect(0, y, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyDocument, font, XBrushes.Black, new XRect(0, y + 20, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 12, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
             WriteFileLine(gfx, invoicePrintData.User, font, XBrushes.Black, new XRect(8, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -103,7 +102,7 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(0, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             WriteFileLine(gfx, "Hora.:", font, XBrushes.Black, new XRect(8, y - 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Fecha.:", font, XBrushes.Black, new XRect(8, y + 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
             WriteFileLine(gfx, "PRODUCTOS", font, XBrushes.Black, new XRect(6, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -130,7 +129,7 @@ namespace GPA.Business.Services.Invoice
                 y += 10;
             }
 
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -143,7 +142,7 @@ namespace GPA.Business.Services.Invoice
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, total.ToString("C"), font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             /// Generate QR Code
