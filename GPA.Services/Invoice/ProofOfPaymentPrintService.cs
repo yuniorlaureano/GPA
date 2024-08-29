@@ -6,7 +6,6 @@ using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using QRCoder;
-using System;
 
 namespace GPA.Business.Services.Invoice
 {
@@ -67,6 +66,7 @@ namespace GPA.Business.Services.Invoice
         public async Task<Stream> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
             Dictionary<string, decimal> accumulatedAddons = new();
+            var separtor = "----------------------------------------------";
             PdfDocument document = new PdfDocument();
             document.Info.Title = invoicePrintData.CompanyDocument;
 
@@ -75,74 +75,75 @@ namespace GPA.Business.Services.Invoice
             XGraphics gfx = XGraphics.FromPdfPage(page);
 
             var widthWithMargin = XUnit.FromMillimeter(75);
-
             //set logo
             var logo = await _blobStorageServiceFactory.DownloadFile(invoicePrintData.CompanyLogo);
             var distanceFormImageHeader = 0;
             if (logo is not null)
             {
-                distanceFormImageHeader = 70;
+                distanceFormImageHeader = 50;
                 XImage logoXImage = XImage.FromStream(logo);
                 gfx.DrawImage(logoXImage, new XRect(60, 0, 100, 100));
             }
 
+            double y = 50 + distanceFormImageHeader;
             //write title
+            XFont fontBold = new("Verdana", 10, XFontStyleEx.Bold);
             XFont font = new("Verdana", 10, XFontStyleEx.Regular);
-            gfx.DrawString(invoicePrintData.CompanyName, font, XBrushes.Black, new XRect(0, 50 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopCenter);
-            gfx.DrawString(invoicePrintData.CompanyDocument, font, XBrushes.Black, new XRect(0, 60 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.Center);
-            gfx.DrawString(invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, 75 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.Center);
-            gfx.DrawString(invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, 90 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.Center);
-            gfx.DrawString("----------------------------------------------", font, XBrushes.Black, new XRect(6, 100 + distanceFormImageHeader, widthWithMargin, 50), XStringFormats.Center);
+            WriteFileLine(gfx, invoicePrintData.CompanyName, fontBold, XBrushes.Black, new XRect(0, y, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyDocument, font, XBrushes.Black, new XRect(0, y + 20, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
+            WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 12, widthWithMargin, 20), XStringFormats.TopCenter, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
-            gfx.DrawString(invoicePrintData.User, font, XBrushes.Black, new XRect(8, 130 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopLeft);
-            gfx.DrawString(invoicePrintData.Hour, font, XBrushes.Black, new XRect(0, 145 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopRight);
-            gfx.DrawString(invoicePrintData.Date, font, XBrushes.Black, new XRect(0, 160 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopRight);
-            gfx.DrawString("Hora.:", font, XBrushes.Black, new XRect(8, 145 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopLeft);
-            gfx.DrawString("Fecha.:", font, XBrushes.Black, new XRect(8, 160 + distanceFormImageHeader, widthWithMargin, 20), XStringFormats.TopLeft);
-            gfx.DrawString("----------------------------------------------", font, XBrushes.Black, new XRect(6, 170 + distanceFormImageHeader, widthWithMargin, 10), XStringFormats.Center);
+            WriteFileLine(gfx, invoicePrintData.User, font, XBrushes.Black, new XRect(8, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, invoicePrintData.Hour, font, XBrushes.Black, new XRect(0, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(0, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, "Hora.:", font, XBrushes.Black, new XRect(8, y - 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, "Fecha.:", font, XBrushes.Black, new XRect(8, y + 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
-            gfx.DrawString("PRODUCTOS", font, XBrushes.Black, new XRect(6, 180 + distanceFormImageHeader, widthWithMargin, 10), XStringFormats.TopLeft);
+
+            WriteFileLine(gfx, "PRODUCTOS", font, XBrushes.Black, new XRect(6, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+
+
             // Add items
-            var lastY = 180 + distanceFormImageHeader;
-            var itemY = 0;
             var totalPrice = 0.0M;
             var itemsCount = invoicePrintData.InvoicePrintDetails.Count;
             foreach (var item in invoicePrintData.InvoicePrintDetails)
             {
                 totalPrice += item.RawInvoiceDetails.Price;
-                gfx.DrawString(ShortenName(item.RawInvoiceDetails.ProductName), font, XBrushes.Black, new XRect(6, lastY + itemY + 13, widthWithMargin, 20), XStringFormats.TopLeft);
-                gfx.DrawString(item.RawInvoiceDetails.Price.ToString("C"), font, XBrushes.Black, new XRect(6, lastY + itemY + 13, widthWithMargin, 20), XStringFormats.TopRight);
-                gfx.DrawString("CANT: " + item.RawInvoiceDetails.Quantity.ToString(), font, XBrushes.Black, new XRect(15, lastY + itemY + 25, widthWithMargin, 20), XStringFormats.TopLeft);
+
+                WriteFileLine(gfx, ShortenName(item.RawInvoiceDetails.ProductName), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                WriteFileLine(gfx, "CANT: " + item.RawInvoiceDetails.Quantity.ToString(), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
                 {
                     var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price), 2);
                     addonComputedValue = detailsAddon.IsDiscount ? -addonComputedValue : addonComputedValue;
-                    gfx.DrawString($"{detailsAddon.Concept}: {addonComputedValue}", font, XBrushes.Black, new XRect(15, lastY + itemY + 37, widthWithMargin, 30), XStringFormats.TopLeft);
-                    itemY += 12;
+                    WriteFileLine(gfx, $"{detailsAddon.Concept}: {addonComputedValue}", font, XBrushes.Black, new XRect(15, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
                     AddAccumulatedAddon(accumulatedAddons, detailsAddon.Concept, addonComputedValue);
                 }
-                itemY += 33;
+                y += 10;
             }
 
-            gfx.DrawString("----------------------------------------------", font, XBrushes.Black, new XRect(6, lastY + itemY + 10, widthWithMargin, 10), XStringFormats.Center);
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
-            gfx.DrawString("TOTAL.:", font, XBrushes.Black, new XRect(6, lastY + itemY + 20, widthWithMargin, 10), XStringFormats.TopLeft);
-            gfx.DrawString("Precio.:", font, XBrushes.Black, new XRect(15, lastY + itemY + 30, widthWithMargin, 10), XStringFormats.TopLeft);
-            gfx.DrawString(totalPrice.ToString("C"), font, XBrushes.Black, new XRect(6, lastY + itemY + 30, widthWithMargin, 10), XStringFormats.TopRight);
+            WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, totalPrice.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             foreach (var item in accumulatedAddons)
             {
-                gfx.DrawString(item.Key, font, XBrushes.Black, new XRect(15, lastY + itemY + 40, widthWithMargin, 10), XStringFormats.TopLeft);
-                gfx.DrawString(item.Value.ToString("C"), font, XBrushes.Black, new XRect(6, lastY + itemY + 40, widthWithMargin, 10), XStringFormats.TopRight);
-                itemY += 12;
+                WriteFileLine(gfx, item.Key, font, XBrushes.Black, new XRect(15, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+                WriteFileLine(gfx, item.Value.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
-            gfx.DrawString("----------------------------------------------", font, XBrushes.Black, new XRect(6, lastY + itemY + 50, widthWithMargin, 10), XStringFormats.Center);
-            gfx.DrawString(total.ToString("C"), font, XBrushes.Black, new XRect(6, lastY + itemY + 60, widthWithMargin, 10), XStringFormats.TopRight);
-
-
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, total.ToString("C"), font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             /// Generate QR Code
             string qrCodeText = "https://example.com/invoice/12345";
@@ -153,12 +154,18 @@ namespace GPA.Business.Services.Invoice
 
             // Draw QR Code
             // Insert QR Code
-            gfx.DrawImage(qrCodeXImage, 60, lastY + itemY + 90, 100, 100);
+            gfx.DrawImage(qrCodeXImage, 60, y + 10, 100, 100);
 
             MemoryStream stream = new();
             document.Save(stream, false);
             stream.Position = 0;
             return stream;
+        }
+
+        private void WriteFileLine(XGraphics gfx, string data, XFont font, XSolidBrush brushes, XRect xRect, XStringFormat position, ref double y)
+        {
+            y = xRect.Y;
+            gfx.DrawString(data, font, brushes, xRect, position);
         }
 
         private string ShortenName(string name)
