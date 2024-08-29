@@ -90,7 +90,6 @@ namespace GPA.Utils
         public static decimal CalculateAmountOrPercentage(RawInvoiceDetailsAddon rawInvoiceDetailsAddon, decimal price)
         {
             return CalculateAmount(rawInvoiceDetailsAddon.Type, rawInvoiceDetailsAddon.Value) + CalculatePercentage(rawInvoiceDetailsAddon.Type, rawInvoiceDetailsAddon.Value, price);
-            
         }
 
         public static (decimal debit, decimal credit) CalculateAddon(decimal price, List<RawInvoiceDetailsAddon> addons)

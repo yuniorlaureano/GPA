@@ -1,4 +1,5 @@
 ﻿using GPA.Entities.Invoice;
+using GPA.Entities.Unmapped.Invoice;
 
 namespace GPA.Entities.Unmapped
 {
@@ -14,8 +15,10 @@ namespace GPA.Entities.Unmapped
         public string User { get; set; }
         public string Hour { get; set; }
         public string Date { get; set; }
-        public Guid InvoiceId { get; set; }
+        public string Signer { get; set; }
 
+        public RawClient Client { get; set; }
+        public RawInvoice Invoice { get; set; }
         public List<InvoicePrintDetails> InvoicePrintDetails { get; set; } = new();
 
         public void SetParams(InvoicePrintConfiguration invoicePrintConfiguration)
@@ -27,6 +30,7 @@ namespace GPA.Entities.Unmapped
             CompanyPhone = invoicePrintConfiguration.CompanyPhone;
             CompanyEmail = invoicePrintConfiguration.CompanyEmail;
             CompanyWebsite = invoicePrintConfiguration.CompanyWebsite;
+            Signer = invoicePrintConfiguration.Signer;
         }
     }
 }

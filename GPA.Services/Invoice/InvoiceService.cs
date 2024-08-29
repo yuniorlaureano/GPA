@@ -139,12 +139,14 @@ namespace GPA.Business.Services.Invoice
             var isCheckCredits = invoice.Status != InvoiceStatus.Draft;
             if (isCheckCredits)
             {
-                await CheckIfClientHasEnoughCredit(invoice.ClientId, invoice.Payment, invoice.InvoiceDetails, addons);
+                var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(invoice.ClientId);
+                var credits = await _clientRepository.GetCreditsByClientIdAsync(new List<Guid> { invoice.ClientId });
+                PaymentCalculator.CheckIfClientHasEnoughCredit(debits, credits, invoice.Payment, invoice.InvoiceDetails, addons);
             }
 
             InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
 
-            invoice.PaymentStatus = GetPaymentStatus(invoice);
+            invoice.PaymentStatus = PaymentCalculator.GetPaymentStatus(invoice, addons);
             invoice.CreatedBy = _userContextService.GetCurrentUserId();
             invoice.CreatedAt = DateTimeOffset.UtcNow;
             invoice.Date = DateTime.UtcNow;
@@ -172,13 +174,15 @@ namespace GPA.Business.Services.Invoice
                 var addons = await _addonRepository
                    .GetAddonsByProductIdAsDictionary(dto.InvoiceDetails.Select(x => x.ProductId).ToList());
 
-                var newInvoice = _mapper.Map<GPA.Common.Entities.Invoice.Invoice>(dto);
+                var newInvoice = _mapper.Map<Common.Entities.Invoice.Invoice>(dto);
                 var invoiceDetails = _mapper.Map<List<InvoiceDetails>>(dto.InvoiceDetails);
 
                 var isCheckCredits = newInvoice.Status != InvoiceStatus.Draft;
                 if (isCheckCredits)
                 {
-                    await CheckIfClientHasEnoughCredit(newInvoice.ClientId, newInvoice.Payment, invoiceDetails, addons);
+                    var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(newInvoice.ClientId);
+                    var credits = await _clientRepository.GetCreditsByClientIdAsync(new List<Guid> { newInvoice.ClientId });
+                    PaymentCalculator.CheckIfClientHasEnoughCredit(debits, credits, newInvoice.Payment, invoiceDetails, addons);
                 }
 
                 foreach (var detail in invoiceDetails)
@@ -188,7 +192,7 @@ namespace GPA.Business.Services.Invoice
                     detail.CreatedAt = DateTimeOffset.UtcNow;
                 }
 
-                newInvoice.PaymentStatus = GetPaymentStatus(newInvoice, invoiceDetails);
+                newInvoice.PaymentStatus = PaymentCalculator.GetPaymentStatus(newInvoice, invoiceDetails, addons);
 
                 InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
                 newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
@@ -279,28 +283,6 @@ namespace GPA.Business.Services.Invoice
             };
         }
 
-        private PaymentStatus GetPaymentStatus(GPA.Common.Entities.Invoice.Invoice invoice)
-        {
-            if (invoice.Payment < invoice.InvoiceDetails.Sum(x => x.Quantity * x.Price))
-            {
-                return PaymentStatus.Pending;
-            }
-
-            return PaymentStatus.Payed;
-        }
-
-        private PaymentStatus GetPaymentStatus(
-            GPA.Common.Entities.Invoice.Invoice invoice,
-            List<InvoiceDetails> invoiceDetails)
-        {
-            if (invoice.Payment < invoiceDetails.Sum(x => x.Quantity * x.Price))
-            {
-                return PaymentStatus.Pending;
-            }
-
-            return PaymentStatus.Payed;
-        }
-
         private async Task AddStock(GPA.Common.Entities.Invoice.Invoice invoice)
         {
             if (invoice.Status == InvoiceStatus.Saved)
@@ -316,11 +298,11 @@ namespace GPA.Business.Services.Invoice
             if (invoice.Status == InvoiceStatus.Saved &&
                 invoice.PaymentStatus == PaymentStatus.Pending)
             {
-                var payment = invoice.InvoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
+                var toPay = invoice.InvoiceDetails.Sum(x => x.Quantity * PaymentCalculator.GetNetPrice(x, addons));
                 var paymentDetail = new ClientPaymentsDetails
                 {
                     InvoiceId = invoice.Id,
-                    PendingPayment = payment - invoice.Payment,
+                    PendingPayment = toPay - invoice.Payment,
                     Date = DateTime.Now,
                 };
                 paymentDetail.CreatedBy = _userContextService.GetCurrentUserId();
@@ -353,15 +335,7 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        private decimal GetNetPrice(InvoiceDetails detail, Dictionary<Guid, List<RawAddons>> addons)
-        {
-            if (addons.ContainsKey(detail.ProductId))
-            {
-                var (debit, credit) = AddonCalculator.CalculateAddon(detail.Price, addons[detail.ProductId]);
-                return detail.Price - debit + credit;
-            }
-            return detail.Price;
-        }
+        
 
         private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products)
         {
@@ -380,22 +354,6 @@ namespace GPA.Business.Services.Invoice
                         product.StockProduct.Credit = credit;
                     }
                 }
-            }
-        }
-
-        private async Task CheckIfClientHasEnoughCredit(Guid clientId, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
-        {
-            var debits = await _receivableAccountRepository.GetPenddingPaymentByClientId(clientId);
-            var credits = await _clientRepository.GetCreditsByClientIdAsync(new List<Guid> { clientId });
-
-            var debit = debits.Sum(x => x.PendingPayment);
-            var credit = credits.Sum(x => x.Credit);
-            var toPay = invoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
-            var duePayment = toPay - payment;
-
-            if (duePayment > (credit - debit))
-            {
-                throw new InvalidOperationException("No se puede proceder con la venta, el cliente no tiene suficiente credito");
             }
         }
 

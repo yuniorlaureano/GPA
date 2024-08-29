@@ -1,7 +1,9 @@
 ﻿using GPA.Data.Invoice;
+using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
+using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using QRCoder;
@@ -19,29 +21,44 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoicePrintRepository _invoicePrintRepository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IUserContextService _userContextService;
+        private readonly IClientRepository _clientRepository;
 
         public ProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
+            IClientRepository clientRepository,
             IUserContextService userContextService
             )
         {
             _invoicePrintRepository = invoicePrintRepository;
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _userContextService = userContextService;
+            _clientRepository = clientRepository;
         }
 
         public async Task<Stream> PrintInvoice(Guid invoiceId)
         {
             var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);
+            var client = await _clientRepository.GetClientAsync(invoice.ClientId);
             var invoiceDetails = await _invoicePrintRepository.GetInvoiceDetailByInvoiceId(invoiceId);
             var invoiceDetailsAddon = await _invoicePrintRepository.GetInvoiceDetailAddonByInvoiceId(invoiceId);
 
+            if (invoice is null)
+            {
+                throw new InvalidOperationException("La factura no existe");
+            }
+
+            if (invoice.PaymentStatus == (byte)PaymentStatus.Pending)
+            {
+                throw new InvalidOperationException("La factura no se ha pagado, no puede imprimir el comprobante de pago");
+            }
+
             var invoicePrintData = new InvoicePrintData()
             {
-                Hour = DateTime.Now.ToString("hh:mm:ss tt"),
-                Date = DateTime.Now.ToString("MM/dd/yyyy"),
-                InvoiceId = invoiceId,
+                Hour = DateTime.Now.ToString("hh:mm:ss tt", new CultureInfo("es-ES")),
+                Date = DateTime.Now.ToString("MM/dd/yyyy", new CultureInfo("es-ES")),
+                Invoice = invoice,
+                Client = client,
                 User = _userContextService.GetCurrentUserName()
             };
 
@@ -102,17 +119,44 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "Recibí de:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, "Mildred", font, XBrushes.Black, new XRect(63, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, $"{invoicePrintData.Client.Name} {invoicePrintData.Client.LastName}", font, XBrushes.Black, new XRect(63, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
+
+            var totalPrice = 0.0M;
+            var totalAddon = 0.0M;
+            foreach (var item in invoicePrintData.InvoicePrintDetails)
+            {
+                totalPrice += item.RawInvoiceDetails.Price;
+                foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
+                {
+                    var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price), 2);
+                    addonComputedValue = detailsAddon.IsDiscount ? -addonComputedValue : addonComputedValue;
+                    totalAddon += addonComputedValue;
+                    AddAccumulatedAddon(accumulatedAddons, detailsAddon.Concept, addonComputedValue);
+                }
+            }
+
             WriteFileLine(gfx, "Monto:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, "122.00", font, XBrushes.Black, new XRect(60, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, totalPrice.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+
+            
+            foreach (var item in accumulatedAddons)
+            {
+                WriteFileLine(gfx, item.Key, fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+                WriteFileLine(gfx, item.Value.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            }
+
+            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, "Total", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            WriteFileLine(gfx, (totalPrice + totalAddon).ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+
 
             WriteFileLine(gfx, "Concepto:", fontBold, XBrushes.Black, new XRect(6, y + 50, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "CAD - PAGO RECARGO 2018-19", font, XBrushes.Black, new XRect(15, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
             WriteFileLine(gfx, "________________________________", font, XBrushes.Black, new XRect(1, y + 50, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, "Yunior Miguel Laurenao", font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, invoicePrintData.Signer, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             MemoryStream stream = new();
             document.Save(stream, false);

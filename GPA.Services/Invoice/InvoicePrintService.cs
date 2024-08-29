@@ -6,6 +6,7 @@ using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using QRCoder;
+using System.Globalization;
 
 namespace GPA.Business.Services.Invoice
 {
@@ -19,29 +20,29 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoicePrintRepository _invoicePrintRepository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IUserContextService _userContextService;
-
+        
         public InvoicePrintService(
             IInvoicePrintRepository invoicePrintRepository,
-            IBlobStorageServiceFactory blobStorageServiceFactory,
+            IBlobStorageServiceFactory blobStorageServiceFactory,            
             IUserContextService userContextService
             )
         {
             _invoicePrintRepository = invoicePrintRepository;
-            _blobStorageServiceFactory = blobStorageServiceFactory;
+            _blobStorageServiceFactory = blobStorageServiceFactory;            
             _userContextService = userContextService;
         }
 
         public async Task<Stream> PrintInvoice(Guid invoiceId)
         {
-            var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);
+            var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);            
             var invoiceDetails = await _invoicePrintRepository.GetInvoiceDetailByInvoiceId(invoiceId);
             var invoiceDetailsAddon = await _invoicePrintRepository.GetInvoiceDetailAddonByInvoiceId(invoiceId);
 
             var invoicePrintData = new InvoicePrintData()
             {
-                Hour = DateTime.Now.ToString("hh:mm:ss tt"),
-                Date = DateTime.Now.ToString("MM/dd/yyyy"),
-                InvoiceId = invoiceId,
+                Hour = DateTime.Now.ToString("hh:mm:ss tt", new CultureInfo("es-ES")),
+                Date = DateTime.Now.ToString("MM/dd/yyyy", new CultureInfo("es-ES")),
+                Invoice = invoice,
                 User = _userContextService.GetCurrentUserName()
             };
 
@@ -116,7 +117,7 @@ namespace GPA.Business.Services.Invoice
                 totalPrice += item.RawInvoiceDetails.Price;
 
                 WriteFileLine(gfx, ShortenName(item.RawInvoiceDetails.ProductName), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
                 WriteFileLine(gfx, "CANT: " + item.RawInvoiceDetails.Quantity.ToString(), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
@@ -133,21 +134,20 @@ namespace GPA.Business.Services.Invoice
 
             WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, totalPrice.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, totalPrice.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             foreach (var item in accumulatedAddons)
             {
                 WriteFileLine(gfx, item.Key, font, XBrushes.Black, new XRect(15, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.Value.ToString("C"), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                WriteFileLine(gfx, item.Value.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
             WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, total.ToString("C"), font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            WriteFileLine(gfx, total.ToString("C", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             /// Generate QR Code
-            string qrCodeText = "https://example.com/invoice/12345";
-            var qrCodeImage = GenerateQRCode(qrCodeText);
+            var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
 
             // Convert Bitmap to XImage
             XImage qrCodeXImage = LoadImage(qrCodeImage);

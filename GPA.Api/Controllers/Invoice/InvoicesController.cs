@@ -20,18 +20,21 @@ namespace GPA.Invoice.Api.Controllers
         private readonly IValidator<InvoiceUpdateDto> _updateValidator;
         private readonly IValidator<InvoiceDto> _createValidator;
         private readonly IInvoicePrintService _invoicePrintService;
+        private readonly IProofOfPaymentPrintService _proofOfPaymentPrintService;
 
         public InvoicesController(
             IInvoiceService invoiceService,
             IValidator<InvoiceUpdateDto> updateValidator,
             IValidator<InvoiceDto> createValidator,
             IInvoicePrintService invoicePrintService,
+            IProofOfPaymentPrintService proofOfPaymentPrintService,
             IMapper mapper)
         {
             _invoiceService = invoiceService;
             _createValidator = createValidator;
             _updateValidator = updateValidator;
             _invoicePrintService = invoicePrintService;
+            _proofOfPaymentPrintService = proofOfPaymentPrintService;
             _mapper = mapper;
         }
 
@@ -162,16 +165,15 @@ namespace GPA.Invoice.Api.Controllers
         public async Task<IActionResult> PrintInvoice(Guid invoiceId)
         {
             var invoice = await _invoicePrintService.PrintInvoice(invoiceId);
-            return File(invoice, "application/pdf", "invoice.pdf");
+            return File(invoice, "application/pdf", "factura.pdf");
         }
 
-        [HttpGet("{invoiceId}/proof-of-payment/print")]
+        [HttpGet("{invoiceId}/print/proof-of-payment")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Print)]
         public async Task<IActionResult> PrintProofOfPaymentInvoice(Guid invoiceId)
         {
-            var invoice = await _invoicePrintService.PrintInvoice(invoiceId);
-            return File(invoice, "application/pdf", "invoice.pdf");
+            var proofOfPayment = await _proofOfPaymentPrintService.PrintInvoice(invoiceId);
+            return File(proofOfPayment, "application/pdf", "comprobante de pago.pdf");
         }
-
     }
 }

@@ -10,6 +10,7 @@
         public string CompanyPhone { get; set; }
         public string CompanyEmail { get; set; }
         public string CompanyWebsite { get; set; }
+        public string Signer { get; set; }
         public bool Current { get; set; }
     }
 }
