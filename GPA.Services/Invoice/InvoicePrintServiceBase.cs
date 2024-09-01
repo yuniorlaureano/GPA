@@ -19,6 +19,11 @@ namespace GPA.Services.Invoice
 
         protected async Task<Stream?> GetLogo(string logo)
         {
+            if (logo is null)
+            {
+                return null;
+            }
+
             BlobStorageFileResult? fileResult = null;
 
             try

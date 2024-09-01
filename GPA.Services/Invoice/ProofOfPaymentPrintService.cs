@@ -95,7 +95,7 @@ namespace GPA.Business.Services.Invoice
 
             var widthWithMargin = XUnit.FromMillimeter(80);
             //set logo
-            var logo = await GetLogo(invoicePrintData.CompanyLogo);
+            using var logo = await GetLogo(invoicePrintData.CompanyLogo);
             var distanceFormImageHeader = 0;
             if (logo is not null)
             {
