@@ -1,9 +1,7 @@
-﻿namespace GPA.Entities.Invoice
+﻿namespace GPA.Dtos.General
 {
-    public class InvoicePrintConfiguration
+    public class UpdatePrintInformationDto
     {
-        public Guid Id { get; set; }
-        public string? CompanyLogo { get; set; }
         public string CompanyName { get; set; }
         public string CompanyDocument { get; set; }
         public string CompanyAddress { get; set; }
@@ -12,5 +10,7 @@
         public string CompanyWebsite { get; set; }
         public string Signer { get; set; }
         public bool Current { get; set; }
+
+        public Guid? StoreId { get; set; }
     }
 }

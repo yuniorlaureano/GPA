@@ -316,7 +316,15 @@ namespace GPA.Utils.Profiles
                         {
                             Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Upload, Permissions.Download
                         }
-                    }
+                    },
+                    new Component
+                    {
+                        Id = Components.PrintInformation,
+                        Permissions = new List<string>
+                        {
+                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Upload
+                        }
+                    },
                 }
             };
         }
@@ -389,5 +397,6 @@ namespace GPA.Utils.Profiles
         public const string Auth = "auth";
         public const string Email = "email";
         public const string Blob = "blob";
+        public const string PrintInformation = "printInformation";
     }
 }

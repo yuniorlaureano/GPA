@@ -1,11 +1,13 @@
-﻿using GPA.Data.Invoice;
+﻿using GPA.Data.General;
+using GPA.Data.Invoice;
+using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
+using GPA.Services.Invoice;
 using GPA.Services.Security;
 using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
-using QRCoder;
 using System.Globalization;
 
 namespace GPA.Business.Services.Invoice
@@ -15,28 +17,39 @@ namespace GPA.Business.Services.Invoice
         Task<Stream> PrintInvoice(Guid invoiceId);
     }
 
-    public class InvoicePrintService : IInvoicePrintService
+    public class InvoicePrintService : InvoicePrintServiceBase, IInvoicePrintService
     {
         private readonly IInvoicePrintRepository _invoicePrintRepository;
-        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IUserContextService _userContextService;
-        
+        private readonly IPrintRepository _printRepository;
+
         public InvoicePrintService(
             IInvoicePrintRepository invoicePrintRepository,
-            IBlobStorageServiceFactory blobStorageServiceFactory,            
-            IUserContextService userContextService
-            )
+            IBlobStorageServiceFactory blobStorageServiceFactory,
+            IUserContextService userContextService,
+            IPrintRepository printRepository
+            ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
-            _blobStorageServiceFactory = blobStorageServiceFactory;            
             _userContextService = userContextService;
+            _printRepository = printRepository;
         }
 
         public async Task<Stream> PrintInvoice(Guid invoiceId)
         {
-            var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);            
+            var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);
             var invoiceDetails = await _invoicePrintRepository.GetInvoiceDetailByInvoiceId(invoiceId);
             var invoiceDetailsAddon = await _invoicePrintRepository.GetInvoiceDetailAddonByInvoiceId(invoiceId);
+
+            if (invoice is null)
+            {
+                throw new InvalidOperationException("La factura no existe");
+            }
+
+            if (invoice.PaymentStatus == (byte)PaymentStatus.Pending)
+            {
+                throw new InvalidOperationException("La factura no se ha pagado, no puede imprimir el comprobante de pago");
+            }
 
             var invoicePrintData = new InvoicePrintData()
             {
@@ -52,11 +65,11 @@ namespace GPA.Business.Services.Invoice
                 RawInvoiceDetailsAddon = invoiceDetailsAddon[detail.Id]
             }));
 
-            var printConfiguration = await _invoicePrintRepository.GetPrintConfiguration();
+            var printConfiguration = await _printRepository.GetCurrentPrintInformationAsync();
 
             if (printConfiguration is null)
             {
-                throw new InvalidOperationException("The configuration for printing is not present in db");
+                throw new InvalidOperationException("La configuración de impresión no existe");
             }
 
             invoicePrintData.SetParams(printConfiguration);
@@ -67,7 +80,7 @@ namespace GPA.Business.Services.Invoice
         public async Task<Stream> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
             Dictionary<string, decimal> accumulatedAddons = new();
-            var separtor = "----------------------------------------------";
+            var separator = "----------------------------------------------";
             PdfDocument document = new PdfDocument();
             document.Info.Title = invoicePrintData.CompanyDocument;
 
@@ -77,7 +90,7 @@ namespace GPA.Business.Services.Invoice
 
             var widthWithMargin = XUnit.FromMillimeter(80);
             //set logo
-            var logo = await _blobStorageServiceFactory.DownloadFile(invoicePrintData.CompanyLogo);
+            var logo = await GetLogo(invoicePrintData.CompanyLogo);
             var distanceFormImageHeader = 0;
             if (logo is not null)
             {
@@ -95,7 +108,7 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 12, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
             WriteFileLine(gfx, invoicePrintData.User, font, XBrushes.Black, new XRect(8, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -103,7 +116,7 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(-6, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
             WriteFileLine(gfx, "Hora.:", font, XBrushes.Black, new XRect(8, y - 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Fecha.:", font, XBrushes.Black, new XRect(8, y + 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
             WriteFileLine(gfx, "PRODUCTOS", font, XBrushes.Black, new XRect(6, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -130,7 +143,7 @@ namespace GPA.Business.Services.Invoice
                 y += 10;
             }
 
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
@@ -143,7 +156,7 @@ namespace GPA.Business.Services.Invoice
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, total.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
             /// Generate QR Code
@@ -160,57 +173,6 @@ namespace GPA.Business.Services.Invoice
             document.Save(stream, false);
             stream.Position = 0;
             return stream;
-        }
-
-        private void WriteFileLine(XGraphics gfx, string data, XFont font, XSolidBrush brushes, XRect xRect, XStringFormat position, ref double y)
-        {
-            y = xRect.Y;
-            gfx.DrawString(data, font, brushes, xRect, position);
-        }
-
-        private string ShortenName(string name)
-        {
-            if (name.Length > 15)
-            {
-                return name.Substring(0, 15);
-            }
-            return name;
-        }
-
-        private XImage LoadImage(byte[] bitmapImage)
-        {
-            XImage qrCodeXImage;
-            using (MemoryStream ms = new MemoryStream(bitmapImage, 0, bitmapImage.Length, writable: false, publiclyVisible: true))
-            {
-                ms.Position = 0;
-                qrCodeXImage = XImage.FromStream(ms);
-            }
-
-            return qrCodeXImage;
-        }
-
-        private void AddAccumulatedAddon(Dictionary<string, decimal> accumulatedAddons, string concept, decimal value)
-        {
-            if (accumulatedAddons.ContainsKey(concept))
-            {
-                accumulatedAddons[concept] += value;
-            }
-            else
-            {
-                accumulatedAddons.Add(concept, value);
-            }
-        }
-
-        private byte[] GenerateQRCode(string text)
-        {
-            using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
-            {
-                using QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
-                using (var qrCode = new BitmapByteQRCode(qrCodeData))
-                {
-                    return qrCode.GetGraphic(20);
-                }
-            }
         }
     }
 }

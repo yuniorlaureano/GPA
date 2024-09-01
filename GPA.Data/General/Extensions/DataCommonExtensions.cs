@@ -9,6 +9,7 @@ namespace GPA.Data.General.Extensions
             services.AddTransient<IUnitRepository, UnitRepository>();
             services.AddTransient<IEmailConfigurationRepository, EmailConfigurationRepository>();
             services.AddTransient<IBlobStorageConfigurationRepository, BlobStorageConfigurationRepository>();
+            services.AddTransient<IPrintRepository, PrintRepository>();
         }
     }
 }

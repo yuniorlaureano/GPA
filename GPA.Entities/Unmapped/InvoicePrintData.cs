@@ -1,4 +1,4 @@
-﻿using GPA.Entities.Invoice;
+﻿using GPA.Entities.Unmapped.General;
 using GPA.Entities.Unmapped.Invoice;
 
 namespace GPA.Entities.Unmapped
@@ -21,7 +21,7 @@ namespace GPA.Entities.Unmapped
         public RawInvoice Invoice { get; set; }
         public List<InvoicePrintDetails> InvoicePrintDetails { get; set; } = new();
 
-        public void SetParams(InvoicePrintConfiguration invoicePrintConfiguration)
+        public void SetParams(RawPrintInformation invoicePrintConfiguration)
         {
             CompanyLogo = invoicePrintConfiguration.CompanyLogo;
             CompanyName = invoicePrintConfiguration.CompanyName;

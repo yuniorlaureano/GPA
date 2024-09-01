@@ -1,12 +1,13 @@
-﻿using GPA.Data.Invoice;
+﻿using GPA.Data.General;
+using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
+using GPA.Services.Invoice;
 using GPA.Services.Security;
 using GPA.Utils;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
-using QRCoder;
 using System.Globalization;
 
 namespace GPA.Business.Services.Invoice
@@ -16,24 +17,25 @@ namespace GPA.Business.Services.Invoice
         Task<Stream> PrintInvoice(Guid invoiceId);
     }
 
-    public class ProofOfPaymentPrintService : IProofOfPaymentPrintService
+    public class ProofOfPaymentPrintService : InvoicePrintServiceBase, IProofOfPaymentPrintService
     {
         private readonly IInvoicePrintRepository _invoicePrintRepository;
-        private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IUserContextService _userContextService;
         private readonly IClientRepository _clientRepository;
+        private readonly IPrintRepository _printRepository;
 
         public ProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IClientRepository clientRepository,
-            IUserContextService userContextService
-            )
+            IUserContextService userContextService,
+            IPrintRepository printRepository
+            ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
-            _blobStorageServiceFactory = blobStorageServiceFactory;
             _userContextService = userContextService;
             _clientRepository = clientRepository;
+            _printRepository = printRepository;
         }
 
         public async Task<Stream> PrintInvoice(Guid invoiceId)
@@ -68,11 +70,11 @@ namespace GPA.Business.Services.Invoice
                 RawInvoiceDetailsAddon = invoiceDetailsAddon[detail.Id]
             }));
 
-            var printConfiguration = await _invoicePrintRepository.GetPrintConfiguration();
+            var printConfiguration = await _printRepository.GetCurrentPrintInformationAsync();
 
             if (printConfiguration is null)
             {
-                throw new InvalidOperationException("The configuration for printing is not present in db");
+                throw new InvalidOperationException("La configuración de impresión no existe");
             }
 
             invoicePrintData.SetParams(printConfiguration);
@@ -83,7 +85,7 @@ namespace GPA.Business.Services.Invoice
         public async Task<Stream> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
             Dictionary<string, decimal> accumulatedAddons = new();
-            var separtor = "------------------------------------------------";
+            var separator = "------------------------------------------------";
             PdfDocument document = new PdfDocument();
             document.Info.Title = invoicePrintData.CompanyDocument;
 
@@ -93,7 +95,7 @@ namespace GPA.Business.Services.Invoice
 
             var widthWithMargin = XUnit.FromMillimeter(80);
             //set logo
-            var logo = await _blobStorageServiceFactory.DownloadFile(invoicePrintData.CompanyLogo);
+            var logo = await GetLogo(invoicePrintData.CompanyLogo);
             var distanceFormImageHeader = 0;
             if (logo is not null)
             {
@@ -111,23 +113,23 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, invoicePrintData.CompanyPhone, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "RECIBO DE PAGO", fontBold, XBrushes.Black, new XRect(0, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, FormatDate(DateTime.Now), font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, "No: 899", font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "Recibí de:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, $"{invoicePrintData.Client.Name} {invoicePrintData.Client.LastName}", font, XBrushes.Black, new XRect(63, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
 
 
             var totalPrice = 0.0M;
             var totalAddon = 0.0M;
             foreach (var item in invoicePrintData.InvoicePrintDetails)
             {
-                totalPrice += (item.RawInvoiceDetails.Price  * item.RawInvoiceDetails.Quantity);
+                totalPrice += (item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity);
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
                 {
                     var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity), 2);
@@ -140,14 +142,14 @@ namespace GPA.Business.Services.Invoice
             WriteFileLine(gfx, "Monto:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
-            
+
             foreach (var item in accumulatedAddons)
             {
                 WriteFileLine(gfx, item.Key, fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
                 WriteFileLine(gfx, item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             }
 
-            WriteFileLine(gfx, separtor, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, "Total", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
             WriteFileLine(gfx, (totalPrice + totalAddon).ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
 
@@ -162,69 +164,6 @@ namespace GPA.Business.Services.Invoice
             document.Save(stream, false);
             stream.Position = 0;
             return stream;
-        }
-
-        public string FormatDate(DateTime date)
-        {
-            // Define the custom format string
-            string format = "d 'de' MMMM 'de' yyyy";
-
-            // Set the culture to Spanish (Spain)
-            CultureInfo culture = new CultureInfo("es-ES");
-
-            // Format the date
-            return date.ToString(format, culture);
-        }
-
-        private void WriteFileLine(XGraphics gfx, string data, XFont font, XSolidBrush brushes, XRect xRect, XStringFormat position, ref double y)
-        {
-            y = xRect.Y;
-            gfx.DrawString(data, font, brushes, xRect, position);
-        }
-
-        private string ShortenName(string name)
-        {
-            if (name.Length > 15)
-            {
-                return name.Substring(0, 15);
-            }
-            return name;
-        }
-
-        private XImage LoadImage(byte[] bitmapImage)
-        {
-            XImage qrCodeXImage;
-            using (MemoryStream ms = new MemoryStream(bitmapImage, 0, bitmapImage.Length, writable: false, publiclyVisible: true))
-            {
-                ms.Position = 0;
-                qrCodeXImage = XImage.FromStream(ms);
-            }
-
-            return qrCodeXImage;
-        }
-
-        private void AddAccumulatedAddon(Dictionary<string, decimal> accumulatedAddons, string concept, decimal value)
-        {
-            if (accumulatedAddons.ContainsKey(concept))
-            {
-                accumulatedAddons[concept] += value;
-            }
-            else
-            {
-                accumulatedAddons.Add(concept, value);
-            }
-        }
-
-        private byte[] GenerateQRCode(string text)
-        {
-            using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
-            {
-                using QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
-                using (var qrCode = new BitmapByteQRCode(qrCodeData))
-                {
-                    return qrCode.GetGraphic(20);
-                }
-            }
         }
     }
 }

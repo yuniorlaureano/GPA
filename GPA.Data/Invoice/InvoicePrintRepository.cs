@@ -1,5 +1,4 @@
-﻿using GPA.Entities.Invoice;
-using GPA.Entities.Unmapped.Invoice;
+﻿using GPA.Entities.Unmapped.Invoice;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +9,6 @@ namespace GPA.Data.Invoice
         Task<RawInvoice?> GetInvoiceById(Guid invoiceId);
         Task<List<PrintRawInvoiceDetails>> GetInvoiceDetailByInvoiceId(Guid invoiceId);
         Task<Dictionary<Guid, List<RawInvoiceDetailsAddon>>> GetInvoiceDetailAddonByInvoiceId(Guid invoiceId);
-        Task<InvoicePrintConfiguration?> GetPrintConfiguration();
     }
 
     public class InvoicePrintRepository : IInvoicePrintRepository
@@ -89,11 +87,6 @@ namespace GPA.Data.Invoice
             }
 
             return invoiceDetailsAddonAsDictionary;
-        }
-
-        public async Task<InvoicePrintConfiguration?> GetPrintConfiguration()
-        {
-            return await _context.InvoicePrintConfigurations.FirstOrDefaultAsync(x => x.Current);
         }
     }
 }

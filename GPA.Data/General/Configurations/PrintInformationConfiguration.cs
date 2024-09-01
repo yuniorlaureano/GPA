@@ -1,20 +1,20 @@
 ﻿using GPA.Data.Schemas;
-using GPA.Entities.Invoice;
+using GPA.Entities.General;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GPA.Data.Invoice.Configurations
+namespace GPA.Data.General.Configurations
 {
-    public class InvoicePrintConfigurationConfiguration : IEntityTypeConfiguration<InvoicePrintConfiguration>
+    public class PrintInformationConfiguration : IEntityTypeConfiguration<PrintInformation>
     {
-        public void Configure(EntityTypeBuilder<InvoicePrintConfiguration> builder)
+        public void Configure(EntityTypeBuilder<PrintInformation> builder)
         {
-            builder.ToTable("InvoicePrintConfigurations", GPASchema.GENERAL);
+            builder.ToTable("PrintInformation", GPASchema.GENERAL);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
-            builder.Property(x => x.CompanyLogo).HasMaxLength(254).IsRequired(false);
+            builder.Property(x => x.CompanyLogo).IsRequired(false);
             builder.Property(x => x.CompanyName).HasMaxLength(254).IsRequired();
             builder.Property(x => x.CompanyDocument).HasMaxLength(30).IsRequired();
             builder.Property(x => x.CompanyAddress).HasMaxLength(254).IsRequired();

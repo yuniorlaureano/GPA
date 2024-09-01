@@ -21,6 +21,7 @@ namespace GPA.Business.General.Extensions
             services.AddTransient<IBlobStorageService, GCPBucketService>();
             services.AddTransient<IBlobStorageService, AzureBlobService>();
             services.AddTransient<IBlobStorageServiceFactory, BlobStorageServiceFactory>();
+            services.AddTransient<IPrintService, PrintService>();
         }
     }
 }
