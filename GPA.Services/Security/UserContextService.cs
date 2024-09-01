@@ -61,7 +61,7 @@ namespace GPA.Services.Security
             {
                 throw new InvalidOperationException("No está autenticado en el sistema");
             }
-            return Guid.Parse(currentUserName!);
+            return currentUserName!;
 #endif
         }
     }
