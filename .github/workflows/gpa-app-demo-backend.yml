@@ -44,5 +44,5 @@ jobs:
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        publish-profile: ${{ secrets.gpa_app_demo_backend_B39F }}
+        publish-profile: ${{ secrets.GPA_APP_DEMO_BACKEND_B39F }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
