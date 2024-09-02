@@ -329,7 +329,7 @@ namespace GPA.Api.Controllers.Security
 
         [HttpPost("{userId}/photo/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Auth}", permission: Permissions.Upload)]
-        public async Task<IActionResult> UploadPhoto([FromRoute] Guid userId, [FromForm] IFormFile photo)
+        public async Task<IActionResult> UploadPhoto([FromRoute] Guid userId, IFormFile photo)
         {
             if (photo is null)
             {

@@ -104,7 +104,7 @@ namespace GPA.Invoice.Api.Controllers
 
         [HttpPost("{invoiceId}/attachment/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Upload)]
-        public async Task<IActionResult> UploadAttachment(Guid invoiceId, [FromForm] IFormCollection files)
+        public async Task<IActionResult> UploadAttachment(Guid invoiceId, IFormCollection files)
         {
             if (files?.Files is { Count: 0 })
             {

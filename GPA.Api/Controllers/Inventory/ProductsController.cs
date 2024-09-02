@@ -74,7 +74,7 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpPost("photo/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Product}", permission: Permissions.Create)]
-        public async Task<IActionResult> UploadPhoto([FromForm] ProductUploadPhotoDto product)
+        public async Task<IActionResult> UploadPhoto(ProductUploadPhotoDto product)
         {
             if (!ModelState.IsValid)
             {

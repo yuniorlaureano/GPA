@@ -118,7 +118,7 @@ namespace GPA.Inventory.Api.Controllers
 
         [HttpPost("{stockId}/attachment/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Stock}", permission: Permissions.Upload)]
-        public async Task<IActionResult> UploadAttachment(Guid stockId, [FromForm] IFormCollection files)
+        public async Task<IActionResult> UploadAttachment(Guid stockId, IFormCollection files)
         {
             if (files?.Files is { Count: 0 })
             {

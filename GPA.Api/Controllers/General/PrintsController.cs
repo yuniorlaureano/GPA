@@ -74,7 +74,7 @@ namespace GPA.Api.Controllers.General
 
         [HttpPost("photo/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Upload)]
-        public async Task<IActionResult> UploadPhoto([FromForm] PrintInformationUploadPhotoDto printInformationUploadPhotoDto)
+        public async Task<IActionResult> UploadPhoto(PrintInformationUploadPhotoDto printInformationUploadPhotoDto)
         {
             if (!ModelState.IsValid)
             {
