@@ -36,15 +36,17 @@ namespace GPA.Data.Inventory
         {
             var sqlQuery = @"SELECT 
 	                            SUM(CASE
-			                            WHEN [t].[Id] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE [t].[Quantity]
 	                            END) AS [Stock],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
 			                            ELSE 0
 	                            END) AS [Input],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE 0
 	                            END) AS [Output],
@@ -110,15 +112,17 @@ namespace GPA.Data.Inventory
 
             var sqlQuery = @$"SELECT 
 	                            SUM(CASE
-			                            WHEN [t].[Id] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE [t].[Quantity]
 	                            END) AS [Stock],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
 			                            ELSE 0
 	                            END) AS [Input],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE 0
 	                            END) AS [Output],
@@ -180,15 +184,17 @@ namespace GPA.Data.Inventory
         {
             var sqlQuery = @$"SELECT 
 	                            SUM(CASE
-			                            WHEN [t].[Id] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE [t].[Quantity]
 	                            END) AS [Stock],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
 			                            WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
 			                            ELSE 0
 	                            END) AS [Input],
 	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0  
 			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                            ELSE 0
 	                            END) AS [Output],
