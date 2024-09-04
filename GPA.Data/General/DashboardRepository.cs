@@ -2,6 +2,7 @@
 using GPA.Entities.Unmapped.General;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace GPA.Data.General
 {
@@ -9,9 +10,9 @@ namespace GPA.Data.General
     public interface IDashboardRepository
     {
         Task<int> GetClientsCount();
-        Task<int> GetSelesRevenue();
+        Task<decimal> GetSelesRevenue(int month = 0);
         Task<IEnumerable<RawInputVsOutputVsExistence>> GetInputVsOutputVsExistence();
-        Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason, TransactionType transactionType);
+        Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason);
 
     }
 
@@ -26,18 +27,31 @@ namespace GPA.Data.General
         public async Task<int> GetClientsCount()
         {
             var query = @$"
-                SELECT COUNT(1)
+                SELECT COUNT(1) AS [Value]
                 FROM [GPA].[Invoice].[Clients]
                 WHERE Deleted = 0 
             ";
 
-            var parameters = new List<SqlParameter>();
-            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
+            return await _context.Database.SqlQueryRaw<int>(query).FirstOrDefaultAsync();
         }
 
-        public Task<int> GetSelesRevenue()
+        public async Task<decimal> GetSelesRevenue(int month = 0)
         {
-            throw new NotImplementedException();
+            var currentMonth = month <= 0 ? DateTime.Now.Month: month;
+            var query = @"
+                SELECT ISNULL(SUM(X.Revenue),0) AS [Value] FROM (
+	                SELECT 
+		                INV.Id,
+		                INV.Payment + SUM(isnull(CPD.Payment,0)) AS Revenue
+	                FROM [GPA].[Invoice].[Invoices] INV
+		                LEFT JOIN [GPA].[Invoice].[ClientPaymentsDetails] CPD ON INV.Id = CPD.InvoiceId
+	                WHERE 
+		                 INV.[Status] = 1 
+		                 AND MONTH(INV.CreatedAt) = @Month
+	                GROUP BY INV.Id,INV.Payment
+                ) X
+            ";
+            return await _context.Database.SqlQueryRaw<decimal>(query, new SqlParameter("@Month", currentMonth)).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<RawInputVsOutputVsExistence>> GetInputVsOutputVsExistence()
@@ -48,7 +62,7 @@ namespace GPA.Data.General
 			                WHEN [t0].[TransactionType] IS NULL THEN 0
 			                WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
 			                ELSE [t].[Quantity]
-	                END) AS [Stock],
+	                END) AS [Existence],
 	                SUM(CASE
 			                WHEN [t0].[TransactionType] IS NULL THEN 0
 			                WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
@@ -78,13 +92,13 @@ namespace GPA.Data.General
             return await _context.Database.SqlQueryRaw<RawInputVsOutputVsExistence>(query).ToListAsync();
         }
 
-        public async Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason, TransactionType transactionType)
+        public async Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason)
         {
             var query = @"
             DECLARE 
-	            @Months AS TABLE(Mth SMALLINT);
+	            @Months AS TABLE(Mth INT);
             DECLARE
-	            @Year SMALLINT = YEAR(GETUTCDATE());
+	            @Year INT = YEAR(GETUTCDATE());
 
             INSERT INTO @Months(Mth) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12);
 
@@ -97,16 +111,18 @@ namespace GPA.Data.General
 		               AND MT.Mth = MONTH(ST.CreatedAt)
 	            LEFT JOIN [Inventory].[StockDetails] STD
 		            ON ST.Id = STD.StockId
-            WHERE ST.TransactionType = @TransactionType 
-	              AND ST.ReasonId =	   @ReasonId 
+            WHERE     (ST.ReasonId =	   @ReasonId OR ST.Id IS NULL)
+                    AND (ST.[Status] =	   1 OR ST.Id IS NULL)
             GROUP BY 
 	            MT.Mth
             ";
 
+            var reasonParam = new SqlParameter("@ReasonId", SqlDbType.SmallInt);
+            reasonParam.Value = (byte)reason;
+
             return await _context.Database.SqlQueryRaw<RawTransactionsPerMonthByReason>(
                     query,
-                    new SqlParameter("@TransactionType", transactionType),
-                    new SqlParameter("@ReasonId", reason)
+                    reasonParam
                 ).ToListAsync();
         }
     }

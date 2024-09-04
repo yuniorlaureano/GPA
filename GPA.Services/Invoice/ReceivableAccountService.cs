@@ -161,7 +161,7 @@ namespace GPA.Business.Services.Invoice
 
         private async Task MarkInvoiceAsPayed(GPA.Common.Entities.Invoice.Invoice invoice)
         {
-            invoice.PaymentStatus = PaymentStatus.Payed;
+            invoice.PaymentStatus = PaymentStatus.Paid;
             invoice.UpdatedBy = _userContextService.GetCurrentUserId();
             invoice.UpdatedAt = DateTimeOffset.UtcNow;
             await _invoiceRepository.UpdateAsync(invoice, invoice, (entityState, _) =>

@@ -37,7 +37,7 @@ namespace GPA.Utils
                 return PaymentStatus.Pending;
             }
 
-            return PaymentStatus.Payed;
+            return PaymentStatus.Paid;
         }
 
         public static PaymentStatus GetPaymentStatus(Invoice invoice, List<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
@@ -47,7 +47,7 @@ namespace GPA.Utils
                 return PaymentStatus.Pending;
             }
 
-            return PaymentStatus.Payed;
+            return PaymentStatus.Paid;
         }
     }
 }

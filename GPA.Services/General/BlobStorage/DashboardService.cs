@@ -7,9 +7,9 @@ namespace GPA.Services.General.BlobStorage
     public interface IDashboardService
     {
         Task<int> GetClientsCount();
-        Task<int> GetSelesRevenue();
+        Task<decimal> GetSelesRevenue(int month = 0);
         Task<IEnumerable<RawInputVsOutputVsExistence>> GetInputVsOutputVsExistence();
-        Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason, TransactionType transactionType);
+        Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason);
     }
 
     public class DashboardService : IDashboardService
@@ -25,9 +25,9 @@ namespace GPA.Services.General.BlobStorage
             return await _dashboardRepository.GetClientsCount();
         }
 
-        public async Task<int> GetSelesRevenue()
+        public async Task<decimal> GetSelesRevenue(int month = 0)
         {
-            return await _dashboardRepository.GetSelesRevenue();
+            return await _dashboardRepository.GetSelesRevenue(month);
         }
 
         public async Task<IEnumerable<RawInputVsOutputVsExistence>> GetInputVsOutputVsExistence()
@@ -35,9 +35,9 @@ namespace GPA.Services.General.BlobStorage
             return await _dashboardRepository.GetInputVsOutputVsExistence();
         }
 
-        public async Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason, TransactionType transactionType)
+        public async Task<IEnumerable<RawTransactionsPerMonthByReason>> GetTransactionsPerMonthByReason(ReasonTypes reason)
         {
-            return await _dashboardRepository.GetTransactionsPerMonthByReason(reason, transactionType);
+            return await _dashboardRepository.GetTransactionsPerMonthByReason(reason);
         }
     }
 }

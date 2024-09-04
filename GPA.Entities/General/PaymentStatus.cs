@@ -2,7 +2,7 @@
 {
     public enum PaymentStatus : byte
     {
-        Payed,
+        Paid,
         Pending
     }
 }

@@ -19,32 +19,32 @@ namespace GPA.Api.Controllers.General
             _dashboardService = dashboardService;
         }
 
-        [HttpGet("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
+        [HttpGet("clients/count")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Dashboard}", permission: Permissions.Read)]
         public async Task<IActionResult> GetClientsCount()
         {
             return Ok(await _dashboardService.GetClientsCount());
         }
 
-        [HttpGet("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
-        public async Task<IActionResult> GetSelesRevenue()
+        [HttpGet("sales/months/{month}/revenue")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Dashboard}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetSelesRevenue(int month = 0)
         {
-            return Ok(await _dashboardService.GetSelesRevenue());
+            return Ok(await _dashboardService.GetSelesRevenue(month));
         }
 
-        [HttpGet("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
+        [HttpGet("input-vs-output-vs-existence")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Dashboard}", permission: Permissions.Read)]
         public async Task<IActionResult> GetInputVsOutputVsExistence()
         {
             return Ok(await _dashboardService.GetInputVsOutputVsExistence());
         }
 
-        [HttpGet("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
-        public async Task<IActionResult> GetTransactionsPerMonthByReason(ReasonTypes reason, TransactionType transactionType)
+        [HttpGet("reasons/{reason}/transactions")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.Dashboard}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetTransactionsPerMonthByReason(ReasonTypes reason)
         {            
-            return Ok(await _dashboardService.GetTransactionsPerMonthByReason(reason, transactionType));
+            return Ok(await _dashboardService.GetTransactionsPerMonthByReason(reason));
         }
     }
 }
