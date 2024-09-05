@@ -13,6 +13,8 @@ namespace GPA.Data.Invoice.Configurations
 
             builder.ToTable("InvoiceDetails", GPASchema.INVOICE);
             builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.Price).HasColumnType("decimal(18,2)").IsRequired();
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 

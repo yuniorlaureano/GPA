@@ -341,10 +341,10 @@ namespace GPA.Utils.Profiles
 
     public class PermissionMessage
     {
-        public string Module { get; set; } = "";
-        public string Component { get; set; } = "";
-        public string Permission { get; set; } = "";
-        public string Message { get; set; } = "";
+        public string? Module { get; set; }
+        public string? Component { get; set; }
+        public string? Permission { get; set; }
+        public string Message { get; set; }
     };
 
     public class Permissions
@@ -353,19 +353,19 @@ namespace GPA.Utils.Profiles
         public const string Update = "update";
         public const string Delete = "delete";
         public const string Read = "read";
-        public const string ReadProducts = "read-products";
-        public const string ReadExistence = "read-existence";
-        public const string RegisterInput = "add-input";
-        public const string RegisterOutput = "add-output";
-        public const string UpdateInput = "update-input";
-        public const string UpdateOutput = "update-output";
+        public const string ReadProducts = "read_products";
+        public const string ReadExistence = "read_existence";
+        public const string RegisterInput = "add_input";
+        public const string RegisterOutput = "add_output";
+        public const string UpdateInput = "update_input";
+        public const string UpdateOutput = "update_output";
         public const string Open = "open";
         public const string Close = "close";
         public const string Cancel = "cancel";
-        public const string AssignProfile = "assign-profile";
-        public const string UnAssignProfile = "unAssign-profile";
-        public const string UpdateUserProfile = "update-user-profile";
-        public const string ReadTransactions = "read-transactions";
+        public const string AssignProfile = "assign_profile";
+        public const string UnAssignProfile = "unAssign_profile";
+        public const string UpdateUserProfile = "update_user_profile";
+        public const string ReadTransactions = "read_transactions";
         public const string Return = "return";
         public const string Send = "send";
         public const string Upload = "upload";

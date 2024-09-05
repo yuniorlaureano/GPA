@@ -15,6 +15,7 @@ namespace GPA.Data.Invoice.Configurations
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
+            builder.Property(x => x.Payment).HasColumnType("decimal(18,2)").IsRequired();
         }
     }
 }

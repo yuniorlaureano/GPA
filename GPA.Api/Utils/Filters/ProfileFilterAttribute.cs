@@ -94,9 +94,9 @@ namespace GPA.Api.Utils.Filters
         {
             return new PermissionMessage
             {
-                Module = pathTokens[1],
-                Component = pathTokens[2],
-                Permission = permission,
+                Module = null,//pathTokens[1],
+                Component = null,//pathTokens[2],
+                Permission = null,//permission,
                 Message = $"Permiso: '{permission}', módulo: '{pathTokens[1]}', sección: '{pathTokens[2]}', requerido."
             };
         }

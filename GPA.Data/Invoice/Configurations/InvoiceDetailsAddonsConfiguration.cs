@@ -14,6 +14,8 @@ namespace GPA.Data.Invoice.Configurations
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
+            builder.Property(x => x.Value).HasColumnType("decimal(18,2)").IsRequired();
+
             builder.HasOne(x => x.InvoiceDetails)
                 .WithMany(x => x.InvoiceDetailsAddons)
                 .HasForeignKey(x => x.InvoiceDetailId)
