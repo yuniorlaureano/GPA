@@ -1,79 +1,48 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - gpa-app-demo-backend
-
+name: Build and deploy .NET Core application to Web App gpa-app-demo-backend
 on:
-  workflow_dispatch:
   push:
     branches:
-      - master
-
+    - master
 env:
   AZURE_WEBAPP_NAME: gpa-app-demo-backend
-  AZURE_WEBAPP_PACKAGE_PATH: './myapp'
-
+  AZURE_WEBAPP_PACKAGE_PATH: GPA.Api/publish
+  CONFIGURATION: Release
+  DOTNET_CORE_VERSION: 8.0.x
+  WORKING_DIRECTORY: GPA.Api
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
-
-      - name: Restore dependencies
-        run: dotnet restore ./GPA.sln
-
-      - name: Build with dotnet
-        run: dotnet build --configuration Release --no-restore
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o '${{env.AZURE_WEBAPP_PACKAGE_PATH}}' --no-build
-
-      - name: Deployment
-        uses: actions/webapps-deploy@v2
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish_profile: ${{secrets.AZURE_PUBLISH_PROFILE}}
-          package: '${{env.AZURE_WEBAPP_PACKAGE_PATH}}'
-      
-      # - name: Upload artifact for deployment job
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: .net-app
-      #     path: ${{env.DOTNET_ROOT}}/myapp
-
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   environment:
-  #     name: 'Production'
-  #     url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-  #   permissions:
-  #     id-token: write #This is required for requesting the JWT
-
-  #   steps:
-  #     - name: Download artifact from build job
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: .net-app
-      
-  #     - name: Login to Azure
-  #       uses: azure/login@v2
-  #       with:
-  #         client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F3E695E1A01D4A4DAAEAC20C8972BDD2 }}
-  #         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_4EDA5493627A4B30AE308BA4DC7102B4 }}
-  #         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_082B3AA685DD4028BC7F2675008DB5E4 }}
-
-  #     - name: Deploy to Azure Web App
-  #       id: deploy-to-webapp
-  #       uses: azure/webapps-deploy@v3
-  #       with:
-  #         app-name: 'gpa-app-demo-backend'
-  #         slot-name: 'Production'
-  #         package: .
-          
+    - uses: actions/checkout@v4
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
+    - name: Restore
+      run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+    - name: Build
+      run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
+    # - name: Test
+    #   run: dotnet test "${{ env.WORKING_DIRECTORY }}" --no-build
+    - name: Publish
+      run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --output "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
+    - name: Publish Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: webapp
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Download artifact from build job
+      uses: actions/download-artifact@v3
+      with:
+        name: webapp
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+    - name: Deploy to Azure WebApp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.gpa_app_demo_backend_B39F }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
