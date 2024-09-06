@@ -68,7 +68,7 @@ namespace GPA.Tests
             var configuration = new ConfigurationBuilder();
             var builtConfiguration = configuration
                 .SetBasePath(Environment.CurrentDirectory)
-                .AddJsonFile("appsettings.json")
+                .AddJsonFile("test-appsettings.json")
                 .AddEnvironmentVariables()
                 .Build();
 
