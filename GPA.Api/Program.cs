@@ -68,7 +68,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
         var origins = builder.Configuration.GetValue<string>("AllowedHosts")?.Split(",") ?? ["*"];
-        policy.WithOrigins("https://gentle-flower-0e8017d1e.5.azurestaticapps.net").AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
     });
 });
 
@@ -124,7 +124,7 @@ if (sendGridUrl is { Length: > 0 })
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+//Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
     app.UseSwagger();
