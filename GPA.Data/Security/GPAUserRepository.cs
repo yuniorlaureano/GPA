@@ -57,7 +57,8 @@ namespace GPA.Data.Security
 	                UserName,
 	                Photo,
 	                Email,
-	                Deleted
+	                Deleted,
+                    CAST(0 AS BIT ) IsAssigned
                 FROM [GPA].[Security].[Users]
                 WHERE 
                     Id = @Id    
