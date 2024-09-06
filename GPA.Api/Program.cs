@@ -113,13 +113,13 @@ builder.Services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 builder.Services.AddUtils();
 
 var sendGridUrl = builder.Configuration["Url:SendGrid"];
-if (sendGridUrl is { Length: > 0 })
-{
+//if (sendGridUrl is { Length: > 0 })
+//{
     builder.Services.AddHttpClient(UrlConstant.SENDGRID, options =>
     {
         options.BaseAddress = new Uri(sendGridUrl);
     });
-}
+//}
 
 
 var app = builder.Build();
