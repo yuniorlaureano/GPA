@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -15,11 +16,13 @@ namespace GPA.Inventory.Api.Controllers
     public class ProvidersController : ControllerBase
     {
         private readonly IProviderService _providerService;
+        private readonly IValidator<ProviderDto> _validator;
         private readonly IMapper _mapper;
 
-        public ProvidersController(IProviderService ProviderService, IMapper mapper)
+        public ProvidersController(IProviderService ProviderService, IValidator<ProviderDto> validator, IMapper mapper)
         {
             _providerService = ProviderService;
+            _validator = validator;
             _mapper = mapper;
         }
 
@@ -41,9 +44,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Provider}", permission: Permissions.Create)]
         public async Task<IActionResult> Create(ProviderDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = await _providerService.AddAsync(model);
@@ -54,9 +58,10 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Provider}", permission: Permissions.Update)]
         public async Task<IActionResult> Update(ProviderDto model)
         {
-            if (!ModelState.IsValid)
+            var validationResult = await _validator.ValidateAsync(model);
+            if (!validationResult.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             await _providerService.UpdateAsync(model);

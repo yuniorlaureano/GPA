@@ -54,10 +54,11 @@ namespace GPA.Data.Inventory
 	                            MAX([P].[Type]) AS [ProductType],
 	                            [p].[CategoryId],
 	                            [p].[Code] AS [ProductCode],
-	                            [p].[Name] AS [ProductName],
+	                            concat([p].[Name], ' ' , p.UnitValue, ' ' ,UNT.[Name] ) AS [ProductName],
 	                            [p].[Id] AS [ProductId]
                             FROM 
 	                            [Inventory].[Products] AS [p]
+                                JOIN [GPA].[General].[Units] UNT ON p.UnitId = UNT.Id
 	                            LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId] AND [t].[Deleted] = CAST(0 AS bit)
 	                            LEFT JOIN [Inventory].[Stocks] AS [t0] 
 		                            ON [t].[StockId] = [t0].[Id] AND 
@@ -76,7 +77,9 @@ namespace GPA.Data.Inventory
 	                            [p].[Id], 
 	                            [p].[Name], 
 	                            [p].[Code], 
-	                            [p].[CategoryId]
+	                            [p].[CategoryId],
+                                p.UnitValue,
+								UNT.[Name]
                             ORDER BY 
 	                            [p].[Name]
                             OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY";
@@ -130,10 +133,11 @@ namespace GPA.Data.Inventory
 	                            MAX([P].[Type]) AS [ProductType],
 	                            [p].[CategoryId],
 	                            [p].[Code] AS [ProductCode],
-	                            [p].[Name] AS [ProductName],
+	                            concat([p].[Name], ' ' , p.UnitValue, ' ' ,UNT.[Name] ) AS [ProductName],
 	                            [p].[Id] AS [ProductId]
                             FROM 
 	                            [Inventory].[Products] AS [p]
+                                JOIN [GPA].[General].[Units] UNT ON p.UnitId = UNT.Id
 	                            LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId] AND [t].[Deleted] = CAST(0 AS bit)
 	                            LEFT JOIN [Inventory].[Stocks] AS [t0] 
 		                            ON [t].[StockId] = [t0].[Id] AND 
@@ -148,7 +152,9 @@ namespace GPA.Data.Inventory
 	                            [p].[Id], 
 	                            [p].[Name], 
 	                            [p].[Code], 
-	                            [p].[CategoryId]
+	                            [p].[CategoryId],
+                                p.UnitValue,
+								UNT.[Name]
                             ORDER BY 
 	                            [p].[Name]
                             OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY";

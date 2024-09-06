@@ -3,21 +3,18 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.General;
 using GPA.Data.General;
 using GPA.Entities.General;
-using System.Linq.Expressions;
+using GPA.Entities.Unmapped.General;
+using GPA.Utils.Database;
 
 namespace GPA.Business.Services.General
 {
     public interface IUnitService
     {
-        public Task<UnitDto?> GetByIdAsync(Guid id);
-
-        public Task<ResponseDto<UnitDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Unit, bool>>? expression = null);
-
-        public Task<UnitDto?> AddAsync(UnitDto unitDto);
-
-        public Task UpdateAsync(UnitDto unitDto);
-
-        public Task RemoveAsync(Guid id);
+        Task<RawUnit?> GetByIdAsync(Guid id);
+        Task<ResponseDto<RawUnit>> GetAllAsync(RequestFilterDto filter);
+        Task<UnitDto?> AddAsync(UnitDto unitDto);
+        Task UpdateAsync(UnitDto unitDto);
+        Task RemoveAsync(Guid id);
     }
 
     public class UnitService : IUnitService
@@ -31,22 +28,19 @@ namespace GPA.Business.Services.General
             _mapper = mapper;
         }
 
-        public async Task<UnitDto?> GetByIdAsync(Guid id)
+        public async Task<RawUnit?> GetByIdAsync(Guid id)
         {
-            var unit = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            return _mapper.Map<UnitDto>(unit);
+            var unit = await _repository.GetUnitAsync(id);
+            return _mapper.Map<RawUnit>(unit);
         }
 
-        public async Task<ResponseDto<UnitDto>> GetAllAsync(RequestFilterDto search, Expression<Func<Unit, bool>>? expression = null)
+        public async Task<ResponseDto<RawUnit>> GetAllAsync(RequestFilterDto filter)
         {
-            var categories = await _repository.GetAllAsync(query =>
+            filter.Search = SearchHelper.ConvertSearchToString(filter);
+            return new ResponseDto<RawUnit>
             {
-                return query.Skip(search.PageSize * Math.Abs(search.Page - 1)).Take(search.PageSize);
-            }, expression);
-            return new ResponseDto<UnitDto>
-            {
-                Count = await _repository.CountAsync(query => query, expression),
-                Data = _mapper.Map<IEnumerable<UnitDto>>(categories)
+                Count = await _repository.GetUnitsCountAsync(filter),
+                Data = await _repository.GetUnitsAsync(filter)
             };
         }
 
@@ -75,8 +69,7 @@ namespace GPA.Business.Services.General
 
         public async Task RemoveAsync(Guid id)
         {
-            var savedUnit = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedUnit);
+            await _repository.SoftDeleteUnitAsync(id);
         }
     }
 }

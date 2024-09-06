@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using GPA.Common.DTOs.Inventory;
+using GPA.Services.Invoice.Validators;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Inventory.Validator
@@ -15,6 +16,7 @@ namespace GPA.Bussiness.Services.Inventory.Validator
             services.AddScoped<IValidator<AddonDto>, AddonValidator>();
             services.AddScoped<IValidator<OutputCreationDto>, OutputCreationValidator>();
             services.AddScoped<IValidator<StockCreationDto>, StockCreationValidator>();
+            services.AddScoped<IValidator<ProviderDto>, ProviderCreationValidator>();
         }
     }
 }

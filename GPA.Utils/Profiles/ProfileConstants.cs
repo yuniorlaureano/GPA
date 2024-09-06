@@ -1,6 +1,4 @@
 ﻿using GPA.Utils.Permissions;
-using System.Security;
-using System.Text;
 
 namespace GPA.Utils.Profiles
 {
@@ -67,7 +65,7 @@ namespace GPA.Utils.Profiles
             string module,
             string component,
             string permission,
-            Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>> profileToVerify 
+            Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>> profileToVerify
             )
         {
             return profileToVerify.ContainsKey(app) &&
@@ -333,6 +331,14 @@ namespace GPA.Utils.Profiles
                             Permissions.Read
                         }
                     },
+                    new Component
+                    {
+                        Id = Components.Unit,
+                        Permissions = new List<string>
+                        {
+                            Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
+                        }
+                    }
                 }
             };
         }
@@ -407,5 +413,6 @@ namespace GPA.Utils.Profiles
         public const string Blob = "blob";
         public const string PrintInformation = "printInformation";
         public const string Dashboard = "dashboard";
+        public const string Unit = "unit";
     }
 }

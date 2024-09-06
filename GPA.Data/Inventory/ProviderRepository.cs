@@ -37,6 +37,9 @@ namespace GPA.Data.Inventory
                   ,[State]
                   ,[Country]
                   ,[PostalCode]
+                  ,[FormattedAddress]
+                  ,[Latitude]
+                  ,[Longitude]
               FROM [GPA].[Inventory].[Providers] 
               WHERE Id = @Id
             ";
@@ -61,11 +64,15 @@ namespace GPA.Data.Inventory
                   ,[State]
                   ,[Country]
                   ,[PostalCode]
+                  ,[FormattedAddress]
+                  ,[Latitude]
+                  ,[Longitude]
               FROM [GPA].[Inventory].[Providers] 
               WHERE
-	              @Search IS NULL
+                  Deleted = 0 AND
+	              (@Search IS NULL
 	              OR CONCAT([Name], ' ', [LastName]) LIKE CONCAT('%', @Search, '%')
-	              OR Identification LIKE CONCAT('%', @Search, '%')
+	              OR Identification LIKE CONCAT('%', @Search, '%'))
                 ORDER BY Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -82,9 +89,10 @@ namespace GPA.Data.Inventory
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Providers] 
                 WHERE
+                  Deleted = 0 AND (
 	              @Search IS NULL
 	              OR CONCAT([Name], ' ', [LastName]) LIKE CONCAT('%', @Search, '%')
-	              OR Identification LIKE CONCAT('%', @Search, '%')
+	              OR Identification LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();

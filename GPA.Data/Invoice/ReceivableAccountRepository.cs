@@ -93,7 +93,7 @@ namespace GPA.Data.Invoice
                 parameters.Add(new SqlParameter("@Search", search));
             }
 
-            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).CountAsync();
+            return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
         }
     }
 }

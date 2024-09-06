@@ -1,11 +1,11 @@
 ﻿using FluentValidation;
-using GPA.Common.DTOs.Invoice;
+using GPA.Common.DTOs.Inventory;
 
 namespace GPA.Services.Invoice.Validators
 {
-    public class ClientCreationValidator : AbstractValidator<ClientDto>
+    public class ProviderCreationValidator : AbstractValidator<ProviderDto>
     {
-        public ClientCreationValidator()
+        public ProviderCreationValidator()
         {
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("El nombre es requerido.")
