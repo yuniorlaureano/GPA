@@ -68,7 +68,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
         var origins = builder.Configuration.GetValue<string>("AllowedHosts")?.Split(",") ?? ["*"];
-        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
+        policy.WithOrigins("https://gentle-flower-0e8017d1e.5.azurestaticapps.net").AllowAnyHeader().AllowAnyMethod();
     });
 });
 
