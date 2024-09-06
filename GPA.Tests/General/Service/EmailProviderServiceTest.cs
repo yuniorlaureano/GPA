@@ -22,34 +22,6 @@ namespace GPA.Tests.General.Service
             _iEmailProviderService = _services.GetRequiredService<IEmailProviderService>();
         }
 
-
-
-        [Fact]
-        public async Task ShouldOneCreate()
-        {
-            var smtpOption = new SmtpEmailOptions
-            {
-                Host = "smtp.gmail.com",
-                UserName = "2018-0025@unad.edu.do",
-                Password = "gikg idwq nvii fbrh",
-                Port = 587,
-                UseSsl = true
-            };
-
-            var configuration = _fixture
-                .Build<EmailConfigurationCreationDto>()
-                .With(x => x.Identifier, "Google")
-                .With(x => x.Engine, EmailConstants.SMTP)
-                .With(x => x.Value, JsonSerializer.Serialize(smtpOption, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                }))
-                .With(x => x.From, "2018-0025@unad.edu.do")
-                .With(x => x.Current, true)
-                .Create();
-
-            await _iEmailProviderService.CreateConfigurationAsync(configuration);
-            Assert.True(true);
-        }
+        
     }
 }
