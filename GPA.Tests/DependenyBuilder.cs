@@ -58,7 +58,7 @@ namespace GPA.Tests
             services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 
             //ToDo: move this to a extension method.
-            services.AddUtils();
+           // services.AddUtils(configurations);
 
             return services.BuildServiceProvider();
         }
