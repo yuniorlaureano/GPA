@@ -1,3 +1,4 @@
+using GPA.Api.Extensions;
 using GPA.Business.General.Extensions;
 using GPA.Business.Inventory.Extensions;
 using GPA.Business.Invoice.Extensions;
@@ -19,68 +20,16 @@ using GPA.Services.General.Security;
 using GPA.Services.Security.Validators;
 using GPA.Utils;
 using GPA.Utils.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using GPA.Utils.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
-//ToDo: move this to a extension method.
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "GPA Api",
-        Version = "v1",
-    });
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Ingrese un token v�lido",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
-                }
-            },
-            new string[]{}
-        }
-    });
-});
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowSpecificOrigin", policy =>
-    {
-        var origins = builder.Configuration.GetValue<string>("AllowedOriging")?.Split(",") ?? ["*"];
-        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod();
-    });
-});
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddGPAJwtBearer(builder.Configuration);
-
-builder.Services.AddDbContext<GPADbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("Default"), p => p.MigrationsAssembly("GPA.Api")));
+builder.Services.AddGPASwagger();
+builder.Services.AddGPACors(builder.Configuration);
+builder.Services.AddGPAAuthentication(builder.Configuration);
+builder.Services.AddGPADbContext(builder.Configuration);
 
 builder.Services.AddInventoryMappers();
 builder.Services.AddInventoryValidators();
@@ -109,27 +58,19 @@ builder.Services.AddScoped<IAesHelper, AesHelper>();
 builder.Services.AddScoped<IEmailProviderHelper, EmailProviderHelper>();
 builder.Services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 
-//ToDo: move this to a extension method.
-builder.Services.AddUtils();
-
-var sendGridUrl = builder.Configuration["Url:SendGrid"];
-if (sendGridUrl is { Length: > 0 })
-{
-    builder.Services.AddHttpClient(UrlConstant.SENDGRID, options =>
-    {
-        options.BaseAddress = new Uri(sendGridUrl);
-    });
-}
-
+builder.Services.AddUtils(builder.Environment, builder.Configuration);
+builder.Services.AddSendGridUrl(builder.Configuration);
 
 var app = builder.Build();
 
 //Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

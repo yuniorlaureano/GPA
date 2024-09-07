@@ -27,6 +27,7 @@
   <ItemGroup>
     <Folder Include="Controllers\Report\" />
     <Folder Include="Properties\PublishProfiles\" />
+    <Folder Include="Utils\Midlleware\" />
   </ItemGroup>
 
   <ItemGroup>
