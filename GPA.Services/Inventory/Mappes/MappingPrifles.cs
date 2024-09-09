@@ -24,6 +24,8 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<AddonDto, Addon>();
             CreateMap<RawAddons, AddonDto>();
             CreateMap<RawAddonsList, AddonDto>();
+            CreateMap<Addon, RawAddonsList>();           
+            CreateMap<RawAddonsList, Addon>();
 
             CreateMap<ProductAddon, ProductAddonDto>();
             CreateMap<ProductAddonDto, ProductAddon>();

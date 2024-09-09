@@ -8,6 +8,7 @@ using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using GPA.Dtos.Audit;
 using GPA.Dtos.General;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
@@ -28,7 +29,6 @@ namespace GPA.Business.Services.Invoice
         public Task<ResponseDto<InvoiceListDto>> GetInvoicesAsync(RequestFilterDto search);
         public Task<InvoiceDto?> AddAsync(InvoiceDto invoiceDto);
         public Task UpdateAsync(InvoiceUpdateDto invoiceDto);
-        public Task RemoveAsync(Guid id);
         Task SaveAttachment(Guid invoiceId, IFormFile file);
         Task<IEnumerable<InvoiceAttachmentDto>> GetAttachmentByInvoiceIdAsync(Guid invoiceId);
         Task<(Stream? file, string fileName)> DownloadAttachmentAsync(Guid id);
@@ -154,6 +154,8 @@ namespace GPA.Business.Services.Invoice
 
             await AddStock(savedInvoice);
             await AddReceivableAccount(invoice, addons);
+            await _repository.AddHistory(savedInvoice, savedInvoice.InvoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
+            
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
@@ -201,13 +203,8 @@ namespace GPA.Business.Services.Invoice
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
+                await _repository.AddHistory(newInvoice, invoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
             }
-        }
-
-        public async Task RemoveAsync(Guid id)
-        {
-            var savedInvoice = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedInvoice);
         }
 
         public async Task CancelAsync(Guid id)

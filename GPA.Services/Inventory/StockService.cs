@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.Audit;
 using GPA.Dtos.General;
 using GPA.Dtos.Inventory;
 using GPA.Entities.General;
@@ -14,6 +15,7 @@ using GPA.Services.Security;
 using GPA.Utils;
 using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
@@ -28,7 +30,6 @@ namespace GPA.Business.Services.Inventory
         Task<StockDto?> AddAsync(StockCreationDto dto);
         Task UpdateInputAsync(StockCreationDto dto);
         Task UpdateOutputAsync(StockCreationDto dto);
-        Task RemoveAsync(Guid id);
         Task CancelAsync(Guid id);
         Task SaveAttachment(Guid stockId, IFormFile file);
         Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId);
@@ -125,6 +126,7 @@ namespace GPA.Business.Services.Inventory
             newStock.CreatedAt = DateTimeOffset.UtcNow;
             newStock.Date = DateTime.UtcNow;
             var savedStock = await _repository.AddAsync(newStock);
+            await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return _mapper.Map<StockDto>(savedStock);
         }
 
@@ -157,6 +159,7 @@ namespace GPA.Business.Services.Inventory
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
+                await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
             }
         }
 
@@ -192,18 +195,18 @@ namespace GPA.Business.Services.Inventory
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
+                await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
             }
-        }
-
-        public async Task RemoveAsync(Guid id)
-        {
-            var newStock = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(newStock);
         }
 
         public async Task CancelAsync(Guid id)
         {
+            var stock = await _repository.GetByIdAsync(entity => entity.Include(x => x.StockDetails));
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
+            if (stock is not null)
+            {
+                await _repository.AddHistory(stock, stock.StockDetails, ActionConstants.Canceled, _userContextService.GetCurrentUserId());
+            }
         }
 
         public async Task SaveAttachment(Guid stockId, IFormFile file)

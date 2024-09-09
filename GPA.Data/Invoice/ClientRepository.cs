@@ -1,10 +1,14 @@
 ﻿using GPA.Common.DTOs;
+using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
+using GPA.Entities.General;
+using GPA.Entities.Unmapped.Audit;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using System.Text.Json;
 
 namespace GPA.Data.Invoice
 {
@@ -17,6 +21,7 @@ namespace GPA.Data.Invoice
         Task UpdateAsync(Client client);
         Task<IEnumerable<RawCredit>> GetCreditsByClientIdAsync(List<Guid> clientIds);
         Task SoftDeleteClientAsync(Guid clientId, Guid createdBy);
+        Task AddHistory(Client client, List<ClientCredit?> clientCredit, string action, Guid by);
     }
 
     public class ClientRepository : Repository<Client>, IClientRepository
@@ -173,6 +178,76 @@ namespace GPA.Data.Invoice
                 new SqlParameter("@DeletedAt", DateTimeOffset.UtcNow),
                 new SqlParameter("@Id", clientId)
                 );
+        }
+
+        public async Task AddHistory(Client client, List<ClientCredit?> clientCredit, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[ClientHistory]
+                   ([Name]
+                   ,[Identification]
+                   ,[Phone]
+                   ,[Email]
+                   ,[Address]
+                   ,[FormattedAddress]
+                   ,[Latitude]
+                   ,[Longitude]
+                   ,[CreditsHistory]
+                   ,[IdentityId]
+                   ,[Action]
+                   ,[By]
+                   ,[At])
+             VALUES
+                   (@Name
+                   ,@Identification
+                   ,@Phone
+                   ,@Email
+                   ,@Address
+                   ,@FormattedAddress
+                   ,@Latitude
+                   ,@Longitude
+                   ,@CreditsHistory
+                   ,@IdentityId
+                   ,@Action
+                   ,@By
+                   ,@At)
+                    ";
+
+            var clientCredits = clientCredit?.Select(x => new ClientCreditHistory
+            {
+                Credit = x.Credit,
+                Concept = x.Concept
+            });
+
+            var parameters = new List<SqlParameter>
+            {
+                new("@Name", client.Name)
+               ,new("@Identification", $"{GetIdentificationTypePrefix(client.IdentificationType)} {client.Identification}")
+               ,new("@Phone", client.Phone ?? "")
+               ,new("@Email", client.Email ?? "")
+               ,new("@Address", $"#{client.BuildingNumber}, C/{client.Street}, {client.State}, {client.City}, {client.Country}, {client.PostalCode}")
+               ,new("@FormattedAddress", client.FormattedAddress)
+               ,new("@Latitude", client.Latitude ?? 0D)
+               ,new("@Longitude", client.Longitude ?? 0D)
+               ,new("@CreditsHistory", clientCredits?.Any() == true ? JsonSerializer.Serialize(clientCredits) : "")
+               ,new("@IdentityId", client.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
+        }
+
+        private string GetIdentificationTypePrefix(IdentificationType identificationType)
+        {
+            return identificationType switch
+            {
+                IdentificationType.Cedula => "Cédula",
+                IdentificationType.RNC => "RNC",
+                IdentificationType.Passport => "Pasaporte",
+                _ => "",
+            };
         }
     }
 }

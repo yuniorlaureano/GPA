@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.Audit;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.Security;
 
@@ -60,6 +61,8 @@ namespace GPA.Business.Services.Inventory
             addon.CreatedBy = _userContextService.GetCurrentUserId();
             addon.CreatedAt = DateTimeOffset.UtcNow;
             var savedAddon = await _repository.AddAsync(addon);
+
+            await _repository.AddHistory(savedAddon, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return _mapper.Map<AddonDto>(savedAddon);
         }
 
@@ -79,6 +82,7 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            await _repository.AddHistory(newAddon, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
         
         public async Task<ResponseDto<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter)
@@ -92,7 +96,7 @@ namespace GPA.Business.Services.Inventory
 
         public Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
         {
-            return _repository.RemoveAddonFromProductAsync(addonId, productId);
+            return _repository.RemoveAddonFromProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToProductAsync(Guid addonId, Guid productId)
@@ -102,7 +106,7 @@ namespace GPA.Business.Services.Inventory
 
         public Task RemoveAddonFromAllProductAsync(Guid addonId)
         {
-            return _repository.RemoveAddonFromAllProductAsync(addonId);
+            return _repository.RemoveAddonFromAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToAllProductAsync(Guid addonId)
@@ -112,7 +116,10 @@ namespace GPA.Business.Services.Inventory
 
         public async Task RemoveAsync(Guid id)
         {
+            var addon = await _repository.GetAddonsAsync(id);
             await _repository.SoftDeleteAddonAsync(id);
+            
+            await _repository.AddHistory(_mapper.Map<Addon>(addon), ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }
     }
 }

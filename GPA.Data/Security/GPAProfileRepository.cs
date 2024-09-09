@@ -21,6 +21,8 @@ namespace GPA.Data.Security
         Task<bool> ProfileExists(Guid profileId, Guid userId);
         Task<bool> ProfileExists(Guid userId);
         Task<(Guid id, string? value)?> GetProfileValue(Guid profileId);
+        Task AddHistory(GPAProfile profile, string action, Guid by);
+        Task AddUserProfileHistory(Guid userId, Guid profileId, string action, Guid by);
     }
 
     public class GPAProfileRepository : Repository<GPAProfile>, IGPAProfileRepository
@@ -169,7 +171,7 @@ namespace GPA.Data.Security
 
         public async Task<(Guid id, string? value)?> GetProfileValue(Guid profileId)
         {
-            var profile =  await _context.Profiles
+            var profile = await _context.Profiles
                 .Where(x => x.Id == profileId)
                 .FirstOrDefaultAsync();
 
@@ -227,6 +229,71 @@ namespace GPA.Data.Security
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
+        }
+
+        public async Task AddHistory(GPAProfile profile, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[ProfileHistory]
+                       ([Name]
+                       ,[Value]
+                       ,[IdentityId]
+                       ,[Action]
+                       ,[By]
+                       ,[At])
+                 VALUES
+                       (@Name
+                       ,@Value
+                       ,@IdentityId
+                       ,@Action
+                       ,@By
+                       ,@At)
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@Name", profile.Name)
+               ,new("@Value", profile.Value ?? "")
+               ,new("@IdentityId", profile.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
+        }
+
+        public async Task AddUserProfileHistory(Guid userId, Guid profileId, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[UserProfileHistory]
+                    ([UserId]
+                    ,[ProfileId]
+                    ,[IdentityId]
+                    ,[Action]
+                    ,[By]
+                    ,[At])
+                SELECT 
+                     [UserId]
+                    ,[ProfileId]
+	                ,[Id]
+	                ,@Action
+	                ,@By
+	                ,@At
+                FROM [GPA].[Security].[UserProfiles]
+                WHERE UserId = @UserId AND ProfileId = @ProfileId
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@UserId", userId)
+               ,new("@ProfileId", profileId)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
     }
 }

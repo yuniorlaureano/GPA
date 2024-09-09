@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
+using GPA.Dtos.Audit;
 using GPA.Dtos.Inventory;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.General.BlobStorage;
@@ -69,6 +70,10 @@ namespace GPA.Business.Services.Inventory
             newProduct.CreatedBy = _userContextService.GetCurrentUserId();
             newProduct.CreatedAt = DateTimeOffset.UtcNow;
             var savedProduct = await _repository.AddAsync(newProduct);
+
+            var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
+            await _repository.AddHistory(rawProduct, ActionConstants.Add, _userContextService.GetCurrentUserId());
+
             return _mapper.Map<ProductDto>(savedProduct);
         }
 
@@ -92,6 +97,9 @@ namespace GPA.Business.Services.Inventory
                 entityState.Property(x => x.Id).IsModified = false;
                 entityState.Property(x => x.Photo).IsModified = false;
             });
+
+            var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
+            await _repository.AddHistory(rawProduct, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
 
         public async Task SavePhoto(ProductUploadPhotoDto dto)
@@ -108,6 +116,8 @@ namespace GPA.Business.Services.Inventory
 
         public async Task RemoveAsync(Guid id)
         {
+            var rawProduct = await _repository.GetProductAsync(id);
+            await _repository.AddHistory(rawProduct, ActionConstants.Remove, _userContextService.GetCurrentUserId());
             await _repository.SoftDelete(id);
         }
 

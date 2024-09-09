@@ -1,11 +1,14 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Inventory;
+using GPA.Dtos.Audit;
 using GPA.Dtos.Inventory;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Text.Json;
 
 namespace GPA.Data.Inventory
@@ -22,10 +25,11 @@ namespace GPA.Data.Inventory
         Task SoftDeleteAddonAsync(Guid id);
         Task<int> GetProductsCountByAddonIdAsync(Guid addonId, RequestFilterDto filter);
         Task<IEnumerable<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter);
-        Task RemoveAddonFromProductAsync(Guid addonId, Guid productId);
+        Task RemoveAddonFromProductAsync(Guid addonId, Guid productId, Guid createdBy);
         Task AssignAddonToProductAsync(Guid addonId, Guid productId, Guid createdBy);
-        Task RemoveAddonFromAllProductAsync(Guid addonId);
+        Task RemoveAddonFromAllProductAsync(Guid addonId, Guid createdBy);
         Task AssignAddonToAllProductAsync(Guid addonId, Guid createdBy);
+        Task AddHistory(Addon addon, string action, Guid by);
     }
 
     public class AddonRepository : Repository<Addon>, IAddonRepository
@@ -280,6 +284,8 @@ namespace GPA.Data.Inventory
             var query = @$"
                 IF(NOT EXISTS(SELECT 1 FROM [GPA].[Inventory].[ProductAddons] WHERE ProductId = @ProductId AND AddonId = @AddonId ))
                 BEGIN
+                    {GetAssignAddonQuery(productId)}
+
 	                INSERT INTO [GPA].[Inventory].[ProductAddons]([ProductId], [AddonId], [CreatedBy], [CreatedAt], Deleted)
 	                VALUES(@ProductId, @AddonId, @CreatedBy, GETUTCDATE(), 0);
                 END
@@ -289,13 +295,17 @@ namespace GPA.Data.Inventory
             {
                 new SqlParameter() { ParameterName = "@ProductId", Value = productId },
                 new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
-                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy }
+                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy },
+                new SqlParameter() { ParameterName = "@Action", Value = ActionConstants.Assign }
             });
         }
 
-        public async Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
+        public async Task RemoveAddonFromProductAsync(Guid addonId, Guid productId, Guid createdBy)
         {
             var query = @$"
+
+                {GetAssignAddonQuery(productId)}
+
                 DELETE FROM [GPA].[Inventory].[ProductAddons]
                 WHERE ProductId = @ProductId AND AddonId = @AddonId
             ";
@@ -304,6 +314,8 @@ namespace GPA.Data.Inventory
             {
                 new SqlParameter() { ParameterName = "@ProductId", Value = productId },
                 new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy },
+                new SqlParameter() { ParameterName = "@Action", Value = ActionConstants.UnAssign }
             });
         }
 
@@ -323,19 +335,25 @@ namespace GPA.Data.Inventory
                         AND PRO.[Type] = 1 
                         AND PROADD.AddonId = @AddonId	
                 WHERE 
-	                PROADD.Id IS NULL
+	                PROADD.Id IS NULL;
+
+                {GetAssignAddonQuery()}
             ";
 
             await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
             {
                 new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
-                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy }
+                new SqlParameter() { ParameterName = "@CreatedBy", Value = createdBy },
+                new SqlParameter() { ParameterName = "@Action", Value = ActionConstants.AssignAll }
             });
         }
 
-        public async Task RemoveAddonFromAllProductAsync(Guid addonId)
+
+        public async Task RemoveAddonFromAllProductAsync(Guid addonId, Guid createdBy)
         {
             var query = @$"
+                {GetAssignAddonQuery()}
+                
                 DELETE FROM [GPA].[Inventory].[ProductAddons]
                 WHERE AddonId = @AddonId
             ";
@@ -343,9 +361,86 @@ namespace GPA.Data.Inventory
             await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter[]
             {
                 new SqlParameter() { ParameterName = "@AddonId", Value = addonId },
+                new SqlParameter() { ParameterName = "@CreatedBy", Value =  createdBy},
+                new SqlParameter() { ParameterName = "@Action", Value =  ActionConstants.UnAssignAll},
             });
         }
 
+        public async Task AddHistory(Addon addon, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[AddonHistory]
+                   (
+                    [Concept]
+                   ,[IsDiscount]
+                   ,[Type]
+                   ,[Value]
+                   ,[IdentityId]
+                   ,[Action]
+                   ,[By]
+                   ,[At])
+                VALUES
+                   (@Concept
+                   ,@IsDiscount
+                   ,@Type
+                   ,@Value
+                   ,@IdentityId
+                   ,@Action
+                   ,@By
+                   ,@At)
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@Concept", addon.Concept)
+               ,new("@IsDiscount", addon.IsDiscount)
+               ,new("@Type", addon.Type)
+               ,new("@Value", addon.Value)
+               ,new("@IdentityId", addon.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
+        }
+
+        private string GetAssignAddonQuery(Guid? productId = null)
+        {
+            var where = "";
+            if (productId is not null)
+            {
+                where += " AND PRO.Id = @ProductId ";
+            }
+
+            return @$"
+                INSERT INTO [Audit].[ProductAddonHistory]
+                    ([Concept]
+                    ,[ProductCode]
+                    ,[ProductName]
+                    ,[IdentityId]
+                    ,[Action]
+                    ,[By]
+                    ,[At])
+                SELECT 
+	                 ISNULL([ADD].Concept,AD.Concept)
+	                ,PRO.Code
+	                ,PRO.[Name]
+	                ,PRO.[Id]
+	                ,@Action
+	                ,@CreatedBy
+	                ,GETUTCDATE()
+                FROM [GPA].[Inventory].[Products] PRO
+	                LEFT JOIN [GPA].[Inventory].[ProductAddons] PROADD ON 
+			                PRO.Id = PROADD.ProductId 
+		                AND PRO.[Type] = 1 
+		                AND PROADD.AddonId = @AddonId
+	                LEFT JOIN [GPA].[Inventory].[Addons] [ADD] ON 
+		                [ADD].Id = PROADD.AddonId
+                    JOIN [GPA].[Inventory].[Addons] AD ON AD.Id = @AddonId
+                WHERE 1 = 1 {where} ;
+            ";
+        }
 
         private (ProductByAddonIdFilterDto? productByAddonIdFilterDto, string termFilter, string selectedFilter) SetProductByAddonFilterParametersIfNotEmpty(RequestFilterDto filter)
         {
@@ -359,7 +454,7 @@ namespace GPA.Data.Inventory
             }
 
             var termFilter = productByAddonIdFilterDto?.Term is { Length: > 0 } ? "AND (PRO.[Code] LIKE CONCAT('%', @Term, '%') OR PRO.[Name] LIKE CONCAT('%', @Term, '%'))" : "";
-            var selectedFilter = productByAddonIdFilterDto?.Selected is not null && productByAddonIdFilterDto?.Selected  != -1 ? "AND (@IsSelected IS NULL OR CAST(IIF(PROADD.Id IS NULL, 0,1) AS BIT) = @IsSelected)" : "";
+            var selectedFilter = productByAddonIdFilterDto?.Selected is not null && productByAddonIdFilterDto?.Selected != -1 ? "AND (@IsSelected IS NULL OR CAST(IIF(PROADD.Id IS NULL, 0,1) AS BIT) = @IsSelected)" : "";
 
             return (productByAddonIdFilterDto, termFilter, selectedFilter);
         }

@@ -4,13 +4,18 @@ using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
+using GPA.Data;
+using GPA.Dtos.Audit;
 using GPA.Dtos.Security;
+using GPA.Entities;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -24,6 +29,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IGPAUserService _gPAUserService;
         private readonly IUserContextService _userContextService;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly GPADbContext _context;
         private readonly IValidator<GPAUserCreationDto> _creationValidator;
         private readonly IValidator<GPAUserUpdateDto> _updateValidator;
 
@@ -33,6 +39,7 @@ namespace GPA.Api.Controllers.Security
             IGPAUserService gPAUserService,
             IUserContextService userContextService,
             IBlobStorageServiceFactory blobStorageServiceFactory,
+            GPADbContext context,
             IValidator<GPAUserCreationDto> creationValidator,
             IValidator<GPAUserUpdateDto> updateValidator)
         {
@@ -41,6 +48,7 @@ namespace GPA.Api.Controllers.Security
             _gPAUserService = gPAUserService;
             _userContextService = userContextService;
             _blobStorageServiceFactory = blobStorageServiceFactory;
+            _context = context;
             _creationValidator = creationValidator;
             _updateValidator = updateValidator;
         }
@@ -90,6 +98,7 @@ namespace GPA.Api.Controllers.Security
                 }
                 return BadRequest(ModelState);
             }
+            await AddHistory(entity, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return Created($"/{entity.Id}", new { Id = entity.Id, Email = entity.Email, UserName = entity.UserName });
         }
 
@@ -124,6 +133,8 @@ namespace GPA.Api.Controllers.Security
             savedEntity.UpdatedAt = DateTimeOffset.UtcNow;
             savedEntity.UpdatedBy = _userContextService.GetCurrentUserId();
             await _userManager.UpdateAsync(savedEntity);
+
+            await AddHistory(savedEntity, ActionConstants.Update, _userContextService.GetCurrentUserId());
             return NoContent();
         }
 
@@ -188,7 +199,49 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            await AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
             return NoContent();
+        }
+
+        private async Task AddHistory(GPAUser model, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[UserHistory]
+                       ([Name]
+                       ,[UserName]
+                       ,[Email]
+                       ,[Photo]
+                       ,[Phone]
+                       ,[IdentityId]
+                       ,[Action]
+                       ,[By]
+                       ,[At])
+                 VALUES
+                       (@Name
+                       ,@UserName
+                       ,@Email
+                       ,@Photo
+                       ,@Phone
+                       ,@IdentityId
+                       ,@Action
+                       ,@By
+                       ,@At)
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@Name", model.FirstName + " " + model.LastName)
+               ,new("@UserName", model.UserName)
+               ,new("@Email", model.Email)
+               ,new("@Photo", model.Photo ?? "")
+               ,new("@Phone", model.PhoneNumber ?? "")
+               ,new("@IdentityId", model.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
     }
 }

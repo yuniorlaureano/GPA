@@ -12,9 +12,9 @@ namespace GPA.Utils
             if (addons.ContainsKey(detail.ProductId))
             {
                 var (debit, credit) = AddonCalculator.CalculateAddon(detail.Price, addons[detail.ProductId]);
-                return detail.Price - debit + credit;
+                return Math.Round(detail.Price - debit + credit, 2, MidpointRounding.ToEven);
             }
-            return detail.Price;
+            return Math.Round(detail.Price, 2, MidpointRounding.ToEven);
         }
 
         public static void CheckIfClientHasEnoughCredit(IEnumerable<RawPenddingPayment> debits, IEnumerable<RawCredit> credits, decimal payment, ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
@@ -22,7 +22,7 @@ namespace GPA.Utils
             var debit = debits.Sum(x => x.PendingPayment);
             var credit = credits.Sum(x => x.Credit);
             var toPay = invoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
-            var duePayment = toPay - payment;
+            var duePayment = Math.Round(toPay - payment, 2, MidpointRounding.ToEven);
 
             if (duePayment > (credit - debit))
             {

@@ -50,38 +50,8 @@ namespace GPA.Data
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
 
-            var role = new GPARole
-            {
-                Id = roleId,
-                Name = "admin",
-                NormalizedName = "ADMIN",
-            };
-
-            var roleClaims = new GPARoleClaim[]
-            {
-                new GPARoleClaim
-                {
-                    Id = 1,
-                    RoleId = roleId,
-                    ClaimType = "category",
-                    ClaimValue = "c,r,u,d",
-                }
-            };
-
-            var userRoles = new GPAUserRole[]
-            {
-                new GPAUserRole
-                {
-                    Id= Guid.NewGuid(),
-                    UserId = userId,
-                    RoleId = roleId,
-                }
-            };
             user.PasswordHash = passwordHasher.HashPassword(user, "admin");
             modelBuilder.Entity<GPAUser>().HasData(user);
-            modelBuilder.Entity<GPARole>().HasData(role);
-            modelBuilder.Entity<GPAUserRole>().HasData(userRoles);
-            modelBuilder.Entity<GPARoleClaim>().HasData(roleClaims);
 
             var reasons = new Reason[] 
             {

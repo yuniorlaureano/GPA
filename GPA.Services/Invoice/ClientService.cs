@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Invoice;
 using GPA.Common.Entities.Invoice;
 using GPA.Data.Invoice;
+using GPA.Dtos.Audit;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Security;
 
@@ -70,6 +71,10 @@ namespace GPA.Business.Services.Invoice
             client.CreatedBy = _userContextService.GetCurrentUserId();
             client.CreatedAt = DateTimeOffset.UtcNow;
             var savedClient = await _repository.AddAsync(client);
+
+            var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
+            await _repository.AddHistory(savedClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
+
             return _mapper.Map<ClientDto>(savedClient);
         }
 
@@ -85,11 +90,20 @@ namespace GPA.Business.Services.Invoice
             newClient.UpdatedBy = _userContextService.GetCurrentUserId();
             newClient.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(newClient);
+
+            var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
+            await _repository.AddHistory(newClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
 
         public async Task RemoveAsync(Guid id)
         {
+            var client = await _repository.GetClientAsync(id);
+            var credit = await _repository.GetCreditsByClientIdAsync(new List<Guid> { id });
+
             await _repository.SoftDeleteClientAsync(id, _userContextService.GetCurrentUserId());
+
+            var credits = credit?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
+            await _repository.AddHistory(_mapper.Map<Client>(client), credits, ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }
 
         public async Task<List<ClientCreditDto>> GetCredits(Guid clientId)

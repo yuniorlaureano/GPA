@@ -3,6 +3,7 @@ using GPA.Common.Entities.Inventory;
 using GPA.Dtos.Inventory;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Audit;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
@@ -24,6 +25,7 @@ namespace GPA.Data.Inventory
         Task<RawStock?> GetStockByIdAsync(Guid id);
         Task<IEnumerable<RawStock>> GetStocksAsync(RequestFilterDto filter);
         Task<int> GetStocksCountAsync(RequestFilterDto filter);
+        Task AddHistory(Stock stock, ICollection<StockDetails> stockDetails, string action, Guid by);
     }
 
     public class StockRepository : Repository<Stock>, IStockRepository
@@ -395,6 +397,60 @@ namespace GPA.Data.Inventory
             ";
 
             await _context.Database.ExecuteSqlRawAsync(query, new SqlParameter("@Photo", fullFileName), new SqlParameter("@Id", productId));
+        }
+
+        public async Task AddHistory(Stock stock, ICollection<StockDetails> stockDetails, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[StockHistory]
+                    ([TransactionType]
+                    ,[Description]
+                    ,[Date]
+                    ,[Status]
+                    ,[ProviderId]
+                    ,[StoreId]
+                    ,[ReasonId]
+                    ,[InvoiceId]
+                    ,[StockDetailsHistory]
+                    ,[IdentityId]
+                    ,[Action]
+                    ,[By]
+                    ,[At])
+                VALUES
+                    (@TransactionType
+                    ,@Description
+                    ,@Date
+                    ,@Status
+                    ,@ProviderId
+                    ,@StoreId
+                    ,@ReasonId
+                    ,@InvoiceId
+                    ,@StockDetailsHistory
+                    ,@IdentityId
+                    ,@Action
+                    ,@By
+                    ,@At)
+                    ";
+
+            var productDetails = JsonSerializer.Serialize(stockDetails.Select(x => new StockDetailHistory { ProductId = x.ProductId, PurchasePrice = x.PurchasePrice, Quantity = x.Quantity }));
+            var parameters = new SqlParameter[]
+            {
+                new("@TransactionType", stock.TransactionType)
+               ,new("@Description", stock.Description ?? "")
+               ,new("@Date", stock.Date)
+               ,new("@Status", stock.Status)
+               ,new("@ProviderId", stock.ProviderId ?? (object)DBNull.Value)
+               ,new("@StoreId", stock.StoreId ?? (object)DBNull.Value)
+               ,new("@ReasonId", stock.ReasonId)
+               ,new("@InvoiceId", stock.InvoiceId ?? (object)DBNull.Value)
+               ,new("@StockDetailsHistory", productDetails)
+               ,new("@IdentityId", stock.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
 
         private (ExistenceFilterDto? existenceFilterDto, string termFilter, string typeFilter) SetExistenceFilterParametersIfNotEmpty(RequestFilterDto filter)

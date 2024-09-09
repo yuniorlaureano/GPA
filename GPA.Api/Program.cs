@@ -21,8 +21,14 @@ using GPA.Services.Security.Validators;
 using GPA.Utils;
 using GPA.Utils.Extensions;
 using GPA.Utils.Middleware;
+using Microsoft.AspNetCore.Identity;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration)
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -47,7 +53,7 @@ builder.Services.AddDataCommonRepositories();
 builder.Services.AddBusinessCommonServices();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddIdentity<GPAUser, GPARole>().AddEntityFrameworkStores<GPADbContext>();
+builder.Services.AddIdentity<GPAUser, IdentityRole<Guid>>().AddEntityFrameworkStores<GPADbContext>();
 builder.Services.AddSecurityMappers();
 builder.Services.AddBusinessSecurityServices();
 builder.Services.AddSecurityValidators();

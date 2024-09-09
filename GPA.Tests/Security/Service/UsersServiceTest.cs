@@ -36,15 +36,12 @@ namespace GPA.Tests.Security.Service
                     .With(x => x.NormalizedUserName, "user" + i)
                     .With(x => x.Email, $"user{i}@test.com")
                     .With(x => x.SecurityStamp, Guid.NewGuid().ToString())
-                    .Without(x => x.UserRoles)
-                    .Without(x => x.UserTokens)
-                    .Without(x => x.UserLogins)
                     .Without(x => x.Profiles)
                     .Create();
                 user.PasswordHash = passwordHasher.HashPassword(user, "user" + i);
                 users.Add(user);
             }
-            _context.Users.AddRange(users);
+
             await _context.SaveChangesAsync();
             Assert.True(true);
         }

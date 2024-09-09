@@ -1,14 +1,17 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Invoice;
+using GPA.Dtos.Audit;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
+using GPA.Entities.Unmapped.Audit;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Utils;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GPA.Data.Invoice
 {
@@ -20,6 +23,7 @@ namespace GPA.Data.Invoice
         Task UpdateAsync(GPA.Common.Entities.Invoice.Invoice model, IEnumerable<InvoiceDetails> invoiceDetails);
         Task CancelAsync(Guid id, Guid updatedBy);
         Task<List<RawInvoiceDetails>> GetInvoiceDetailsByInvoiceIdAsync(Guid invoiceId);
+        Task AddHistory(GPA.Common.Entities.Invoice.Invoice invoice, ICollection<InvoiceDetails> invoiceDetails, string action, Guid by);
     }
 
     public class InvoiceRepository : Repository<GPA.Common.Entities.Invoice.Invoice>, IInvoiceRepository
@@ -58,6 +62,7 @@ namespace GPA.Data.Invoice
             var invoice = await _context
                 .Invoices
                 .Include(x => x.InvoiceDetails)
+                .ThenInclude(x => x.InvoiceDetailsAddons)
                 .FirstAsync(x => x.Id == id);
 
             if (invoice is not null && invoice.Status == InvoiceStatus.Saved)
@@ -93,6 +98,7 @@ namespace GPA.Data.Invoice
                     _context.Stocks.Add(stock);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
+                    await AddHistory(invoice, invoice.InvoiceDetails, ActionConstants.Canceled, updatedBy);
                 }
                 catch (Exception)
                 {
@@ -228,6 +234,70 @@ namespace GPA.Data.Invoice
             }
 
             return await _context.Database.SqlQueryRaw<int>(query, parameters.ToArray()).FirstOrDefaultAsync();
+        }
+
+        public async Task AddHistory(GPA.Common.Entities.Invoice.Invoice invoice, ICollection<InvoiceDetails> invoiceDetails, string action, Guid by)
+        {
+            var query = @"
+               INSERT INTO [Audit].[InvoiceHistory]
+                   ([Type]
+                   ,[Status]
+                   ,[Payment]
+                   ,[PaymentStatus]
+                   ,[Date]
+                   ,[Note]
+                   ,[ClientId]
+                   ,[InvoiceDetailsHistory]
+                   ,[IdentityId]
+                   ,[Action]
+                   ,[By]
+                   ,[At])
+             VALUES(
+                    @Type
+                   ,@Status
+                   ,@Payment
+                   ,@PaymentStatus
+                   ,@Date
+                   ,@Note
+                   ,@ClientId
+                   ,@InvoiceDetailsHistory
+                   ,@IdentityId
+                   ,@Action
+                   ,@By
+                   ,@At)
+                    ";
+
+            var detailsWithAddons = invoiceDetails.Select(x => new 
+            {
+                Price = x.Price,
+                ProductId = x.ProductId,
+                Quantity = x.Quantity,
+                Addon = x.InvoiceDetailsAddons.Select(add => new
+                {
+                    Concept = add.Concept,
+                    IsDiscount = add.IsDiscount,
+                    Type = add.Type,
+                    Value = add.Value
+                })
+            });
+            
+            var parameters = new SqlParameter[]
+            {
+                new("@Type", invoice.Type)
+               ,new("@Status", invoice.Status)
+               ,new("@Payment", invoice.Payment)
+               ,new("@PaymentStatus", invoice.PaymentStatus)
+               ,new("@Date", invoice.Date)
+               ,new("@Note", invoice.Note ?? "")
+               ,new("@ClientId", invoice.ClientId)
+               ,new("@InvoiceDetailsHistory", JsonSerializer.Serialize(detailsWithAddons))
+               ,new("@IdentityId", invoice.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
 
         private (SqlParameter from, SqlParameter to, SqlParameter status, SqlParameter saleType, SqlParameter term) GetInvoiceFilterParameter(InvoiceFilterDto? invoiceListFilter)

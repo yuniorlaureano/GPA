@@ -94,14 +94,6 @@ namespace GPA.Invoice.Api.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Delete)]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _invoiceService.RemoveAsync(id);
-            return NoContent();
-        }
-
         [HttpPost("{invoiceId}/attachment/upload")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.Invoicing}", permission: Permissions.Upload)]
         public async Task<IActionResult> UploadAttachment(Guid invoiceId, IFormCollection files)

@@ -4,6 +4,7 @@ using GPA.Business.Security;
 using GPA.Business.Services.Security;
 using GPA.Common.Entities.Security;
 using GPA.Data;
+using GPA.Dtos.Audit;
 using GPA.Dtos.General;
 using GPA.Dtos.Security;
 using GPA.Services.General.BlobStorage;
@@ -14,6 +15,8 @@ using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text.Json;
@@ -33,6 +36,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IEmailServiceFactory _emailServiceFactory;
         private readonly IAesHelper _aesHelper;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IGPAJwtService jwtService,
@@ -42,7 +46,8 @@ namespace GPA.Api.Controllers.Security
             IValidator<SignUpDto> signUpValidator,
             IEmailServiceFactory emailServiceFactory,
             IAesHelper aesHelper,
-            IBlobStorageServiceFactory blobStorageServiceFactory)
+            IBlobStorageServiceFactory blobStorageServiceFactory,
+            ILogger<AuthController> logger)
         {
             _jwtService = jwtService;
             _userManager = userManager;
@@ -52,12 +57,15 @@ namespace GPA.Api.Controllers.Security
             _emailServiceFactory = emailServiceFactory;
             _aesHelper = aesHelper;
             _blobStorageServiceFactory = blobStorageServiceFactory;
+            _logger = logger;
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LogInDto model)
         {
+            _logger.LogInformation("Login attempt");
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -132,6 +140,7 @@ namespace GPA.Api.Controllers.Security
 
             if (result.Succeeded)
             {
+                await AddHistory(entity, ActionConstants.SignUp, Guid.Empty);
                 return Created();
             }
 
@@ -185,7 +194,7 @@ namespace GPA.Api.Controllers.Security
                 ModelState.AddModelError("usuario", "El correo ya está registrado");
                 return BadRequest(ModelState);
             }
-            
+
             if (user is null)
             {
                 ModelState.AddModelError("usuario", "El usuario no existe");
@@ -212,17 +221,19 @@ namespace GPA.Api.Controllers.Security
             }
 
             BlobStorageFileResult? photo = GetUserPhoto(user);
-            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName && 
+            var cliams = User.Claims.Where(x => x.Type != GPAClaimTypes.FullName &&
                                                 x.Type != GPAClaimTypes.Photo).ToList();
 
             cliams.Add(new Claim(GPAClaimTypes.FullName, $"{user.FirstName} {user.LastName}"));
             cliams.Add(new Claim(GPAClaimTypes.Photo, photo?.FileUrl ?? ""));
-            
+
             var token = _jwtService.GenerateToken(new TokenDescriptorDto
             {
                 Algorithm = SecurityAlgorithms.HmacSha256Signature,
                 Claims = cliams.ToArray()
             });
+
+            await AddHistory(user, ActionConstants.Update, user.Id);
 
             var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
 
@@ -324,6 +335,7 @@ namespace GPA.Api.Controllers.Security
             user.SecurityStamp = Guid.NewGuid().ToString();
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
             await _userManager.UpdateAsync(user);
+            await AddHistory(user, ActionConstants.ResetPassword, user.Id);
             return Ok();
         }
 
@@ -370,6 +382,7 @@ namespace GPA.Api.Controllers.Security
 
             var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
 
+            await AddHistory(user, ActionConstants.Update, user.Id);
             return Ok(new { token = token, permissions = permissions });
         }
 
@@ -378,16 +391,16 @@ namespace GPA.Api.Controllers.Security
             BlobStorageFileResult? photo = null;
             if (user?.Photo is not null)
             {
-                try 
-                { 
+                try
+                {
                     photo = JsonSerializer.Deserialize<BlobStorageFileResult>(user.Photo, new JsonSerializerOptions
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     });
                 }
-                catch 
-                { 
-                    photo = null; 
+                catch
+                {
+                    photo = null;
                 }
             }
 
@@ -433,6 +446,48 @@ namespace GPA.Api.Controllers.Security
             }
 
             return ProfileConstants.InlineMasterProfile(profile);
+        }
+
+
+        private async Task AddHistory(GPAUser model, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[UserHistory]
+                       ([Name]
+                       ,[UserName]
+                       ,[Email]
+                       ,[Photo]
+                       ,[Phone]
+                       ,[IdentityId]
+                       ,[Action]
+                       ,[By]
+                       ,[At])
+                 VALUES
+                       (@Name
+                       ,@UserName
+                       ,@Email
+                       ,@Photo
+                       ,@Phone
+                       ,@IdentityId
+                       ,@Action
+                       ,@By
+                       ,@At)
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@Name", model.FirstName + " " + model.LastName)
+               ,new("@UserName", model.UserName)
+               ,new("@Email", model.Email)
+               ,new("@Photo", model.Photo ?? "")
+               ,new("@Phone", model.PhoneNumber ?? "")
+               ,new("@IdentityId", model.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
     }
 }

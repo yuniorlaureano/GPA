@@ -15,6 +15,7 @@ namespace GPA.Data.Inventory
         Task<IEnumerable<RawProduct>> GetProductsAsync(List<Guid> ids);
         Task SavePhoto(string fullFileName, Guid productId);
         Task SoftDelete(Guid productId);
+        Task AddHistory(RawProduct product, string action, Guid by);
     }
 
     public class ProductRepository : Repository<Product>, IProductRepository
@@ -159,6 +160,59 @@ namespace GPA.Data.Inventory
                 x => x.SetProperty(p => p.Deleted, true)
                       .SetProperty(p => p.DeletedAt, DateTimeOffset.UtcNow)
                 );
+        }
+
+        public async Task AddHistory(RawProduct product, string action, Guid by)
+        {
+            var query = @"
+                INSERT INTO [Audit].[ProductHistory]
+                       ([Code]
+                       ,[Name]
+                       ,[Photo]
+                       ,[Price]
+                       ,[Description]
+                       ,[Type]
+                       ,[Unit]
+                       ,[Category]
+                       ,[ProductLocation]
+                       ,[IdentityId]
+                       ,[Action]
+                       ,[By]
+                       ,[At])
+                 VALUES
+                       (@Code
+                       ,@Name
+                       ,@Photo
+                       ,@Price
+                       ,@Description
+                       ,@Type
+                       ,@Unit
+                       ,@Category
+                       ,@ProductLocation
+                       ,@IdentityId
+                       ,@Action
+                       ,@By
+                       ,@At)
+                    ";
+
+            var parameters = new SqlParameter[]
+            {
+                new("@Code", product.Code)
+               ,new("@Name", product.Name)
+               ,new("@Photo", product.Photo)
+               ,new("@Price", product.Price)
+               ,new("@Description", product.Description)
+               ,new("@Type", product.Type)
+               ,new("@Unit", product.Unit)
+               ,new("@Category", product.Category)
+               ,new("@ProductLocation", product.ProductLocation ?? "")
+               ,new("@IdentityId", product.Id)
+               ,new("@Action", action)
+               ,new("@By", by)
+               ,new("@At", DateTimeOffset.UtcNow)
+            };
+
+            await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
     }
 }

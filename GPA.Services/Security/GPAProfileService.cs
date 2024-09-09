@@ -2,6 +2,7 @@
 using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Data.Security;
+using GPA.Dtos.Audit;
 using GPA.Dtos.Security;
 using GPA.Entities.Unmapped;
 using GPA.Services.Security;
@@ -92,6 +93,9 @@ namespace GPA.Business.Services.Security
             entity.CreatedBy = _userContextService.GetCurrentUserId();
             entity.CreatedAt = DateTimeOffset.UtcNow;
             var savedEntity = await _repository.AddAsync(entity);
+
+            await _repository.AddHistory(savedEntity, ActionConstants.Add, _userContextService.GetCurrentUserId());
+
             return new GPAProfileDto
             {
                 Id = savedEntity.Id,
@@ -122,12 +126,15 @@ namespace GPA.Business.Services.Security
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+
+            await _repository.AddHistory(savedEntity, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
 
         public async Task AssignProfileToUser(Guid profileId, Guid userId)
         {
             var createdBy = _userContextService.GetCurrentUserId();
             await _repository.AssignProfileToUser(profileId, userId, createdBy);
+            await _repository.AddUserProfileHistory(userId, profileId, ActionConstants.Assign, _userContextService.GetCurrentUserId());
         }
 
         public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto filter)
@@ -142,6 +149,7 @@ namespace GPA.Business.Services.Security
 
         public async Task UnAssignProfileFromUser(Guid profileId, Guid userId)
         {
+            await _repository.AddUserProfileHistory(userId, profileId, ActionConstants.UnAssign, _userContextService.GetCurrentUserId());
             await _repository.UnAssignProfileFromUser(profileId, userId);
         }
 
@@ -163,6 +171,8 @@ namespace GPA.Business.Services.Security
             {
                 throw new InvalidOperationException("No puede eliminar el perfil administrador");
             }
+
+            await _repository.AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
 
             await _repository.RemoveAsync(entity);
         }

@@ -19,9 +19,6 @@ namespace GPA.Common.Entities.Security
         public Guid? DeletedBy { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public ICollection<GPAUserRole> UserRoles { get; set; }
-        public ICollection<GPAUserToken> UserTokens { get; set; }
-        public ICollection<GPAUserLogin> UserLogins { get; set; }
         public ICollection<GPAUserProfile> Profiles { get; set; }
     }
 }

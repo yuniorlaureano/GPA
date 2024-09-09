@@ -1,0 +1,7 @@
+is_global = true
+
+# Enforce structured logging
+dotnet_diagnostic.CA2254.severity = warning
+
+# Remove unused usings
+dotnet_diagnostic.IDE0005.severity = warning

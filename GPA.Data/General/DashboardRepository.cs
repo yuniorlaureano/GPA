@@ -107,8 +107,8 @@ namespace GPA.Data.General
 	            SUM(CASE WHEN ST.Id IS NULL THEN 0 ELSE STD.Quantity END) AS Quantity
             FROM @Months MT
 	            LEFT JOIN [Inventory].[Stocks] ST
-		            ON     @Year  = YEAR(ST.CreatedAt)
-		               AND MT.Mth = MONTH(ST.CreatedAt)
+		            ON     @Year  = YEAR(ST.[Date])
+		               AND MT.Mth = MONTH(ST.[Date])
 	            LEFT JOIN [Inventory].[StockDetails] STD
 		            ON ST.Id = STD.StockId
             WHERE     (ST.ReasonId =	   @ReasonId OR ST.Id IS NULL)

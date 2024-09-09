@@ -1,6 +1,6 @@
-﻿namespace GPA.Common.DTOs.Invoice
+﻿namespace GPA.Entities.Unmapped.Audit
 {
-    public class ClientCreditDto
+    public class ClientCreditHistory
     {
         public decimal Credit { get; set; }
         public string Concept { get; set; }

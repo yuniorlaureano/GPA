@@ -15,6 +15,8 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
             CreateMap<Client, ClientDto>();
             CreateMap<RawClient, ClientDto>();
             CreateMap<ClientDto, Client>();
+            CreateMap<RawClient, Client>();
+            CreateMap<Client, RawClient>();
 
             CreateMap<ClientCreditDto, ClientCredit>();
             CreateMap<ClientCredit, ClientCreditDto>();

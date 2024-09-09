@@ -5,13 +5,15 @@ using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
 using GPA.Entities.Inventory;
+using GPA.Entities.Unmapped.Audit;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace GPA.Data
 {
-    public class GPADbContext : IdentityDbContext<GPAUser, GPARole, Guid, GPAUserClaim, GPAUserRole, GPAUserLogin, GPARoleClaim, GPAUserToken>
+    public class GPADbContext : IdentityDbContext<GPAUser, IdentityRole<Guid>, Guid, IdentityUserClaim<Guid>, IdentityUserRole<Guid>, IdentityUserLogin<Guid>, IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
     {
         public GPADbContext(DbContextOptions<GPADbContext> dbContextOptions) : base(dbContextOptions)
         {
@@ -69,5 +71,16 @@ namespace GPA.Data
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
         public DbSet<BlobStorageConfiguration> BlobStorageConfigurations { get; set; }
         public DbSet<PrintInformation> PrintInformation { get; set; }
+
+        //AUDIT
+        public DbSet<AddonHistory> AddonHistory { get; set; }
+        public DbSet<ClientHistory> ClientHistory { get; set; }
+        public DbSet<InvoiceHistory> InvoiceHistory { get; set; }
+        public DbSet<ProductAddonHistory> ProductAddonHistory { get; set; }
+        public DbSet<ProductHistory> ProductHistory { get; set; }
+        public DbSet<ProfileHistory> ProfileHistory { get; set; }
+        public DbSet<StockHistory> StockHistory { get; set; }
+        public DbSet<UserHistory> UserHistory { get; set; }
+        public DbSet<UserProfileHistory> UserProfileHistory { get; set; }
     }
 }

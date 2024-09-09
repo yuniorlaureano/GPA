@@ -219,53 +219,6 @@ namespace GPA.Tests.Inventory.Service
             Assert.NotEqual(updated.Description, added.Description);
         }
 
-        [Fact]
-        public async Task ShouldDelete()
-        {
-            var productDependencies = await ProductCreationDependencies();
-
-            var product = _fixture
-                .Build<ProductCreationDto>()
-                .With(x => x.Code)
-                .With(x => x.Photo)
-                .With(x => x.UnitId, productDependencies.UnitId)
-                .With(x => x.CategoryId, productDependencies.CategoryId)
-                .With(x => x.ProductLocationId, productDependencies.LocationId)
-                .With(x => x.Type, new Random().Next(1, 2))
-                .With(x => x.Type, new Random().Next(1, 2))
-                .Without(x => x.Id)
-                .Without(x => x.Addons)
-                .Create();
-
-            var dto = await _productService.AddAsync(product);
-
-
-            var stockDependencies = await StockCreationDependencies();
-
-            var stockDetails = _fixture
-                .Build<StockCreationDetailDto>()
-                .With(x => x.ProductId, dto.Id)
-                .Create();
-
-            var stock = _fixture
-                .Build<StockCreationDto>()
-                .With(x => x.TransactionType, (int)TransactionType.Input)
-                .With(x => x.StoreId, stockDependencies.StoreId)
-                .With(x => x.ProviderId, stockDependencies.ProviderId)
-                .With(x => x.ReasonId, stockDependencies.ReasonId)
-                .With(x => x.StockDetails, new List<StockCreationDetailDto> { stockDetails })
-                .Without(x => x.Id)
-                .Create();
-
-            var added = await _stockService.AddAsync(stock);
-
-
-            await _stockService.RemoveAsync(added.Id.Value);
-            var existing = await _stockService.GetByIdAsync(added.Id.Value);
-
-            Assert.Null(existing);
-        }
-
         private async Task<(Guid LocationId, Guid CategoryId, Guid UnitId)> ProductCreationDependencies()
         {
             var productLocation = _fixture
