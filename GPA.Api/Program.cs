@@ -1,4 +1,5 @@
 using GPA.Api.Extensions;
+using GPA.Api.Utils;
 using GPA.Business.General.Extensions;
 using GPA.Business.Inventory.Extensions;
 using GPA.Business.Invoice.Extensions;
@@ -53,7 +54,16 @@ builder.Services.AddDataCommonRepositories();
 builder.Services.AddBusinessCommonServices();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddIdentity<GPAUser, IdentityRole<Guid>>().AddEntityFrameworkStores<GPADbContext>();
+builder.Services.AddIdentity<GPAUser, IdentityRole<Guid>>(options =>
+{
+    options.Password.RequireDigit = true; // Requires at least one digit
+    options.Password.RequireLowercase = true; // Requires at least one lowercase letter
+    options.Password.RequireUppercase = true; // Requires at least one uppercase letter
+    options.Password.RequireNonAlphanumeric = true; // Requires at least one non-alphanumeric character
+    options.Password.RequiredLength = 8; // Requires a minimum length of 8 characters
+}).AddEntityFrameworkStores<GPADbContext>()
+.AddErrorDescriber<CustomIdentityErrorDescriber>();
+
 builder.Services.AddSecurityMappers();
 builder.Services.AddBusinessSecurityServices();
 builder.Services.AddSecurityValidators();

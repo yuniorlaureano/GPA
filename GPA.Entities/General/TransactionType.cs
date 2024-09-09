@@ -1,6 +1,6 @@
 ﻿namespace GPA.Entities.General
 {
-    public enum TransactionType
+    public enum TransactionType : byte
     {
         Input,
         Output

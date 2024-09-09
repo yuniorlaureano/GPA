@@ -16,6 +16,7 @@ using GPA.Utils;
 using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
 
@@ -45,6 +46,7 @@ namespace GPA.Business.Services.Inventory
         private readonly IStockAttachmentRepository _stockAttachmentRepository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IMapper _mapper;
+        private readonly ILogger<StockService> _logger;
 
         public StockService(
             IProductRepository productRepository,
@@ -53,7 +55,8 @@ namespace GPA.Business.Services.Inventory
             IStockRepository repository,
             IStockAttachmentRepository stockAttachmentRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<StockService> logger)
         {
             _addonRepository = addonRepository;
             _productRepository = productRepository;
@@ -62,6 +65,7 @@ namespace GPA.Business.Services.Inventory
             _stockAttachmentRepository = stockAttachmentRepository;
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<StockWithDetailDto?> GetByIdAsync(Guid id)
@@ -126,6 +130,8 @@ namespace GPA.Business.Services.Inventory
             newStock.CreatedAt = DateTimeOffset.UtcNow;
             newStock.Date = DateTime.UtcNow;
             var savedStock = await _repository.AddAsync(newStock);
+            var action = dto.TransactionType == (int)TransactionType.Input ? "Entrada" : "Salida";
+            _logger.LogInformation("El usuario '{User}' ha realidado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return _mapper.Map<StockDto>(savedStock);
         }
@@ -160,6 +166,8 @@ namespace GPA.Business.Services.Inventory
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
+                var action = savedStock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
+                _logger.LogInformation("El usuario '{User}' ha actualizado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             }
         }
 
@@ -196,6 +204,8 @@ namespace GPA.Business.Services.Inventory
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
+                var action = savedStock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
+                _logger.LogInformation("El usuario '{User}' ha actualizado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             }
         }
 
@@ -203,6 +213,8 @@ namespace GPA.Business.Services.Inventory
         {
             var stock = await _repository.GetByIdAsync(entity => entity.Include(x => x.StockDetails));
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
+            var action = stock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
+            _logger.LogInformation("El usuario '{User}' ha cancelado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, stock.Id);
             if (stock is not null)
             {
                 await _repository.AddHistory(stock, stock.StockDetails, ActionConstants.Canceled, _userContextService.GetCurrentUserId());

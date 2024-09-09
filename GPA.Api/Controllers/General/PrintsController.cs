@@ -2,7 +2,6 @@
 using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
 using GPA.Dtos.General;
-using GPA.Dtos.Inventory;
 using GPA.Services.General;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;

@@ -4,7 +4,9 @@ using GPA.Common.DTOs.General;
 using GPA.Data.General;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped.General;
+using GPA.Services.Security;
 using GPA.Utils.Database;
+using Microsoft.Extensions.Logging;
 
 namespace GPA.Business.Services.General
 {
@@ -21,11 +23,20 @@ namespace GPA.Business.Services.General
     {
         private readonly IUnitRepository _repository;
         private readonly IMapper _mapper;
+        private readonly ILogger<UnitService> _logger;
+        private readonly IUserContextService _userContextService;
 
-        public UnitService(IUnitRepository repository, IMapper mapper)
+        public UnitService(
+            IUnitRepository repository,
+            IMapper mapper,
+            ILogger<UnitService> logger,
+            IUserContextService userContextService)
         {
             _repository = repository;
             _mapper = mapper;
+            _logger = logger;
+            _userContextService = userContextService;
+            _logger = logger;
         }
 
         public async Task<RawUnit?> GetByIdAsync(Guid id)
@@ -48,6 +59,7 @@ namespace GPA.Business.Services.General
         {
             var unit = _mapper.Map<Unit>(dto);
             var savedUnit = await _repository.AddAsync(unit);
+            _logger.LogInformation("El usuario '{User}' ha agregado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
             return _mapper.Map<UnitDto>(savedUnit);
         }
 
@@ -65,11 +77,13 @@ namespace GPA.Business.Services.General
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            _logger.LogInformation("El usuario '{User}' ha modificado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             await _repository.SoftDeleteUnitAsync(id);
+            _logger.LogInformation("El usuario '{User}' ha eliminado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

@@ -5,6 +5,7 @@ using GPA.Dtos.General;
 using GPA.Entities.General;
 using GPA.Services.Security;
 using GPA.Utils;
+using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Linq.Expressions;
 
@@ -25,17 +26,20 @@ namespace GPA.Services.General
         private readonly IUserContextService _userContextService;
         private readonly IEmailProviderHelper _emailProviderHelper;
         private readonly IMapper _mapper;
+        private readonly ILogger<EmailProviderService> _logger;
 
         public EmailProviderService(
             IEmailConfigurationRepository repository,
             IUserContextService userContextService,
             IEmailProviderHelper emailProviderHelper,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<EmailProviderService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _emailProviderHelper = emailProviderHelper;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<EmailConfigurationDto?> GetByIdAsync(Guid id)
@@ -65,6 +69,7 @@ namespace GPA.Services.General
             var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
             emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
             await _repository.CreateConfigurationAsync(emailConfiguration);
+            _logger.LogInformation("El usuario '{User}' ha agregado la configuración de email para '{Engine}'", _userContextService.GetCurrentUserId(), dto.Engine);
         }
 
         public async Task UpdateConfigurationAsync(EmailConfigurationUpdateDto dto)
@@ -84,12 +89,14 @@ namespace GPA.Services.General
             var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
             emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
             await _repository.UpdateConfigurationAsync(emailConfiguration);
+            _logger.LogInformation("El usuario '{User}' ha modificado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), dto.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var savedCEmailConfiguration = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedCEmailConfiguration);
+            _logger.LogInformation("El usuario '{User}' ha eliminado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

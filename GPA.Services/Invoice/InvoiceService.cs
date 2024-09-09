@@ -19,6 +19,7 @@ using GPA.Services.Security;
 using GPA.Utils;
 using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace GPA.Business.Services.Invoice
@@ -47,6 +48,7 @@ namespace GPA.Business.Services.Invoice
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IInvoiceAttachmentRepository _invoiceAttachmentRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<InvoiceService> _logger;
 
         public InvoiceService(
             IClientService clientService,
@@ -58,7 +60,8 @@ namespace GPA.Business.Services.Invoice
             IUserContextService userContextService,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IInvoiceAttachmentRepository invoiceAttachmentRepository,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<InvoiceService> logger)
         {
             _clientRepository = clientRepository;
             _clientService = clientService;
@@ -70,6 +73,7 @@ namespace GPA.Business.Services.Invoice
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _invoiceAttachmentRepository = invoiceAttachmentRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<InvoiceListDto?> GetInvoiceByIdAsync(Guid id)
@@ -155,7 +159,8 @@ namespace GPA.Business.Services.Invoice
             await AddStock(savedInvoice);
             await AddReceivableAccount(invoice, addons);
             await _repository.AddHistory(savedInvoice, savedInvoice.InvoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
-            
+
+            _logger.LogInformation("El usuario '{User}', Ha actualizado la factura '{InvoiceId}', con estado de pago: {PaymentStatus}, y estado", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(invoice.PaymentStatus), Enum.GetName(invoice.Status));
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
@@ -204,11 +209,13 @@ namespace GPA.Business.Services.Invoice
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
                 await _repository.AddHistory(newInvoice, invoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
+                _logger.LogInformation("El usuario '{User}', Ha actualizado la factura '{InvoiceId}', con estado de pago: {PaymentStatus}, y estado", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(newInvoice.PaymentStatus), Enum.GetName(newInvoice.Status));
             }
         }
 
         public async Task CancelAsync(Guid id)
         {
+            _logger.LogInformation("El usuario '{User}', ha cancelado la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), id);
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
         }
 
@@ -286,7 +293,8 @@ namespace GPA.Business.Services.Invoice
             {
                 invoice.CreatedBy = _userContextService.GetCurrentUserId();
                 invoice.CreatedAt = DateTimeOffset.UtcNow;
-                await _stockRepository.AddAsync(ToStock(invoice));
+                var entity = await _stockRepository.AddAsync(ToStock(invoice));
+                _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', por el usaurio", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
             }
         }
 
@@ -332,7 +340,7 @@ namespace GPA.Business.Services.Invoice
             }
         }
 
-        
+
 
         private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products)
         {

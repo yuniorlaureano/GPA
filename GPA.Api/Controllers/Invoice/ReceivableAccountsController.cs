@@ -76,13 +76,5 @@ namespace GPA.Invoice.Api.Controllers
             await _service.UpdateAsync(model);
             return NoContent();
         }
-
-        [HttpDelete("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Delete)]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _service.RemoveAsync(id);
-            return NoContent();
-        }
     }
 }

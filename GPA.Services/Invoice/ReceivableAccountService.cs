@@ -6,25 +6,17 @@ using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Services.Security;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+using Microsoft.Extensions.Logging;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IReceivableAccountService
     {
         Task<ClientPaymentsDetailDto?> GetByIdAsync(Guid id);
-
         Task<InvoiceWithReceivableAccountsDto?> GetByInvoiceIdAsync(Guid id);
-
-        //Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null);
-
         Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search);
-
         Task<ClientPaymentsDetailDto?> AddAsync(ClientPaymentsDetailCreationDto clientDto);
-
         Task UpdateAsync(ClientPaymentsDetailCreationDto clientDto);
-
-        Task RemoveAsync(Guid id);
     }
 
     public class ReceivableAccountService : IReceivableAccountService
@@ -33,17 +25,20 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoiceRepository _invoiceRepository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<ReceivableAccountService> _logger;
 
         public ReceivableAccountService(
             IReceivableAccountRepository repository,
             IUserContextService userContextService,
             IInvoiceRepository invoiceRepository,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<ReceivableAccountService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
             _invoiceRepository = invoiceRepository;
+            _logger = logger;
         }
 
         public async Task<ClientPaymentsDetailDto?> GetByIdAsync(Guid id)
@@ -75,22 +70,6 @@ namespace GPA.Business.Services.Invoice
             return invoiceWithReceivableAccounts;
         }
 
-        //public async Task<ResponseDto<ClientPaymentsDetailDto>> GetAllAsync(RequestFilterDto search, Expression<Func<ClientPaymentsDetails, bool>>? expression = null)
-        //{
-        //    var categories = await _repository.GetAllAsync(query =>
-        //    {
-        //        return query
-        //            .OrderByDescending(x => x.Id)
-        //            .Skip(search.PageSize * Math.Abs(search.Page - 1))
-        //            .Take(search.PageSize);
-        //    }, expression);
-        //    return new ResponseDto<ClientPaymentsDetailDto>
-        //    {
-        //        Count = await _repository.CountAsync(query => query, expression),
-        //        Data = _mapper.Map<IEnumerable<ClientPaymentsDetailDto>>(categories)
-        //    };
-        //}
-
         public async Task<ResponseDto<ClientPaymentsDetailSummaryDto>> GetReceivableSummaryAsync(RequestFilterDto search)
         {
             var receivables = await _repository.GetReceivableSummaryAsync(search);
@@ -109,6 +88,7 @@ namespace GPA.Business.Services.Invoice
             payment.CreatedAt = DateTimeOffset.UtcNow;
             payment.Date = DateTime.UtcNow;
             var savedClient = await _repository.AddAsync(payment);
+            _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar: {ReceivableId} para la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), savedClient.Id, dto.InvoiceId);
             return _mapper.Map<ClientPaymentsDetailDto>(savedClient);
         }
 
@@ -134,18 +114,14 @@ namespace GPA.Business.Services.Invoice
                 if (hasMorePayments)
                 {
                     await CreateNextPayment(dto, pendingPayment);
+                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar {ReceivableId} para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
                 }
                 else
                 {
                     await MarkInvoiceAsPayed(invoice);
+                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar {ReceivableId} para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
                 }
             }
-        }
-
-        public async Task RemoveAsync(Guid id)
-        {
-            var savedClient = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedClient);
         }
 
         private async Task CreateNextPayment(ClientPaymentsDetailCreationDto dto, decimal pendingPayment)

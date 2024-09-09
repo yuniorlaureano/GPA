@@ -4,14 +4,13 @@ using GPA.Common.Entities.Invoice;
 using GPA.Dtos.Audit;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
-using GPA.Entities.Unmapped.Audit;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Utils;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace GPA.Data.Invoice
 {
@@ -28,8 +27,10 @@ namespace GPA.Data.Invoice
 
     public class InvoiceRepository : Repository<GPA.Common.Entities.Invoice.Invoice>, IInvoiceRepository
     {
-        public InvoiceRepository(GPADbContext _dbContext) : base(_dbContext)
+        private ILogger<InvoiceRepository> _logger;
+        public InvoiceRepository(GPADbContext _dbContext, ILogger<InvoiceRepository> logger) : base(_dbContext)
         {
+            _logger = logger;
         }
 
 
@@ -91,7 +92,6 @@ namespace GPA.Data.Invoice
                         CreatedBy = updatedBy
                     }).ToList()
                 };
-
                 try
                 {
 
@@ -99,9 +99,12 @@ namespace GPA.Data.Invoice
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     await AddHistory(invoice, invoice.InvoiceDetails, ActionConstants.Canceled, updatedBy);
+                    _logger.LogInformation("Cancelando factura: {InvoiceId}", id);
+                    _logger.LogInformation("Generando entrada: {StockId}", stock.Id);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error cancelando factura: {InvoiceId}", id);
                     await transaction.RollbackAsync();
                     throw;
                 }
@@ -267,7 +270,7 @@ namespace GPA.Data.Invoice
                    ,@At)
                     ";
 
-            var detailsWithAddons = invoiceDetails.Select(x => new 
+            var detailsWithAddons = invoiceDetails.Select(x => new
             {
                 Price = x.Price,
                 ProductId = x.ProductId,
@@ -280,7 +283,7 @@ namespace GPA.Data.Invoice
                     Value = add.Value
                 })
             });
-            
+
             var parameters = new SqlParameter[]
             {
                 new("@Type", invoice.Type)

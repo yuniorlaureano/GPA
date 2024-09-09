@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace GPA.Business.Services.Inventory
@@ -26,15 +27,18 @@ namespace GPA.Business.Services.Inventory
         private readonly IProviderRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<ProviderService> _logger;
 
         public ProviderService(
             IProviderRepository repository,
             IUserContextService userContextService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<ProviderService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<ProviderDto?> GetProviderByIdAsync(Guid id)
@@ -60,6 +64,7 @@ namespace GPA.Business.Services.Inventory
             newProvider.CreatedBy = _userContextService.GetCurrentUserId();
             newProvider.CreatedAt = DateTimeOffset.UtcNow;
             var savedProvider = await _repository.AddAsync(newProvider);
+            _logger.LogInformation("El usuario '{User}' ha agregado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), savedProvider.Id);
             return _mapper.Map<ProviderDto>(savedProvider);
         }
 
@@ -79,12 +84,14 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            _logger.LogInformation("El usuario '{User}' ha actualizado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), savedProvider.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var newProvider = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(newProvider);
+            _logger.LogInformation("El usuario '{User}' ha actualizado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

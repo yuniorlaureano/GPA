@@ -4,8 +4,8 @@
     {
         public Guid? Id { get; set; }
         public string? Description { get; set; }
-        public int TransactionType { get; set; }
-        public int Status { get; set; }
+        public byte TransactionType { get; set; }
+        public byte Status { get; set; }
         public Guid? ProviderId { get; set; }
         public Guid? StoreId { get; set; }
         public int ReasonId { get; set; }

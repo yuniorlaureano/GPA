@@ -2,6 +2,7 @@
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Dtos.Security;
+using GPA.Services.Security;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,17 @@ namespace GPA.Api.Controllers.Security
     public class ProfilesController : ControllerBase
     {
         private readonly IGPAProfileService _gPAProfileService;
+        private readonly ILogger<ProfilesController> _logger;
+        private readonly IUserContextService _userContextService;
 
-        public ProfilesController(IGPAProfileService gPAProfileService)
+        public ProfilesController(
+            IGPAProfileService gPAProfileService,
+            IUserContextService userContextService,
+            ILogger<ProfilesController> logger)
         {
             _gPAProfileService = gPAProfileService;
+            _userContextService = userContextService;
+            _logger = logger;
         }
 
         [HttpGet("{id}")]
@@ -57,6 +65,7 @@ namespace GPA.Api.Controllers.Security
             }
 
             var profile = await _gPAProfileService.AddAsync(model);
+            _logger.LogInformation("El usuario '{User}' ha creado el perfil '{Profile}'", _userContextService.GetCurrentUserName(), model.Name);
             return Created(Url.Action(action: "Get", new { id = profile.Id }), profile);
         }
 
@@ -77,6 +86,7 @@ namespace GPA.Api.Controllers.Security
 
             try
             {
+                _logger.LogInformation("El usuario '{User}' ha modificado el perfil '{Profile}'", _userContextService.GetCurrentUserName(), model.Name);
                 await _gPAProfileService.UpdateAsync(model);
             }
             catch (Exception ex)
@@ -92,6 +102,7 @@ namespace GPA.Api.Controllers.Security
         public async Task<IActionResult> AssignProfileToUser(Guid profileId, Guid userId)
         {
             await _gPAProfileService.AssignProfileToUser(profileId, userId);
+            _logger.LogInformation("El usuario '{User}' ha asignado el perfil '{Profile}' a {UserId}", _userContextService.GetCurrentUserName(), profileId, userId);
             return NoContent();
         }
 
@@ -119,6 +130,7 @@ namespace GPA.Api.Controllers.Security
             }
 
             await _gPAProfileService.UnAssignProfileFromUser(profileId, userId);
+            _logger.LogInformation("El usuario '{User}' ha desasignado el perfil '{Profile}' a {UserId}", _userContextService.GetCurrentUserName(), profileId, userId);
             return NoContent();
         }
 
@@ -134,6 +146,7 @@ namespace GPA.Api.Controllers.Security
             try
             {
                 await _gPAProfileService.RemoveAsync(id);
+                _logger.LogInformation("El usuario '{User}' ha eliminado el perfil '{Profile}'", _userContextService.GetCurrentUserName(), id);
             }
             catch (Exception ex)
             {

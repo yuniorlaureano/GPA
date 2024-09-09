@@ -7,7 +7,6 @@ using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Audit;
 using GPA.Dtos.Security;
-using GPA.Entities;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils.Profiles;
@@ -30,6 +29,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IUserContextService _userContextService;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly GPADbContext _context;
+        private readonly ILogger<UsersController> _logger;
         private readonly IValidator<GPAUserCreationDto> _creationValidator;
         private readonly IValidator<GPAUserUpdateDto> _updateValidator;
 
@@ -41,7 +41,8 @@ namespace GPA.Api.Controllers.Security
             IBlobStorageServiceFactory blobStorageServiceFactory,
             GPADbContext context,
             IValidator<GPAUserCreationDto> creationValidator,
-            IValidator<GPAUserUpdateDto> updateValidator)
+            IValidator<GPAUserUpdateDto> updateValidator,
+            ILogger<UsersController> logger)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -51,6 +52,7 @@ namespace GPA.Api.Controllers.Security
             _context = context;
             _creationValidator = creationValidator;
             _updateValidator = updateValidator;
+            _logger = logger;
         }
 
         [HttpGet("{id}")]
@@ -98,6 +100,7 @@ namespace GPA.Api.Controllers.Security
                 }
                 return BadRequest(ModelState);
             }
+            _logger.LogInformation("'{User}' ha creado un usuario", _userContextService.GetCurrentUserName());
             await AddHistory(entity, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return Created($"/{entity.Id}", new { Id = entity.Id, Email = entity.Email, UserName = entity.UserName });
         }
@@ -126,6 +129,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            var originalUserName = savedEntity.UserName;
             savedEntity.FirstName = model.FirstName;
             savedEntity.LastName = model.LastName;
             savedEntity.Email = model.Email;
@@ -134,6 +138,7 @@ namespace GPA.Api.Controllers.Security
             savedEntity.UpdatedBy = _userContextService.GetCurrentUserId();
             await _userManager.UpdateAsync(savedEntity);
 
+            _logger.LogInformation("'{User}' ha modificado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), originalUserName);
             await AddHistory(savedEntity, ActionConstants.Update, _userContextService.GetCurrentUserId());
             return NoContent();
         }
@@ -166,6 +171,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            _logger.LogInformation("'{User}' ha cambiado la foto de perfil del usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), user.UserName);
             return Ok();
         }
 
@@ -199,6 +205,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState);
             }
 
+            _logger.LogInformation("'{User}' ha eliminado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
             await AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
             return NoContent();
         }

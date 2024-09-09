@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 
 namespace GPA.Business.Services.Inventory
 {
@@ -21,15 +22,18 @@ namespace GPA.Business.Services.Inventory
         private readonly IStockCycleRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<StockCycleService> _logger;
 
         public StockCycleService(
             IStockCycleRepository repository,
             IUserContextService userContextService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<StockCycleService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<StockCycleDto?> GetStockCycleAsync(Guid id)
@@ -56,17 +60,20 @@ namespace GPA.Business.Services.Inventory
             newStockCycle.CreatedBy = _userContextService.GetCurrentUserId();
             newStockCycle.CreatedAt = DateTimeOffset.UtcNow;
             var cycleId = await _repository.OpenCycleAsync(newStockCycle);
+            _logger.LogInformation("El usuario '{User}' ha abierto el ciclo de inventario '{Cicle}'", _userContextService.GetCurrentUserId(), cycleId);
             return cycleId;
         }
 
         public async Task CloseCycleAsync(Guid id)
         {
             await _repository.CloseCycleAsync(id, _userContextService.GetCurrentUserId());
+            _logger.LogInformation("El usuario '{User}' ha cerrado el ciclo de inventario '{Cicle}'", _userContextService.GetCurrentUserId(), id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             await _repository.SoftDeleteStockCycleAsync(id, _userContextService.GetCurrentUserId());
+            _logger.LogInformation("El usuario '{User}' ha eliminado el ciclo de inventario '{Cicle}'", _userContextService.GetCurrentUserId(), id);
         }
 
         private async Task MapStockCycleDetails(StockCycleDto dto)

@@ -5,6 +5,8 @@ using GPA.Dtos.General;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped.General;
 using GPA.Services.General.BlobStorage;
+using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace GPA.Services.General
@@ -24,14 +26,21 @@ namespace GPA.Services.General
         private readonly IPrintRepository _repository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IMapper _mapper;
+        private readonly ILogger<PrintService> _logger;
+        private readonly IUserContextService _userContextService;
+
         public PrintService(
             IPrintRepository printRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<PrintService> logger,
+            IUserContextService userContextService)
         {
             _repository = printRepository;
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _mapper = mapper;
+            _logger = logger;
+            _userContextService = userContextService;
         }
 
         public async Task<RawPrintInformation?> GetPrintInformationByIdAsync(Guid id)
@@ -54,6 +63,7 @@ namespace GPA.Services.General
         {
             var printInformation = _mapper.Map<PrintInformation>(model);
             var savedUnit = await _repository.AddAsync(printInformation);
+            _logger.LogInformation("El usuario '{User}' ha agregado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
             return _mapper.Map<RawPrintInformation>(savedUnit);
         }
 
@@ -66,6 +76,7 @@ namespace GPA.Services.General
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            _logger.LogInformation("El usuario '{User}' ha modificado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), Id);
         }
 
         public async Task SavePhoto(PrintInformationUploadPhotoDto dto)
@@ -84,6 +95,7 @@ namespace GPA.Services.General
         {
             var model = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(model);
+            _logger.LogInformation("El usuario '{User}' ha eliminado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

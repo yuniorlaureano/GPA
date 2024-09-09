@@ -6,6 +6,7 @@ using GPA.Data.Invoice;
 using GPA.Dtos.Audit;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 
 namespace GPA.Business.Services.Invoice
 {
@@ -25,17 +26,20 @@ namespace GPA.Business.Services.Invoice
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
+        private readonly ILogger<ClientService> _logger;
 
         public ClientService(
             IClientRepository repository,
             IUserContextService userContextService,
             IMapper mapper,
-            IReceivableAccountRepository receivableAccountRepository)
+            IReceivableAccountRepository receivableAccountRepository,
+            ILogger<ClientService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
             _receivableAccountRepository = receivableAccountRepository;
+            _logger = logger;
         }
 
         public async Task<ClientDto?> GetClientAsync(Guid id)
@@ -75,6 +79,7 @@ namespace GPA.Business.Services.Invoice
             var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(savedClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
 
+            _logger.LogInformation("El usuario '{User}', ha agregado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), savedClient.Name + " " + savedClient.LastName);
             return _mapper.Map<ClientDto>(savedClient);
         }
 
@@ -91,6 +96,7 @@ namespace GPA.Business.Services.Invoice
             newClient.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(newClient);
 
+            _logger.LogInformation("El usuario '{User}', ha modificado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), newClient.Name + " " + newClient.LastName);
             var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(newClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
@@ -102,6 +108,7 @@ namespace GPA.Business.Services.Invoice
 
             await _repository.SoftDeleteClientAsync(id, _userContextService.GetCurrentUserId());
 
+            _logger.LogInformation("El usuario '{User}', ha borrado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), client.Name + " " + client.LastName);
             var credits = credit?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(_mapper.Map<Client>(client), credits, ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }

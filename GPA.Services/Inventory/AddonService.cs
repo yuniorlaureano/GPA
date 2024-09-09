@@ -6,6 +6,7 @@ using GPA.Data.Inventory;
 using GPA.Dtos.Audit;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 
 namespace GPA.Business.Services.Inventory
 {
@@ -28,15 +29,18 @@ namespace GPA.Business.Services.Inventory
         private readonly IAddonRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<AddonService> _logger;
 
         public AddonService(
             IAddonRepository repository,
             IUserContextService userContextService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<AddonService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<AddonDto?> GetAddonsAsync(Guid id)
@@ -63,6 +67,7 @@ namespace GPA.Business.Services.Inventory
             var savedAddon = await _repository.AddAsync(addon);
 
             await _repository.AddHistory(savedAddon, ActionConstants.Add, _userContextService.GetCurrentUserId());
+            _logger.LogInformation("El usuario '{User}' ha creado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
             return _mapper.Map<AddonDto>(savedAddon);
         }
 
@@ -82,35 +87,40 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            _logger.LogInformation("El usuario '{User}' ha modificado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
             await _repository.AddHistory(newAddon, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
-        
+
         public async Task<ResponseDto<RawProductByAddonId>> GetProductsByAddonIdAsync(Guid addonId, RequestFilterDto filter)
         {
             return new ResponseDto<RawProductByAddonId>
             {
-               Data = await _repository.GetProductsByAddonIdAsync(addonId, filter),
-               Count = await _repository.GetProductsCountByAddonIdAsync(addonId, filter)
+                Data = await _repository.GetProductsByAddonIdAsync(addonId, filter),
+                Count = await _repository.GetProductsCountByAddonIdAsync(addonId, filter)
             };
         }
 
         public Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
         {
+            _logger.LogInformation("El usuario '{User}' ha desasignado el agregado: '{AddonId}' del producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
             return _repository.RemoveAddonFromProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToProductAsync(Guid addonId, Guid productId)
         {
+            _logger.LogInformation("El usuario '{User}' ha asignado el agregado '{AddonId}' al producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
             return _repository.AssignAddonToProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
         }
 
         public Task RemoveAddonFromAllProductAsync(Guid addonId)
         {
+            _logger.LogInformation("El usuario '{User}' ha desasignado el agregado '{AddonId}' de todos los productos", _userContextService.GetCurrentUserId(), addonId);
             return _repository.RemoveAddonFromAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToAllProductAsync(Guid addonId)
         {
+            _logger.LogInformation("El usuario '{User}' ha asignado el agregado '{AddonId}' a todos los productos", _userContextService.GetCurrentUserId(), addonId);
             return _repository.AssignAddonToAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
@@ -118,7 +128,7 @@ namespace GPA.Business.Services.Inventory
         {
             var addon = await _repository.GetAddonsAsync(id);
             await _repository.SoftDeleteAddonAsync(id);
-            
+            _logger.LogInformation("El usuario '{User}' ha eliminado el agregado '{AddonId}'", _userContextService.GetCurrentUserId(), id);
             await _repository.AddHistory(_mapper.Map<Addon>(addon), ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }
     }
