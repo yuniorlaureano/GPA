@@ -10,6 +10,7 @@ namespace GPA.Business.Services.Inventory
 {
     public interface IStockReportsService
     {
+        Task<IEnumerable<Existence>> GetAllExistenceAsync(RequestFilterDto filter);
         Task<byte[]> ExportExistenceToExcelAsync(RequestFilterDto filter);
     }
 
@@ -32,6 +33,12 @@ namespace GPA.Business.Services.Inventory
             _repository = repository;
             _reportExcel = reportExcel;
             _logger = logger;
+        }
+
+        public async Task<IEnumerable<Existence>> GetAllExistenceAsync(RequestFilterDto filter)
+        {
+            _logger.LogInformation("User '{User}' is readin existence", _userContextService.GetCurrentUserId());
+            return await _repository.GetAllExistenceAsync(filter);
         }
 
         public async Task<byte[]> ExportExistenceToExcelAsync(RequestFilterDto filter)
