@@ -100,7 +100,7 @@ namespace GPA.Api.Controllers.Security
                 new Claim(GPAClaimTypes.Photo, photo?.FileUrl ?? "")
             };
 
-            var profileId = await AssignProfileAsClaimIfUserHasOnlyOneProfile(user.Id, claims);
+            var profileId = await AssignProfileAsClaim(user.Id, claims);
 
             var token = _jwtService.GenerateToken(new TokenDescriptorDto
             {
@@ -439,21 +439,17 @@ namespace GPA.Api.Controllers.Security
             await _userManager.UpdateAsync(user);
         }
 
-        private async Task<string> AssignProfileAsClaimIfUserHasOnlyOneProfile(Guid userId, List<Claim> claims)
+        private async Task<string> AssignProfileAsClaim(Guid userId, List<Claim> claims)
         {
             var profiles = await _gPAProfileService.GetProfilesByUserId(userId);
 
-            if (profiles is { Count: 1 })
+            if (profiles is { Count: > 0 })
             {
-                var profileId = profiles.FirstOrDefault()?.Id?.ToString();
-                claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId ?? ""));
+                var profileId = profiles.First().Id.ToString();
+                claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId));
                 return profileId;
             }
-            else
-            {
-                claims.Add(new Claim(GPAClaimTypes.ProfileId, ""));
-                return string.Empty;
-            }
+            return "";
         }
 
         private async Task<Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, bool>>>>> GetProfilePermissions(string profileId)

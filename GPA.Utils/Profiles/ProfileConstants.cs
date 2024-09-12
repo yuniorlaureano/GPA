@@ -270,17 +270,18 @@ namespace GPA.Utils.Profiles
         {
             return new Module
             {
-                Id = Modules.Report,
+                Id = Modules.Reporting,
                 Components = new List<Component>
+                {
+                    new Component
+                    {
+                        Id = Components.Report,
+                        Permissions = new List<string>
                         {
-                            new Component
-                            {
-                                Id = "",
-                                Permissions = new List<string>
-                                {
-                                }
-                            }
+                            Permissions.ExistenceReport
                         }
+                    }
+                }
             };
         }
 
@@ -377,6 +378,7 @@ namespace GPA.Utils.Profiles
         public const string Upload = "upload";
         public const string Download = "download";
         public const string Print = "print";
+        public const string ExistenceReport = "existence-report";
     }
 
     public class Apps
@@ -389,7 +391,7 @@ namespace GPA.Utils.Profiles
         public const string Inventory = "inventory";
         public const string Invoice = "invoice";
         public const string Security = "security";
-        public const string Report = "report";
+        public const string Reporting = "reporting";
         public const string General = "general";
     }
 
@@ -414,5 +416,6 @@ namespace GPA.Utils.Profiles
         public const string PrintInformation = "printInformation";
         public const string Dashboard = "dashboard";
         public const string Unit = "unit";
+        public const string Report = "report";
     }
 }

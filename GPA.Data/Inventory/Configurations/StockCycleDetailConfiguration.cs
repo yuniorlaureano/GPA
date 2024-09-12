@@ -14,6 +14,9 @@ namespace GPA.Data.Inventory.Configurations
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")
                 .IsRequired();
 
+            builder.Property(x => x.ProductPrice).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(x => x.ProductName).HasMaxLength(200);
+
             builder.HasOne(x => x.StockCycle)
                 .WithMany(x => x.StockCycleDetails)
                 .HasForeignKey(x => x.StockCycleId)

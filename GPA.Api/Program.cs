@@ -16,8 +16,10 @@ using GPA.Data;
 using GPA.Data.General.Extensions;
 using GPA.Data.Inventory.Extensions;
 using GPA.Data.Invoice.Extensions;
+using GPA.Data.Report.Extensions;
 using GPA.Data.Security.Extensions;
 using GPA.Services.General.Security;
+using GPA.Services.Report.Extensions;
 using GPA.Services.Security.Validators;
 using GPA.Utils;
 using GPA.Utils.Extensions;
@@ -76,6 +78,9 @@ builder.Services.AddScoped<IBlobStorageHelper, BlobStorageHelper>();
 
 builder.Services.AddUtils(builder.Environment, builder.Configuration);
 builder.Services.AddSendGridUrl(builder.Configuration);
+
+builder.Services.AddDataReportRepositories();
+builder.Services.AddBusinessReportServices();
 
 var app = builder.Build();
 
