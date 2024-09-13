@@ -3,6 +3,7 @@ using GPA.Data.Inventory;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
+using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
@@ -15,7 +16,8 @@ namespace GPA.Business.Services.Inventory
     {
         Task<byte[]> ExportExistenceToExcelAsync(RequestFilterDto filter);
         Task<byte[]> ExportStockCycleDetails(Guid stockCycleId);
-        Task<byte[]> ExportStock(RequestFilterDto filter);
+        Task<byte[]> ExportTransactions(RequestFilterDto filter);
+        Task<byte[]> ExportSales(RequestFilterDto filter);
     }
 
     public class InventoryService : IStockReportsService
@@ -48,11 +50,18 @@ namespace GPA.Business.Services.Inventory
             _logger = logger;
         }
 
-        public async Task<byte[]> ExportStock(RequestFilterDto filter)
+        public async Task<byte[]> ExportTransactions(RequestFilterDto filter)
         {
 
-            var transactions = await _repository.GetStocksAsync(filter);
-            var htmlContent =   await  GetExportStockTemplate(transactions);
+            var transactions = await _repository.GetTransactionsAsync(filter);
+            var htmlContent = await GetTransactionTemplate(transactions);
+            return _reportPdfBase.GeneratePdf(htmlContent);
+        }
+
+        public async Task<byte[]> ExportSales(RequestFilterDto filter)
+        {
+            var transactions = await _repository.GetAllInvoicesAsync(filter);
+            var htmlContent = await GetSaleTemplate(transactions);
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -86,7 +95,7 @@ namespace GPA.Business.Services.Inventory
                 }
             }
 
-            var htmlContent = await GetExportExistenceToExcelTemplate(stockCycle, stockDetailSummary);
+            var htmlContent = await GetStockCycleDetailsTemplate(stockCycle, stockDetailSummary);
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -125,7 +134,7 @@ namespace GPA.Business.Services.Inventory
             return stream.ToArray();
         }
 
-        private async Task<string> GetExportExistenceToExcelTemplate(RawStockCycle rawStockCycle, Dictionary<Guid, Dictionary<string, RawStockCycleDetails?>> details)
+        private async Task<string> GetStockCycleDetailsTemplate(RawStockCycle rawStockCycle, Dictionary<Guid, Dictionary<string, RawStockCycleDetails?>> details)
         {
             var content = new StringBuilder();
             foreach (var detail in details.Values)
@@ -170,7 +179,7 @@ namespace GPA.Business.Services.Inventory
                     </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.EXISTENCE_TEMPLATE);
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_DETAILS_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");
@@ -206,7 +215,7 @@ namespace GPA.Business.Services.Inventory
             };
         }
 
-        private async Task<string> GetExportStockTemplate(IEnumerable<RawStock> rawStocks)
+        private async Task<string> GetTransactionTemplate(IEnumerable<RawStock> rawStocks)
         {
             var content = new StringBuilder();
             foreach (var stock in rawStocks)
@@ -222,14 +231,70 @@ namespace GPA.Business.Services.Inventory
                   </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_TEMPLATE);
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.TRANSACTION_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");
             }
 
             return template.Template.Replace("{{Content}}", content.ToString());
+        }
 
+        private async Task<string> GetSaleTemplate(IEnumerable<RawAllInvoice> rawInvoices)
+        {
+            var content = new StringBuilder();
+            foreach (var invoice in rawInvoices)
+            {
+                content.Append($@"
+                    <tr class=""content"">
+                    <td>{GetSaleStatus(invoice.Status)}</td>
+                    <td>{GetSaleType(invoice.Type)}</td>
+                    <td>{invoice.Date.ToString("MM d yyyy")}</td>
+                    <td>{invoice.Note}</td>
+                    <td>{invoice.ClientName} {invoice.ClientLastName}</td>
+                    <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
+                  </tr>");
+            }
+
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.SALE_TEMPLATE);
+            if (template == null || template.Template is null)
+            {
+                throw new Exception("El template para el reporte no existe");
+            }
+
+            return template.Template.Replace("{{Content}}", content.ToString());
+        }
+
+        private string GetSaleType(int transactionType)
+        {
+            return transactionType switch
+            {
+                0 => "A crédito",
+                1 => "Al contado",
+                _ => ""
+            };
+        }
+
+        private string GetPaymentStatus(byte transactionType)
+        {
+            return transactionType switch
+            {
+                0 => "Pagado",
+                1 => "Pendiente",
+                _ => ""
+            };
+        }
+
+
+        private string GetSaleStatus(byte status)
+        {
+            return status switch
+            {
+                0 => "Borrador",
+                1 => "Guardado",
+                2 => "Cancelado",
+                _ => ""
+            };  
         }
     }
 }

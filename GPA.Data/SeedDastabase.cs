@@ -14,23 +14,16 @@ namespace GPA.Data
     {
         public static void Seed(this ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ProductLocation>().HasData(
-                    new ProductLocation { Id = Guid.NewGuid(), Code = "ST-1", Name = "Estante 1", Description = "Estante 1" },
-                    new ProductLocation { Id = Guid.NewGuid(), Code = "ST-2", Name = "Estante 2", Description = "Estante 2" }
-                );
-
-            Guid cat1 = GuidHelper.NewSequentialGuid();
-            Guid cat2 = GuidHelper.NewSequentialGuid();
             modelBuilder.Entity<Category>().HasData(
                  new Category
                  {
-                     Id = cat1,
+                     Id = GuidHelper.NewSequentialGuid(),
                      Name = "Botellita",
                      Description = "Botellitas pequeñas"
                  },
                  new Category
                  {
-                     Id = cat2,
+                     Id = GuidHelper.NewSequentialGuid(),
                      Name = "Botellon",
                      Description = "Botellones de los grandes",
                  }
@@ -54,7 +47,7 @@ namespace GPA.Data
             user.PasswordHash = passwordHasher.HashPassword(user, "admin");
             modelBuilder.Entity<GPAUser>().HasData(user);
 
-            var reasons = new Reason[] 
+            var reasons = new Reason[]
             {
                 new Reason { Id = 1, NormalizedName = "Purchase", Name = "Compra" , Description = "Compra", TransactionType = TransactionType.Input },
                 new Reason { Id = 2, NormalizedName = "Sale", Name = "Venta" , Description = "Venta", TransactionType = TransactionType.Output },
@@ -78,26 +71,6 @@ namespace GPA.Data
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     })
-                },
-                new GPAProfile
-                {
-                    Id = GuidHelper.NewSequentialGuid(),
-                    Name = "cajero"
-                },
-                new GPAProfile
-                {
-                    Id = GuidHelper.NewSequentialGuid(),
-                    Name = "genrente"
-                },
-                new GPAProfile
-                {
-                    Id = GuidHelper.NewSequentialGuid(),
-                    Name = "delivery"
-                },
-                new GPAProfile
-                {
-                    Id = GuidHelper.NewSequentialGuid(),
-                    Name = "gestor de planta"
                 }
             );
 
@@ -106,7 +79,7 @@ namespace GPA.Data
                 {
                     Id = GuidHelper.NewSequentialGuid(),
                     UserId = userId,
-                    ProfileId = adminProfileId,                    
+                    ProfileId = adminProfileId,
                 }
             );
 
@@ -114,17 +87,22 @@ namespace GPA.Data
                 new ReportTemplate
                 {
                     Id = GuidHelper.NewSequentialGuid(),
-                    Code = TemplateConstants.EXISTENCE_TEMPLATE,
-                    Template = TemplateConstants.ExistenceToExcelTemplate()
+                    Code = TemplateConstants.STOCK_DETAILS_TEMPLATE,
+                    Template = TemplateConstants.StockDetailsTemplate()
                 },
                 new ReportTemplate
                 {
                     Id = GuidHelper.NewSequentialGuid(),
-                    Code = TemplateConstants.STOCK_TEMPLATE,
-                    Template = TemplateConstants.ExistenceToExcelTemplate()
+                    Code = TemplateConstants.TRANSACTION_TEMPLATE,
+                    Template = TemplateConstants.TransactionTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.SALE_TEMPLATE,
+                    Template = TemplateConstants.SaleTemplate()
                 }
             );
-
         }
     }
 }

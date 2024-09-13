@@ -278,7 +278,7 @@ namespace GPA.Utils.Profiles
                         Id = Components.Report,
                         Permissions = new List<string>
                         {
-                            Permissions.ExistenceReport, Permissions.StockCycleReport, Permissions.TransactionReport
+                            Permissions.ExistenceReport, Permissions.StockCycleReport, Permissions.TransactionReport, Permissions.SaleReport
                         }
                     }
                 }
@@ -381,6 +381,7 @@ namespace GPA.Utils.Profiles
         public const string ExistenceReport = "existence-report";
         public const string StockCycleReport = "stock-cycle-report";
         public const string TransactionReport = "transaction-report";
+        public const string SaleReport = "sale-report";
     }
 
     public class Apps

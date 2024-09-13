@@ -1,7 +1,9 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Dtos.Inventory;
+using GPA.Dtos.Invoice;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
+using GPA.Entities.Unmapped.Invoice;
 using GPA.Utils;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
@@ -13,7 +15,8 @@ namespace GPA.Data.Inventory
     public interface IStockReportRepository
     {
         Task<IEnumerable<Existence>> GetAllExistenceAsync(RequestFilterDto filter);
-        Task<IEnumerable<RawStock>> GetStocksAsync(RequestFilterDto filter);
+        Task<IEnumerable<RawStock>> GetTransactionsAsync(RequestFilterDto filter);
+        Task<IEnumerable<RawAllInvoice>> GetAllInvoicesAsync(RequestFilterDto filter);
     }
 
     public class StockReportRepository : IStockReportRepository
@@ -78,7 +81,7 @@ namespace GPA.Data.Inventory
             return await _context.Database.SqlQueryRaw<Existence>(sqlQuery, parameters.ToArray()).ToListAsync();
         }
 
-        public async Task<IEnumerable<RawStock>> GetStocksAsync(RequestFilterDto filter)
+        public async Task<IEnumerable<RawStock>> GetTransactionsAsync(RequestFilterDto filter)
         {
             var (transactionsFilterDto, dateFilter, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
             var query = @$"
@@ -115,6 +118,59 @@ namespace GPA.Data.Inventory
             return await _context.Database.SqlQueryRaw<RawStock>(
                 query, parameters.ToArray()
                 ).ToListAsync();
+        }
+
+        public async Task<IEnumerable<RawAllInvoice>> GetAllInvoicesAsync(RequestFilterDto filter)
+        {
+            var (termFilter, dateFilter, statusFilter, typeFilter, invoiceListFilter) = GetInvoiceFilter(filter);
+
+            var query = @$"
+                SELECT 
+	                 INV.[Id]
+                    ,INV.[Type]
+                    ,INV.[Status]
+                    ,INV.[Payment]
+                    ,INV.[PaymentStatus]
+                    ,INV.[Date]
+                    ,INV.[Note]
+                    ,INV.[ClientId]
+                    ,CL.[Name] AS ClientName
+                    ,CL.[LastName] AS ClientLastName 
+                FROM [GPA].[Invoice].[Invoices] INV
+	                JOIN [GPA].[Invoice].[Clients] CL ON INV.ClientId = CL.Id
+                WHERE 1 = 1 
+                    {termFilter}
+                    {dateFilter}
+                    {statusFilter}
+                    {typeFilter}
+                    ";
+
+            var (Page, PageSize, _) = PagingHelper.GetPagingParameter(filter);
+            var (from, to, status, saleType, term) = GetInvoiceFilterParameter(invoiceListFilter);
+            var parameters = new List<SqlParameter>();
+            parameters.AddRange([Page, PageSize]);
+
+            if (termFilter is { Length: > 0 })
+            {
+                parameters.Add(term);
+            }
+
+            if (dateFilter is { Length: > 0 })
+            {
+                parameters.AddRange([from, to]);
+            }
+
+            if (statusFilter is { Length: > 0 })
+            {
+                parameters.Add(status);
+            }
+
+            if (typeFilter is { Length: > 0 })
+            {
+                parameters.Add(saleType);
+            }
+
+            return await _context.Database.SqlQueryRaw<RawAllInvoice>(query, parameters.ToArray()).ToListAsync();
         }
 
         private (TransactionsFilterDto? transactionsFilterDto, string dateFilter, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter) SetStockFilterParametersIfNotEmpty(RequestFilterDto filter)
@@ -198,6 +254,50 @@ namespace GPA.Data.Inventory
             {
                 parameters.Add(new SqlParameter("@Type", existenceFilterDto?.Type));
             }
+        }
+
+        private (string termFilter, string dateFilter, string statusFilter, string typeFilter, InvoiceFilterDto? invoiceListFilter) GetInvoiceFilter(RequestFilterDto filter)
+        {
+            var search = SearchHelper.ConvertSearchToString(filter);
+            var invoiceListFilter = new InvoiceFilterDto()
+            {
+                Term = "",
+                From = null,
+                To = null,
+                Status = -1,
+                SaleType = -1
+            };
+
+            if (search is { Length: > 0 })
+            {
+                invoiceListFilter = JsonSerializer.Deserialize<InvoiceFilterDto>(search, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+            }
+
+            var termFilter = invoiceListFilter?.Term is { Length: > 0 } ? $"AND CONCAT(CL.Name, ' ', CL.LastName) LIKE CONCAT('%', @Term, '%')" : "";
+            var dateFilter = invoiceListFilter?.From is null || invoiceListFilter?.To is null ? "" : $"AND INV.[Date] BETWEEN @From AND @To";
+            var statusFilter = invoiceListFilter?.Status == -1 ? "" : "AND INV.[Status] = @Status";
+            var typeFilter = invoiceListFilter?.SaleType == -1 ? "" : "AND INV.[Type] = @Type";
+            return (termFilter, dateFilter, statusFilter, typeFilter, invoiceListFilter);
+        }
+
+        private (SqlParameter from, SqlParameter to, SqlParameter status, SqlParameter saleType, SqlParameter term) GetInvoiceFilterParameter(InvoiceFilterDto? invoiceListFilter)
+        {
+            var from = new SqlParameter("@From", DetailedDateUtil.GetDetailedDate(invoiceListFilter?.From));
+            var to = new SqlParameter("@To", DetailedDateUtil.GetDetailedDate(invoiceListFilter?.To));
+            var status = new SqlParameter("@Status", invoiceListFilter?.Status == -1 ? null : invoiceListFilter?.Status);
+            var saleType = new SqlParameter("@Type", invoiceListFilter?.SaleType == -1 ? null : invoiceListFilter?.SaleType);
+            var term = new SqlParameter("@Term", invoiceListFilter?.Term is { Length: > 0 } ? invoiceListFilter?.Term : null);
+
+            from.DbType = System.Data.DbType.Date;
+            to.DbType = System.Data.DbType.Date;
+            status.DbType = System.Data.DbType.Byte;
+            saleType.DbType = System.Data.DbType.Byte;
+            term.DbType = System.Data.DbType.String;
+
+            return (from, to, status, saleType, term);
         }
     }
 }
