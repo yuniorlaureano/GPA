@@ -25,7 +25,7 @@ namespace GPA.Data.Inventory
                                 Code,
                                 Template
                             FROM 
-	                            [General].[ReportTemplate]
+	                            [General].[ReportTemplates]
                             WHERE [Code] = @Code";
 
             var parameters = new List<SqlParameter>();
