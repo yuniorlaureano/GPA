@@ -52,7 +52,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<byte[]> ExportTransactions(RequestFilterDto filter)
         {
-
+            _logger.LogInformation("El usuario '{UserId}' está generando el reporte de transacciones", _userContextService.GetCurrentUserId());
             var transactions = await _repository.GetTransactionsAsync(filter);
             var htmlContent = await GetTransactionTemplate(transactions);
             return _reportPdfBase.GeneratePdf(htmlContent);
@@ -60,6 +60,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<byte[]> ExportSales(RequestFilterDto filter)
         {
+            _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
             var transactions = await _repository.GetAllInvoicesAsync(filter);
             var htmlContent = await GetSaleTemplate(transactions);
             return _reportPdfBase.GeneratePdf(htmlContent);
@@ -67,6 +68,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<byte[]> ExportStockCycleDetails(Guid stockCycleId)
         {
+            _logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
 
             var stockCycle = await _stockCycleRepository.GetStockCycleAsync(stockCycleId);
             var stockCycleDetails = await _stockCycleRepository.GetStockCycleDetailsAsync(stockCycleId);
@@ -101,7 +103,7 @@ namespace GPA.Business.Services.Inventory
 
         public async Task<byte[]> ExportExistenceToExcelAsync(RequestFilterDto filter)
         {
-            _logger.LogInformation("User '{User}' is generating existence report", _userContextService.GetCurrentUserId());
+            _logger.LogInformation("El usuario '{UserId}' está generando el reporte de existencia", _userContextService.GetCurrentUserId());
             var existences = await _repository.GetAllExistenceAsync(filter);
             var report = _reportExcel.CreateWorkBook();
             report.CreateSheet("Existences");
@@ -284,7 +286,6 @@ namespace GPA.Business.Services.Inventory
                 _ => ""
             };
         }
-
 
         private string GetSaleStatus(byte status)
         {

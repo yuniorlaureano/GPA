@@ -117,7 +117,7 @@ namespace GPA.Business.Services.Invoice
 
             WriteFileLine(gfx, "RECIBO DE PAGO", fontBold, XBrushes.Black, new XRect(0, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, FormatDate(DateTime.Now), font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, "No: 899", font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
+            //WriteFileLine(gfx, "No: 899", font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
             WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
 
             WriteFileLine(gfx, "Recibí de:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
