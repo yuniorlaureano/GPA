@@ -15,11 +15,16 @@ namespace GPA.Invoice.Api.Controllers
     public class ReceivableAccountsController : ControllerBase
     {
         private readonly IReceivableAccountService _service;
+        private readonly IReceivableAccountProofOfPaymentPrintService _receivableAccountProofOfPaymentPrintService;
         private readonly IMapper _mapper;
 
-        public ReceivableAccountsController(IReceivableAccountService service, IMapper mapper)
+        public ReceivableAccountsController(
+            IReceivableAccountService service, 
+            IReceivableAccountProofOfPaymentPrintService receivableAccountProofOfPaymentPrintService, 
+            IMapper mapper)
         {
             _service = service;
+            _receivableAccountProofOfPaymentPrintService = receivableAccountProofOfPaymentPrintService;
             _mapper = mapper;
         }
 
@@ -75,6 +80,15 @@ namespace GPA.Invoice.Api.Controllers
 
             await _service.UpdateAsync(model);
             return NoContent();
+        }
+
+
+        [HttpGet("payments/{id}/proof-of-payment/print")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Invoice}.{Components.ReceivableAccount}", permission: Permissions.Print)]
+        public async Task<IActionResult> PrintProofOfPaymentInvoice(Guid id)
+        {
+            var receivableAccountProofOfPayment = await _receivableAccountProofOfPaymentPrintService.PrintInvoice(id);
+            return File(receivableAccountProofOfPayment, "application/pdf", "comprobante de pago de cuentas por cobrar.pdf");
         }
     }
 }

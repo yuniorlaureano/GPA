@@ -17,8 +17,10 @@ namespace GPA.Data.General.Configurations
             builder.Property(x => x.CompanyLogo).IsRequired(false);
             builder.Property(x => x.CompanyName).HasMaxLength(254).IsRequired();
             builder.Property(x => x.CompanyDocument).HasMaxLength(30).IsRequired();
+            builder.Property(x => x.CompanyDocumentPrefix).HasMaxLength(10).IsRequired();
             builder.Property(x => x.CompanyAddress).HasMaxLength(254).IsRequired();
             builder.Property(x => x.CompanyPhone).HasMaxLength(30).IsRequired();
+            builder.Property(x => x.CompanyPhonePrefix).HasMaxLength(10).IsRequired();
             builder.Property(x => x.CompanyEmail).HasMaxLength(254).IsRequired();
             builder.Property(x => x.Signer).HasMaxLength(100).IsRequired();
             builder.Property(x => x.CompanyWebsite).IsRequired();

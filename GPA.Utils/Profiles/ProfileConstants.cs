@@ -232,7 +232,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.ReceivableAccount,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
+                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read, Permissions.Print
                                 }
                             }
                         }
