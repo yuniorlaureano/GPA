@@ -11,6 +11,7 @@
     <PackageReference Include="AWSSDK.S3" Version="3.7.402.4" />
     <PackageReference Include="Azure.Identity" Version="1.12.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.21.2" />
+    <PackageReference Include="DinkToPdf" Version="1.0.8" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
@@ -27,6 +28,27 @@
     <ProjectReference Include="..\GPA.Dtos\GPA.Dtos.csproj" />
     <ProjectReference Include="..\GPA.Entities\GPA.Entities.csproj" />
     <ProjectReference Include="..\GPA.Utils\GPA.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

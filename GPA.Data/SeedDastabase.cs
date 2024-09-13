@@ -1,6 +1,7 @@
 ﻿using GPA.Common.Entities.Inventory;
 using GPA.Common.Entities.Security;
 using GPA.Entities.General;
+using GPA.Entities.Report;
 using GPA.Utils;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Identity;
@@ -106,6 +107,21 @@ namespace GPA.Data
                     Id = GuidHelper.NewSequentialGuid(),
                     UserId = userId,
                     ProfileId = adminProfileId,                    
+                }
+            );
+
+            modelBuilder.Entity<ReportTemplate>().HasData(
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.EXISTENCE_TEMPLATE,
+                    Template = TemplateConstants.ExistenceToExcelTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.STOCK_TEMPLATE,
+                    Template = TemplateConstants.ExistenceToExcelTemplate()
                 }
             );
 

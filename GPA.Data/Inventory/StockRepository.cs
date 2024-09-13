@@ -5,6 +5,7 @@ using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Audit;
 using GPA.Entities.Unmapped.Inventory;
+using GPA.Utils;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -326,7 +327,7 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<RawStock>> GetStocksAsync(RequestFilterDto filter)
         {
-            var (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
+            var (transactionsFilterDto, dateFilter, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
             var query = @$"
                 SELECT 
 	                 ST.[Id]
@@ -351,6 +352,7 @@ namespace GPA.Data.Inventory
                     {statusFilter}
                     {transactionTypeFilter}
                     {reasonFilter}
+                    {dateFilter}
                 ORDER BY Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -367,7 +369,7 @@ namespace GPA.Data.Inventory
 
         public async Task<int> GetStocksCountAsync(RequestFilterDto filter)
         {
-            var (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
+            var (transactionsFilterDto, dateFilter, termFilter, statusFilter, transactionTypeFilter, reasonFilter) = SetStockFilterParametersIfNotEmpty(filter);
             var query = @$"
                 SELECT 
 	                 COUNT(1) AS [Value]
@@ -378,6 +380,7 @@ namespace GPA.Data.Inventory
                     {statusFilter}
                     {transactionTypeFilter}
                     {reasonFilter}
+                    {dateFilter}
             ";
 
             var (Page, PageSize, Search) = PagingHelper.GetPagingParameter(filter);
@@ -483,9 +486,13 @@ namespace GPA.Data.Inventory
             }
         }
 
-        private (TransactionsFilterDto? transactionsFilterDto, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter) SetStockFilterParametersIfNotEmpty(RequestFilterDto filter)
+        private (TransactionsFilterDto? transactionsFilterDto, string dateFilter, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter) SetStockFilterParametersIfNotEmpty(RequestFilterDto filter)
         {
-            var transactionsFilterDto = new TransactionsFilterDto();
+            var transactionsFilterDto = new TransactionsFilterDto()
+            {
+                From = null,
+                To = null,
+            };
             if (filter.Search is { Length: > 0 })
             {
                 transactionsFilterDto = JsonSerializer.Deserialize<TransactionsFilterDto>(SearchHelper.ConvertSearchToString(filter), new JsonSerializerOptions
@@ -498,8 +505,9 @@ namespace GPA.Data.Inventory
             var statusFilter = transactionsFilterDto?.Status != -1 ? "AND ST.[Status] = @Status" : "";
             var transactionTypeFilter = transactionsFilterDto?.TransactionType != -1 ? "AND ST.[TransactionType] = @TransactionType" : "";
             var reasonFilter = transactionsFilterDto?.Reason != -1 ? "AND ST.[ReasonId] = @Reason" : "";
+            var dateFilter = transactionsFilterDto?.From is null || transactionsFilterDto?.To is null ? "" : $"AND ST.[Date] BETWEEN @From AND @To";
 
-            return (transactionsFilterDto, termFilter, statusFilter, transactionTypeFilter, reasonFilter);
+            return (transactionsFilterDto, dateFilter, termFilter, statusFilter, transactionTypeFilter, reasonFilter);
         }
 
         private void AddStockFilterParameters(TransactionsFilterDto? transactionsFilterDto, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter, List<SqlParameter> parameters)
@@ -522,6 +530,12 @@ namespace GPA.Data.Inventory
             if (reasonFilter is { Length: > 0 })
             {
                 parameters.Add(new SqlParameter("@Reason", transactionsFilterDto?.Reason));
+            }
+
+            if (transactionsFilterDto?.From is not null && transactionsFilterDto?.To is not null)
+            {
+                parameters.Add(new SqlParameter("@From", DetailedDateUtil.GetDetailedDate(transactionsFilterDto?.From)));
+                parameters.Add(new SqlParameter("@To", DetailedDateUtil.GetDetailedDate(transactionsFilterDto?.To)));
             }
         }
 

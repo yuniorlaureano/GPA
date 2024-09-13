@@ -8,6 +8,7 @@ namespace GPA.Data.Report.Extensions
         public static void AddDataReportRepositories(this IServiceCollection services)
         {
             services.AddTransient<IStockReportRepository, StockReportRepository>();
+            services.AddTransient<IReportTemplateRepository, ReportTemplateRepository>();
         }
     }
 }

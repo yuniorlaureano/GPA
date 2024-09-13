@@ -5,6 +5,7 @@ using GPA.Common.Entities.Security;
 using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
 using GPA.Entities.Inventory;
+using GPA.Entities.Report;
 using GPA.Entities.Unmapped.Audit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -71,6 +72,7 @@ namespace GPA.Data
         public DbSet<EmailConfiguration> EmailConfigurations { get; set; }
         public DbSet<BlobStorageConfiguration> BlobStorageConfigurations { get; set; }
         public DbSet<PrintInformation> PrintInformation { get; set; }
+        public DbSet<ReportTemplate> ReportTemplates { get; set; }
 
         //AUDIT
         public DbSet<AddonHistory> AddonHistory { get; set; }
