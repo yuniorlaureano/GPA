@@ -41,22 +41,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="libs\dinktopdflibs\32 bit\libwkhtmltox.dll">
+    <None Update="libwkhtmltox.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="libs\dinktopdflibs\32 bit\libwkhtmltox.dylib">
+    <None Update="libwkhtmltox.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="libs\dinktopdflibs\32 bit\libwkhtmltox.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="libs\dinktopdflibs\64 bit\libwkhtmltox.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="libs\dinktopdflibs\64 bit\libwkhtmltox.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="libs\dinktopdflibs\64 bit\libwkhtmltox.so">
+    <None Update="libwkhtmltox.so">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
