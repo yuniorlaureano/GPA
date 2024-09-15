@@ -14,12 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ env.DOTNET_CORE_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgdiplus
+        sudo ln -s /usr/lib/libgdiplus.so /usr/lib/gdiplus.dll
+
     - name: Restore
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"
+
     - name: Build
       run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
     # - name: Test
