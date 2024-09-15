@@ -18,7 +18,7 @@ namespace GPA.Services.Report.Extensions
             {
                 //var context = new CustomAssemblyLoadContext();
                 //context.LoadUnmanagedLibrary(LoadNativeLibrary());
-                NativeLibrary.Load(LoadNativeLibrary());
+                //NativeLibrary.Load(LoadNativeLibrary());
                 return new SynchronizedConverter(new PdfTools());
             });
         }
@@ -26,16 +26,15 @@ namespace GPA.Services.Report.Extensions
         private static string LoadNativeLibrary()
         {
             var architecture = RuntimeInformation.ProcessArchitecture;
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var basePath = AppContext.BaseDirectory;
             var libraryPath = string.Empty;
 
             if (architecture == Architecture.X64)
             {
                 libraryPath = Path.Combine(
                     basePath,
-                    "Report",
+                    "libs",
                     "dinktopdflibs",
-                    "v0.12.4",
                     "64 bit",
                     LoadDinkToPdfDllBasedOnOS());
             }
@@ -45,7 +44,7 @@ namespace GPA.Services.Report.Extensions
                     basePath,
                     "Report",
                     "dinktopdflibs",
-                    "v0.12.4", "32 bit",
+                    "32 bit",
                     LoadDinkToPdfDllBasedOnOS());
             }
 

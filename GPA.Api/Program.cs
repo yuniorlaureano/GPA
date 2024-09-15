@@ -82,6 +82,8 @@ builder.Services.AddSendGridUrl(builder.Configuration);
 builder.Services.AddDataReportRepositories();
 builder.Services.AddBusinessReportServices();
 
+builder.Services.LoadDinkToPdfNativeLibrary();
+
 var app = builder.Build();
 
 //Configure the HTTP request pipeline.
