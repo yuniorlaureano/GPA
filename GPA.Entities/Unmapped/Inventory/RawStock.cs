@@ -6,7 +6,7 @@
         public string Description { get; set; }
         public DateTime? Date { get; set; }
         public byte TransactionType { get; set; }
-        public int Status { get; set; }
+        public byte Status { get; set; }
         public Guid? ProviderId { get; set; }
         public string? ProviderName { get; set; }
         public string? ProviderIdentification { get; set; }
