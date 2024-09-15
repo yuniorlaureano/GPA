@@ -30,25 +30,4 @@
     <ProjectReference Include="..\GPA.Utils\GPA.Utils.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Report\dinktopdflibs\v0.12.4\32 bit\libwkhtmltox.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Report\dinktopdflibs\v0.12.4\64 bit\libwkhtmltox.so">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

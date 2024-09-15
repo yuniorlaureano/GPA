@@ -1,43 +1,22 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.InteropServices;
+﻿using System.Reflection;
+using System.Runtime.Loader;
 
 namespace GPA.Utils
 {
-    public static class CustomAssemblyLoadContext
+    public class CustomAssemblyLoadContext : AssemblyLoadContext
     {
-        public static void LoadDinkToPdfNativeLibrary(this IServiceCollection services)
+        public IntPtr LoadUnmanagedLibrary(string absolutePath)
         {
-            var architecture = RuntimeInformation.ProcessArchitecture;
-            var basePath = AppContext.BaseDirectory;
-            var libraryPath = string.Empty;
+            return LoadUnmanagedDll(absolutePath);
+        }
+        protected override IntPtr LoadUnmanagedDll(String unmanagedDllName)
+        {
+            return LoadUnmanagedDllFromPath(unmanagedDllName);
+        }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                libraryPath = architecture == Architecture.X64
-                    ? Path.Combine(basePath, "libs", "dinktopdflibs", "64 bit", "libwkhtmltox.dll")
-                    : Path.Combine(basePath, "libs", "dinktopdflibs", "32 bit", "libwkhtmltox.dll");
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                libraryPath = architecture == Architecture.X64
-                    ? Path.Combine(basePath, "libs", "dinktopdflibs", "64 bit", "libwkhtmltox.so")
-                    : Path.Combine(basePath, "libs", "dinktopdflibs", "32 bit", "libwkhtmltox.so");
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                libraryPath = architecture == Architecture.X64
-                    ? Path.Combine(basePath, "libs", "dinktopdflibs", "64 bit", "libwkhtmltox.dylib")
-                    : Path.Combine(basePath, "libs", "dinktopdflibs", "32 bit", "libwkhtmltox.dylib");
-            }
-
-            if (!string.IsNullOrEmpty(libraryPath))
-            {
-                NativeLibrary.Load(libraryPath);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Unsupported platform or architecture.");
-            }
+        protected override Assembly Load(AssemblyName assemblyName)
+        {
+            throw new NotImplementedException();
         }
     }
 }

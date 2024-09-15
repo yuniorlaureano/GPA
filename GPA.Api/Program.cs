@@ -82,7 +82,7 @@ builder.Services.AddSendGridUrl(builder.Configuration);
 builder.Services.AddDataReportRepositories();
 builder.Services.AddBusinessReportServices();
 
-builder.Services.LoadDinkToPdfNativeLibrary();
+builder.Services.LoadDinkToPdfNativeLibrary(builder.Environment.ContentRootPath);
 
 var app = builder.Build();
 
