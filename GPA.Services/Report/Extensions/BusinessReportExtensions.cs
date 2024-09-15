@@ -1,7 +1,6 @@
 ﻿using DinkToPdf;
 using DinkToPdf.Contracts;
 using GPA.Business.Services.Inventory;
-using GPA.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.InteropServices;
 
@@ -15,11 +14,11 @@ namespace GPA.Services.Report.Extensions
             services.AddTransient<IStockReportsService, InventoryService>();
             services.AddTransient<IReportPdfBase, ReportPdfBase>();
 
-
             services.AddSingleton<IConverter>(provider =>
             {
-                var context = new CustomAssemblyLoadContext();
-                context.LoadUnmanagedLibrary(LoadNativeLibrary());
+                //var context = new CustomAssemblyLoadContext();
+                //context.LoadUnmanagedLibrary(LoadNativeLibrary());
+                NativeLibrary.Load(LoadNativeLibrary());
                 return new SynchronizedConverter(new PdfTools());
             });
         }
