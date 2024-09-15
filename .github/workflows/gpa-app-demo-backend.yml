@@ -25,6 +25,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libgdiplus
         sudo ln -s /usr/lib/libgdiplus.so /usr/lib/gdiplus.dll
+        LD_LIBRARY_PATH=/libs/dinktopdflibs/64\ bit:$LD_LIBRARY_PATH
 
     - name: Restore
       run: dotnet restore "${{ env.WORKING_DIRECTORY }}"

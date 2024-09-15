@@ -37,6 +37,7 @@ namespace GPA.Utils
             // Inject logger to log
             var loggerFactory = services.BuildServiceProvider().GetService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("DinkToPdf");
+            logger.LogInformation("***********************************************************************************************************");
             logger.LogInformation("Native library loaded successfully.");
             logger.LogInformation(rootPath);
             logger.LogInformation(basePath);
