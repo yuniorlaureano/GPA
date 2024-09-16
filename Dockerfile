@@ -3,12 +3,22 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source
 
 # copy csproj and restore as distinct layers
-COPY . .
+COPY GPA.Api/GPA.Api.csproj GPA.Api/
+COPY GPA.Dtos/GPA.Dtos.csproj GPA.Dtos/
+COPY GPA.Entities/GPA.Entities.csproj GPA.Entities/
+COPY GPA.Utils/GPA.Utils.csproj GPA.Utils/
+COPY GPA.Data/GPA.Data.csproj GPA.Data/
+COPY GPA.Services/GPA.Services.csproj GPA.Services/
+COPY GPA.Tests/GPA.Tests.csproj GPA.Tests/
+COPY GPA.sln .
 RUN dotnet restore GPA.Api/GPA.Api.csproj
 
-RUN dotnet publish -c Release -o /app/publish --no-restore GPA.Api/GPA.Api.csproj
-
 # copy everything else and build app
+COPY . .
+
+RUN dotnet publish GPA.Api/GPA.Api.csproj -c Release -o /app/publish --no-restore
+
+# build the app from the build image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
