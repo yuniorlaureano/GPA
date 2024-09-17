@@ -93,7 +93,7 @@ namespace GPA.Api.Utils.Filters
         {
             return new PermissionMessage
             {
-                Message = $"Permiso '{permission}', en '{pathTokens[2]}' requerido."
+                Message = $"Permiso '{PermissionsTranslate.Translates[permission]}', en '{PermissionsTranslate.Translates[pathTokens[2]]}' requerido."
             };
         }
     }

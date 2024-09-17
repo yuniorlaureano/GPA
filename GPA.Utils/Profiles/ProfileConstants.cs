@@ -421,4 +421,63 @@ namespace GPA.Utils.Profiles
         public const string Unit = "unit";
         public const string Report = "report";
     }
+
+    public class PermissionsTranslate
+    {
+        public static Dictionary<string, string> Translates { get; set; } = new()
+        {
+          { Permissions.Create, "crear"},
+          { Permissions.Update,"actualizar"},
+          { Permissions.Delete,"eliminar"},
+          { Permissions.Read,"leer"},
+          { Permissions.ReadProducts,"leer productos"},
+          { Permissions.ReadExistence,"leer existencia"},
+          { Permissions.RegisterInput,"agregar entrada"},
+          { Permissions.RegisterOutput,"agregar salida"},
+          { Permissions.UpdateInput,"actualizar entrada"},
+          { Permissions.UpdateOutput,"actualizar salida"},
+          { Permissions.Open,"abrir"},
+          { Permissions.Close,"cerrar"},
+          { Permissions.Cancel,"cancelar"},
+          { Permissions.AssignProfile,"asignar perfil"},
+          { Permissions.UnAssignProfile,"desasignar perfil"},
+          { Permissions.UpdateUserProfile,"actualizar perfil de usuario"},
+          { Permissions.ReadTransactions,"lee transacciones"},
+          { Permissions.Return,"devolver"},
+          { Permissions.Send,"enviar email"},
+          { Permissions.Upload,"subir archvio"},
+          { Permissions.Download,"descargar archivo"},
+          { Permissions.Print,"imprimir"},
+          { Permissions.ExistenceReport,"reporte de existencia"},
+          { Permissions.StockCycleReport,"reporte de ciclo de inventario"},
+          { Permissions.TransactionReport,"reporte de transacciones"},
+          { Permissions.SaleReport,"reporte de venta"},
+          { Apps.GPA, "Sistema GPA"},
+          { Modules.Inventory, "inventario"},
+          { Modules.Invoice, "faturación"},
+          { Modules.Security, "seguridad"},
+          { Modules.Reporting, "reporte"},
+          { Modules.General, "general"},
+          { Components.Addon, "agregado"},
+          { Components.Category, "categoría"},
+          { Components.ProductLocation, "ubicación de producto"},
+          { Components.Product, "producto"},
+          { Components.Provider, "proveedor"},
+          { Components.Reason, "razón"},
+          { Components.StockCycle, "ciclo de inventario"},
+          { Components.Stock, "inventario"},
+          { Components.Client, "cliente"},
+          { Components.Invoicing, "facturación"},
+          { Components.ReceivableAccount, "cuentas por cobrar"},
+          { Components.User, "usuario"},
+          { Components.Profile, "perfil"},
+          { Components.Auth, "autenticación"},
+          { Components.Email, "correo"},
+          { Components.Blob, "blob"},
+          { Components.PrintInformation, "inforamción de impresión"},
+          { Components.Dashboard, "dashboard"},
+          { Components.Unit, "unidad"},
+          { Components.Report, "reporte"}
+        };
+    }
 }
