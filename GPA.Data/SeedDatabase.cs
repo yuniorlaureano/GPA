@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace GPA.Data
 {
-    public static class SeedDastabase
+    public static class SeedDatabase
     {
         public static void Seed(this ModelBuilder modelBuilder)
         {
@@ -87,7 +87,7 @@ namespace GPA.Data
                 new ReportTemplate
                 {
                     Id = GuidHelper.NewSequentialGuid(),
-                    Code = TemplateConstants.STOCK_DETAILS_TEMPLATE,
+                    Code = TemplateConstants.STOCK_CYCLE_DETAILS_TEMPLATE,
                     Template = TemplateConstants.StockDetailsTemplate()
                 },
                 new ReportTemplate
@@ -101,6 +101,25 @@ namespace GPA.Data
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.SALE_TEMPLATE,
                     Template = TemplateConstants.SaleTemplate()
+                },
+
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.INVOICE_TEMPLATE,
+                    Template = TemplateConstants.InvoiceTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.PROOF_OF_PAYMENT_TEMPLATE,
+                    Template = TemplateConstants.ProofOfPaymentTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE,
+                    Template = TemplateConstants.ReceivableProofOfPaymentTemplate()
                 }
             );
         }

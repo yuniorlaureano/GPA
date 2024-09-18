@@ -181,7 +181,7 @@ namespace GPA.Business.Services.Inventory
                     </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_DETAILS_TEMPLATE);
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_CYCLE_DETAILS_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");

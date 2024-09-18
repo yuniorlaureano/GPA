@@ -1,5 +1,6 @@
 ﻿using DinkToPdf;
 using GPA.Data.General;
+using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
@@ -26,6 +27,7 @@ namespace GPA.Business.Services.Invoice
         private readonly IClientRepository _clientRepository;
         private readonly IPrintRepository _printRepository;
         private readonly IReportPdfBase _reportPdfBase;
+        private readonly IReportTemplateRepository _reportTemplateRepository;
 
         public ProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
@@ -33,7 +35,8 @@ namespace GPA.Business.Services.Invoice
             IClientRepository clientRepository,
             IUserContextService userContextService,
             IPrintRepository printRepository,
-            IReportPdfBase reportPdfBase
+            IReportPdfBase reportPdfBase,
+            IReportTemplateRepository reportTemplateRepository
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
@@ -41,6 +44,7 @@ namespace GPA.Business.Services.Invoice
             _clientRepository = clientRepository;
             _printRepository = printRepository;
             _reportPdfBase = reportPdfBase;
+            _reportTemplateRepository = reportTemplateRepository;
         }
 
         public async Task<byte[]> PrintInvoice(Guid invoiceId)
@@ -89,17 +93,10 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
-            //using var logo = await GetLogo(invoicePrintData.CompanyLogo);
-
-            //var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
-
-            // Convert Bitmap to XImage
-            //XImage qrCodeXImage = LoadImage(qrCodeImage);
-
-            //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
             Dictionary<string, decimal> accumulatedAddons = new();
 
-            var htmlContent = GetTemplate();
+            var htmlContent = await GetTemplate();
+            var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
 
             var totalPrice = 0.0M;
             var totalAddon = 0.0M;
@@ -144,7 +141,8 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Amounts}", amounts.ToString())
                 .Replace("{Total}", (totalPrice + totalAddon).ToString("C2", CultureInfo.GetCultureInfo("en-US")))
                 .Replace("{Concept}", $"Factura {invoicePrintData.Invoice.Code}")
-                .Replace("{Signer}", invoicePrintData.Signer);
+                .Replace("{Signer}", invoicePrintData.Signer)
+                .Replace("{Logo}", logo);
 
             var globalSettings = new GlobalSettings
             {
@@ -157,146 +155,14 @@ namespace GPA.Business.Services.Invoice
             return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
         }
 
-        private string GetTemplate()
+        private async Task<string> GetTemplate()
         {
-            var template = """
-                <!DOCTYPE html>
-                <html lang="en">
-                  <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>Invoice</title>
-                    <style>
-                      html {
-                        font-family: Verdana, Geneva, Tahoma, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        font-size: 12px;
-                        display: flex;
-                        justify-content: center;
-                        flex-direction: column;
-                      }
-
-                      table {
-                        width: 100%;
-                      }
-                      body {
-                        margin: 5px;
-                        padding: 0;
-                      }
-
-                      table tr td:nth-child(2) {
-                        text-align: right;
-                      }
-                      .qr-code {
-                        text-align: center;
-                        margin-top: 20px;
-                      }
-
-                      /* invoice header */
-                      .invoce-header {
-                        text-align: center;
-                      }
-                      .mb-9 {
-                        margin-bottom: 9px;
-                      }
-
-                      .receit-title {
-                        font-size: 20px;
-                        font-weight: bold;
-                        align-items: center;
-                      }
-
-                      .bold {
-                        font-weight: bold;
-                      }
-
-                      .m0 {
-                        margin: 0;
-                      }
-                      .p0 {
-                        padding: 0;
-                      }
-
-                      /* details */
-                      table.details th,
-                      td {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                      }
-                    </style>
-                  </head>
-                  <body>
-                    <table>
-                      <tr>
-                        <td class="title">
-                          <center>
-                            <img
-                              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz7xOJSrO_80yAlVx3xLYSExnII1jTTPdTOA&s"
-                              style="width: 200px"
-                            />
-                          </center>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td class="invoce-header">
-                          <div class="mb-9 receit-title">{Company}</div>
-                          <div class="mb-9">{Document}</div>
-                          <div class="mb-9">{Tel}</div>
-                          <div class="mb-9">{Mail}</div>
-                          <div>{Address}</div>
-                          <div>------------------------------------------------------</div>
-                          <b class="bold">RECIBO DE PAGO</b>
-                          <div>{Date}</div>
-                          <div>------------------------------------------------------</div>
-                        </td>
-                      </tr>
-                    </table>
-                    <table class="details">
-                      <tr>
-                        <th>Recibí de:</th>
-                        <td>{Client}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="2">
-                          <center>
-                            ------------------------------------------------------
-                          </center>
-                        </td>
-                      </tr>
-                      {Amounts}
-                      <tr>
-                        <td colspan="2">
-                          <center>
-                            ------------------------------------------------------
-                          </center>
-                        </td>
-                      </tr>
-                      <tr>
-                         <th>Total</th>
-                         <td>{Total}</td>                        
-                      </tr>
-
-                    </table>
-                    <div>
-                      <br />
-                      <br />
-                      <div class="bold">Concento:</div>
-                      <div style="margin-left: 20px">{Concept}</div>
-
-                      <br />
-                      <br />
-                      <br />
-                      <br />
-                      <div style="border-top: solid 1px black; text-align: center">
-                        {Signer}
-                      </div>
-                    </div>
-                  </body>
-                </html>
-                
-                """;
-            return template;
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.PROOF_OF_PAYMENT_TEMPLATE);
+            if (template == null || template.Template is null)
+            {
+                throw new Exception("El template de impresión no exíste");
+            }
+            return template.Template;
         }
     }
 }

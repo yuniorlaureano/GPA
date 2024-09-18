@@ -1,5 +1,6 @@
 ﻿using DinkToPdf;
 using GPA.Data.General;
+using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
@@ -23,19 +24,22 @@ namespace GPA.Business.Services.Invoice
         private readonly IUserContextService _userContextService;
         private readonly IPrintRepository _printRepository;
         private readonly IReportPdfBase _reportPdfBase;
+        private readonly IReportTemplateRepository _reportTemplateRepository;
 
         public InvoicePrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IUserContextService userContextService,
             IPrintRepository printRepository,
-            IReportPdfBase reportPdfBase
+            IReportPdfBase reportPdfBase,
+            IReportTemplateRepository reportTemplateRepository
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
             _userContextService = userContextService;
             _printRepository = printRepository;
             _reportPdfBase = reportPdfBase;
+            _reportTemplateRepository = reportTemplateRepository;
         }
 
         public async Task<byte[]> PrintInvoice(Guid invoiceId)
@@ -77,17 +81,13 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
-            //using var logo = await GetLogo(invoicePrintData.CompanyLogo);
-
-            //var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
-
-            // Convert Bitmap to XImage
-            //XImage qrCodeXImage = LoadImage(qrCodeImage);
+            var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+            var qrCodeImage = ConvertQrCodeToDataUri(GenerateQRCode(invoicePrintData.Invoice.Id.ToString()));
 
             //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
             Dictionary<string, decimal> accumulatedAddons = new();
 
-            var htmlContent = GetTemplate();
+            var htmlContent = await GetTemplate();
 
             var products = new StringBuilder();
             var totalPrice = 0.0M;
@@ -153,7 +153,9 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Date}", $"{invoicePrintData.Date}")
                 .Replace("{Products}", products.ToString())
                 .Replace("{Totals}", totals.ToString())
-                .Replace("{TotalPrice}", total.ToString("C2", CultureInfo.GetCultureInfo("en-US")));
+                .Replace("{TotalPrice}", total.ToString("C2", CultureInfo.GetCultureInfo("en-US")))
+                .Replace("{Logo}", logo)
+                .Replace("{QrCode}", qrCodeImage);
 
             var globalSettings = new GlobalSettings
             {
@@ -166,170 +168,14 @@ namespace GPA.Business.Services.Invoice
             return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
         }
 
-        private string GetTemplate()
+        private async Task<string> GetTemplate()
         {
-            var template = """
-                <!DOCTYPE html>
-                <html lang="en">
-                  <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>Invoice</title>
-                    <style>
-                      html {
-                  font-family: Verdana, Geneva, Tahoma, sans-serif;
-                  margin: 0;
-                  padding: 0;
-                  font-size: 12px;
-                  display: flex;
-                  justify-content: center;
-                  flex-direction: column;
-                }
-
-                          body {
-                  margin: 5px;
-                  padding: 0;
-                }
-
-                          table {
-                  width: 100%;
-                }
-
-                table td {
-                  padding: 5px;
-                  vertical-align: top;
-                }
-                table tr td:nth-child(2) {
-                  text-align: right;
-                }
-                .qr-code {
-                  text-align: center;
-                  margin-top: 20px;
-                }
-
-                /* invoice header */
-                .invoce-header {
-                  text-align: center;
-                }
-                .mb-9 {
-                  margin-bottom: 9px;
-                }
-
-                .receit-title {
-                  font-size: 20px;
-                  font-weight: bold;
-                  align-items: center;
-                }
-
-                .bold {
-                  font-weight: bold;
-                }
-
-                .m0 {
-                  margin: 0;
-                }
-                .p0 {
-                  padding: 0;
-                }
-
-                /* details */
-                table.details th,
-                td {
-                  margin: 0 !important;
-                  padding: 0 !important;
-                }
-                    </style>
-                  </head>
-                  <body>
-                      <table>
-                        <tr>
-                          <td class="title">
-                            <center>
-                              <img
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz7xOJSrO_80yAlVx3xLYSExnII1jTTPdTOA&s"
-                                style="width: 200px"
-                              />
-                            </center>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="invoce-header">
-                            <div class="mb-9 receit-title">{Company}</div>
-                            <div class="mb-9">{Document}</div>
-                            <div class="mb-9">{Tel}</div>
-                            <div class="mb-9">{Mail}</div>
-                            <div>
-                                {Address}
-                            </div>
-                          </td>
-                        </tr>
-                      </table>
-                      <table class="details">
-                        <tr>
-                          <td colspan="2">
-                            <center>
-                              ------------------------------------------------------
-                            </center>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Usuario: {User}</td>
-                          <td></td>
-                        </tr>
-                        <tr>
-                          <td>Hora.:</td>
-                          <td>{Hour}</td>
-                        </tr>
-                        <tr>
-                          <td>Fecha.:</td>
-                          <td>{Date}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="2">
-                            <center>
-                              ------------------------------------------------------
-                            </center>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="2">PRODUCTOS</td>
-                        </tr>
-                        {Products}
-                        <tr>
-                          <td colspan="2">
-                            <center>
-                              ------------------------------------------------------
-                            </center>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Total</td>
-                          <td></td>
-                        </tr>
-                        {Totals}
-                        <tr>
-                          <td colspan="2">
-                            <center>
-                              ------------------------------------------------------
-                            </center>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td></td>
-                          <td>{TotalPrice}</td>
-                        </tr>
-                      </table>
-                      <div class="qr-code">
-                        <img
-                          style="width: 100px"
-                          src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
-                          alt="QR Code"
-                        />
-                      </div>
-                  </body>
-                </html>
-                """;
-            return template;
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.INVOICE_TEMPLATE);
+            if (template == null || template.Template is null)
+            {
+                throw new Exception("El template de impresión no exíste");
+            }
+            return template.Template;
         }
     }
 }

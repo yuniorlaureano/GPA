@@ -83,9 +83,9 @@ namespace GPA.Services.Invoice
             using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
             {
                 using QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
-                using (var qrCode = new BitmapByteQRCode(qrCodeData))
+                using (var qrCode = new PngByteQRCode(qrCodeData))
                 {
-                    return qrCode.GetGraphic(20);
+                    return qrCode.GetGraphic(40);
                 }
             }
         }
@@ -100,6 +100,58 @@ namespace GPA.Services.Invoice
 
             // Format the date
             return date.ToString(format, culture);
+        }
+
+        protected async Task<string> GetLogoAsDataUri(string logo)
+        {
+            if (logo is null)
+            {
+                return string.Empty;
+            }
+
+            BlobStorageFileResult? fileResult = null;
+
+            try
+            {
+                fileResult = JsonSerializer.Deserialize<BlobStorageFileResult>(logo, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+                    ?? throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+            catch (Exception e)
+            {
+                throw new AttachmentDeserializingException("Error deserializing exception");
+            }
+
+            var image = await _blobStorageServiceFactory.DownloadFile(fileResult.UniqueFileName, isPublic: true);
+            if (image is null)
+            {
+                return string.Empty;
+            }
+
+            var base64 = ConvertImageToBase64(image);
+            if (base64 is null)
+            {
+                return string.Empty;
+            }
+            var fileExtension = fileResult.UniqueFileName.Split('.').Last();
+            return $"data:image/{fileExtension};base64,{base64}";
+        }
+
+        protected string ConvertImageToBase64(Stream imageStream)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                imageStream.CopyTo(memoryStream);
+                var imageBytes = memoryStream.ToArray();
+                var base64Image = Convert.ToBase64String(imageBytes);
+                imageStream?.Dispose();
+                return base64Image;
+            }
+        }
+
+        protected string ConvertQrCodeToDataUri(byte[] image)
+        {
+            var base64Image = Convert.ToBase64String(image);
+            return $"data:image/png;base64,{base64Image}";
         }
     }
 }
