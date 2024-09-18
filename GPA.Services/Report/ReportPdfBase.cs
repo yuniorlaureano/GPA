@@ -5,25 +5,27 @@ namespace GPA.Services.Report
 {
     public interface IReportPdfBase
     {
-        byte[] GeneratePdf(string htmlContent, string documentTitle = "", string header = "", string footer = "");
+        byte[] GeneratePdf(string htmlContent, string documentTitle = "", string header = "", string footer = "", GlobalSettings settings = null);
     }
 
     public class ReportPdfBase : IReportPdfBase
     {
         private readonly IConverter _converter;
-
+        private readonly GlobalSettings _globalSettings = new GlobalSettings
+        {
+            ColorMode = ColorMode.Color,
+            Orientation = Orientation.Portrait,
+            PaperSize = PaperKind.A4,
+        };
         public ReportPdfBase(IConverter converter)
         {
             _converter = converter;
         }
 
-        public byte[] GeneratePdf(string htmlContent, string documentTitle = "", string header = "", string footer = "")
+        public byte[] GeneratePdf(string htmlContent, string documentTitle = "", string header = "", string footer = "", GlobalSettings settings = null)
         {
-            var globalSettings = new GlobalSettings {
-                ColorMode = ColorMode.Color,
-                    Orientation = Orientation.Portrait,
-                    PaperSize = PaperKind.A4,
-                };
+            // 80mm (3.15 inches)
+            var globalSettings = settings ?? _globalSettings;
 
             if (documentTitle is { Length: > 0 })
             {

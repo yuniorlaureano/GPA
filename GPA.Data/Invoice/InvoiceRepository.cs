@@ -118,6 +118,7 @@ namespace GPA.Data.Invoice
 	                 INV.[Id]
                     ,INV.[Type]
                     ,INV.[Status]
+                    ,INV.Code
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
                     ,INV.[Date]
@@ -153,6 +154,7 @@ namespace GPA.Data.Invoice
 	                 INV.[Id]
                     ,INV.[Type]
                     ,INV.[Status]
+                    ,INV.Code  
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
                     ,INV.[Date]
@@ -246,6 +248,7 @@ namespace GPA.Data.Invoice
                    ([Type]
                    ,[Status]
                    ,[Payment]
+                   ,[Code]
                    ,[PaymentStatus]
                    ,[Date]
                    ,[Note]
@@ -259,6 +262,7 @@ namespace GPA.Data.Invoice
                     @Type
                    ,@Status
                    ,@Payment
+                   ,@Code
                    ,@PaymentStatus
                    ,@Date
                    ,@Note
@@ -275,13 +279,13 @@ namespace GPA.Data.Invoice
                 Price = x.Price,
                 ProductId = x.ProductId,
                 Quantity = x.Quantity,
-                Addon = x.InvoiceDetailsAddons.Select(add => new
+                Addon = x.InvoiceDetailsAddons?.Select(add => new
                 {
                     Concept = add.Concept,
                     IsDiscount = add.IsDiscount,
                     Type = add.Type,
                     Value = add.Value
-                })
+                }) ?? []
             });
 
             var parameters = new SqlParameter[]
@@ -289,6 +293,7 @@ namespace GPA.Data.Invoice
                 new("@Type", invoice.Type)
                ,new("@Status", invoice.Status)
                ,new("@Payment", invoice.Payment)
+               ,new("@Code", invoice.Code)
                ,new("@PaymentStatus", invoice.PaymentStatus)
                ,new("@Date", invoice.Date)
                ,new("@Note", invoice.Note ?? "")
@@ -340,7 +345,7 @@ namespace GPA.Data.Invoice
                 });
             }
 
-            var termFilter = invoiceListFilter?.Term is { Length: > 0 } ? $"AND CONCAT(CL.Name, ' ', CL.LastName) LIKE CONCAT('%', @Term, '%')" : "";
+            var termFilter = invoiceListFilter?.Term is { Length: > 0 } ? $"AND (CONCAT(CL.Name, ' ', CL.LastName) LIKE CONCAT('%', @Term, '%') OR INV.[Code] LIKE CONCAT('%', @Term, '%'))" : "";
             var dateFilter = invoiceListFilter?.From is null || invoiceListFilter?.To is null ? "" : $"AND INV.[Date] BETWEEN @From AND @To";
             var statusFilter = invoiceListFilter?.Status == -1 ? "" : "AND INV.[Status] = @Status";
             var typeFilter = invoiceListFilter?.SaleType == -1 ? "" : "AND INV.[Type] = @Type";

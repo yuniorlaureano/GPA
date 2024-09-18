@@ -6,6 +6,7 @@ namespace GPA.Common.DTOs.Invoices
     {
         public Guid? Id { get; set; }
         public byte Status { get; set; }
+        public string Code { get; set; }
         public decimal Payment { get; set; }
         public byte PaymentStatus { get; set; }
         public byte Type { get; set; }

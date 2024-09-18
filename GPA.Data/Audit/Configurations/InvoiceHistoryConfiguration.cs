@@ -15,6 +15,7 @@ namespace GPA.Data.Audit.Configurations
                 .IsRequired();
 
             builder.Property(x => x.Action).HasMaxLength(50).IsRequired();
+            builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
         }
     }
 }

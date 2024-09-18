@@ -1,20 +1,20 @@
-﻿using GPA.Data.General;
+﻿using DinkToPdf;
+using GPA.Data.General;
 using GPA.Data.Invoice;
-using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Invoice;
+using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using System.Globalization;
+using System.Text;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IInvoicePrintService
     {
-        Task<Stream> PrintInvoice(Guid invoiceId);
+        Task<byte[]> PrintInvoice(Guid invoiceId);
     }
 
     public class InvoicePrintService : InvoicePrintServiceBase, IInvoicePrintService
@@ -22,20 +22,23 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoicePrintRepository _invoicePrintRepository;
         private readonly IUserContextService _userContextService;
         private readonly IPrintRepository _printRepository;
+        private readonly IReportPdfBase _reportPdfBase;
 
         public InvoicePrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IUserContextService userContextService,
-            IPrintRepository printRepository
+            IPrintRepository printRepository,
+            IReportPdfBase reportPdfBase
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
             _userContextService = userContextService;
             _printRepository = printRepository;
+            _reportPdfBase = reportPdfBase;
         }
 
-        public async Task<Stream> PrintInvoice(Guid invoiceId)
+        public async Task<byte[]> PrintInvoice(Guid invoiceId)
         {
             var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);
             var invoiceDetails = await _invoicePrintRepository.GetInvoiceDetailByInvoiceId(invoiceId);
@@ -44,11 +47,6 @@ namespace GPA.Business.Services.Invoice
             if (invoice is null)
             {
                 throw new InvalidOperationException("La factura no existe");
-            }
-
-            if (invoice.PaymentStatus == (byte)PaymentStatus.Pending)
-            {
-                throw new InvalidOperationException("La factura no se ha pagado, no puede imprimir el comprobante de pago");
             }
 
             var invoicePrintData = new InvoicePrintData()
@@ -62,7 +60,7 @@ namespace GPA.Business.Services.Invoice
             invoicePrintData.InvoicePrintDetails.AddRange(invoiceDetails.Select(detail => new InvoicePrintDetails
             {
                 RawInvoiceDetails = detail,
-                RawInvoiceDetailsAddon = invoiceDetailsAddon[detail.Id]
+                RawInvoiceDetailsAddon = invoiceDetailsAddon.ContainsKey(detail.Id) ? invoiceDetailsAddon[detail.Id] : []
             }));
 
             var printConfiguration = await _printRepository.GetCurrentPrintInformationAsync();
@@ -77,102 +75,261 @@ namespace GPA.Business.Services.Invoice
             return await GenerateInvoice(invoicePrintData);
         }
 
-        public async Task<Stream> GenerateInvoice(InvoicePrintData invoicePrintData)
+        public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
+            //using var logo = await GetLogo(invoicePrintData.CompanyLogo);
+
+            //var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
+
+            // Convert Bitmap to XImage
+            //XImage qrCodeXImage = LoadImage(qrCodeImage);
+
+            //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
             Dictionary<string, decimal> accumulatedAddons = new();
-            var separator = "----------------------------------------------";
-            PdfDocument document = new PdfDocument();
-            document.Info.Title = invoicePrintData.CompanyDocument;
 
-            PdfPage page = document.AddPage();
-            page.Width = XUnit.FromMillimeter(80);
-            XGraphics gfx = XGraphics.FromPdfPage(page);
+            var htmlContent = GetTemplate();
 
-            var widthWithMargin = XUnit.FromMillimeter(80);
-            //set logo
-            using var logo = await GetLogo(invoicePrintData.CompanyLogo);
-            var distanceFormImageHeader = 0;
-            if (logo is not null)
-            {
-                distanceFormImageHeader = 50;
-                XImage logoXImage = XImage.FromStream(logo);
-                gfx.DrawImage(logoXImage, new XRect(60, 0, 100, 100));
-            }
-
-            double y = 50 + distanceFormImageHeader;
-            //write title
-            XFont fontBold = new("Verdana", 10, XFontStyleEx.Bold);
-            XFont font = new("Verdana", 10, XFontStyleEx.Regular);
-            WriteFileLine(gfx, invoicePrintData.CompanyName, fontBold, XBrushes.Black, new XRect(0, y, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, $"{invoicePrintData.CompanyDocumentPrefix} {invoicePrintData.CompanyDocument}".Trim(), font, XBrushes.Black, new XRect(0, y + 20, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, $"{invoicePrintData.CompanyPhonePrefix} {invoicePrintData.CompanyPhone}".Trim(), font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 12, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
-
-
-            WriteFileLine(gfx, invoicePrintData.User, font, XBrushes.Black, new XRect(8, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, invoicePrintData.Hour, font, XBrushes.Black, new XRect(-6, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
-            WriteFileLine(gfx, invoicePrintData.Date, font, XBrushes.Black, new XRect(-6, y + 11, widthWithMargin, 20), XStringFormats.TopRight, ref y);
-            WriteFileLine(gfx, "Hora.:", font, XBrushes.Black, new XRect(8, y - 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, "Fecha.:", font, XBrushes.Black, new XRect(8, y + 11, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
-
-
-            WriteFileLine(gfx, "PRODUCTOS", font, XBrushes.Black, new XRect(6, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-
-
-            // Add items
+            var products = new StringBuilder();
             var totalPrice = 0.0M;
             var itemsCount = invoicePrintData.InvoicePrintDetails.Count;
             foreach (var item in invoicePrintData.InvoicePrintDetails)
             {
                 totalPrice += (item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity);
 
-                WriteFileLine(gfx, ShortenName(item.RawInvoiceDetails.ProductName), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.RawInvoiceDetails.Price.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
-                WriteFileLine(gfx, "CANT: " + item.RawInvoiceDetails.Quantity.ToString(), font, XBrushes.Black, new XRect(6, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-
+                products.Append($"""
+                    <tr>
+                      <td>{ShortenName(item.RawInvoiceDetails.ProductName)}</td>
+                      <td>{item.RawInvoiceDetails.Price.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                    </tr>
+                    <tr style="display: block; padding-left: 15px">
+                      <td>Cant:</td>
+                      <td>x {item.RawInvoiceDetails.Quantity}</td>
+                    </tr>
+                    """);
                 foreach (var detailsAddon in item.RawInvoiceDetailsAddon)
                 {
                     var addonComputedValue = Math.Round(AddonCalculator.CalculateAmountOrPercentage(detailsAddon, item.RawInvoiceDetails.Price * item.RawInvoiceDetails.Quantity), 2);
                     addonComputedValue = detailsAddon.IsDiscount ? -addonComputedValue : addonComputedValue;
-                    WriteFileLine(gfx, $"{detailsAddon.Concept}: {addonComputedValue}", font, XBrushes.Black, new XRect(15, y + 13, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+
+                    products.Append($"""
+                        <tr style="display: block; padding-left: 15px">
+                          <td>{detailsAddon.Concept}</td>
+                          <td>{addonComputedValue}</td>
+                        </tr>
+                    """);
+
                     AddAccumulatedAddon(accumulatedAddons, detailsAddon.Concept, addonComputedValue);
                 }
-                y += 10;
             }
 
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-
-            WriteFileLine(gfx, "TOTAL.:", font, XBrushes.Black, new XRect(6, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, "Precio.:", font, XBrushes.Black, new XRect(15, y + 10, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+            var totals = new StringBuilder();
+            totals.Append($"""
+                <tr>
+                  <td>Precio.:</td>
+                  <td>{totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                </tr>
+            """);
 
             foreach (var item in accumulatedAddons)
             {
-                WriteFileLine(gfx, item.Key, font, XBrushes.Black, new XRect(15, y + 15, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y, widthWithMargin, 20), XStringFormats.TopRight, ref y);
+                totals.Append($"""
+                <tr>
+                  <td>{item.Key}</td>
+                  <td>{item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                </tr>
+                """);
             }
 
             var total = totalPrice + accumulatedAddons.Sum(x => x.Value);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, total.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(-6, y + 10, widthWithMargin, 20), XStringFormats.TopRight, ref y);
 
-            /// Generate QR Code
-            var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
+            htmlContent = htmlContent
+                .Replace("{Company}", invoicePrintData.CompanyName)
+                .Replace("{Document}", $"{invoicePrintData.CompanyDocumentPrefix} {invoicePrintData.CompanyDocument}")
+                .Replace("{Tel}", $"{invoicePrintData.CompanyPhonePrefix} {invoicePrintData.CompanyPhone}")
+                .Replace("{Mail}", $"{invoicePrintData.CompanyEmail}")
+                .Replace("{Address}", $"{invoicePrintData.CompanyAddress}")
+                .Replace("{User}", $"{invoicePrintData.User}")
+                .Replace("{Hour}", $"{invoicePrintData.Hour}")
+                .Replace("{Date}", $"{invoicePrintData.Date}")
+                .Replace("{Products}", products.ToString())
+                .Replace("{Totals}", totals.ToString())
+                .Replace("{TotalPrice}", total.ToString("C2", CultureInfo.GetCultureInfo("en-US")));
 
-            // Convert Bitmap to XImage
-            XImage qrCodeXImage = LoadImage(qrCodeImage);
+            var globalSettings = new GlobalSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = new PechkinPaperSize("65mm", "297mm"),
+                Margins = new MarginSettings(0, 0, 0, 0)
+            };
 
-            // Draw QR Code
-            // Insert QR Code
-            gfx.DrawImage(qrCodeXImage, 60, y + 10, 100, 100);
+            return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
+        }
 
-            MemoryStream stream = new();
-            document.Save(stream, false);
-            stream.Position = 0;
-            return stream;
+        private string GetTemplate()
+        {
+            var template = """
+                <!DOCTYPE html>
+                <html lang="en">
+                  <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>Invoice</title>
+                    <style>
+                      html {
+                  font-family: Verdana, Geneva, Tahoma, sans-serif;
+                  margin: 0;
+                  padding: 0;
+                  font-size: 12px;
+                  display: flex;
+                  justify-content: center;
+                  flex-direction: column;
+                }
+
+                          body {
+                  margin: 5px;
+                  padding: 0;
+                }
+
+                          table {
+                  width: 100%;
+                }
+
+                table td {
+                  padding: 5px;
+                  vertical-align: top;
+                }
+                table tr td:nth-child(2) {
+                  text-align: right;
+                }
+                .qr-code {
+                  text-align: center;
+                  margin-top: 20px;
+                }
+
+                /* invoice header */
+                .invoce-header {
+                  text-align: center;
+                }
+                .mb-9 {
+                  margin-bottom: 9px;
+                }
+
+                .receit-title {
+                  font-size: 20px;
+                  font-weight: bold;
+                  align-items: center;
+                }
+
+                .bold {
+                  font-weight: bold;
+                }
+
+                .m0 {
+                  margin: 0;
+                }
+                .p0 {
+                  padding: 0;
+                }
+
+                /* details */
+                table.details th,
+                td {
+                  margin: 0 !important;
+                  padding: 0 !important;
+                }
+                    </style>
+                  </head>
+                  <body>
+                      <table>
+                        <tr>
+                          <td class="title">
+                            <center>
+                              <img
+                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz7xOJSrO_80yAlVx3xLYSExnII1jTTPdTOA&s"
+                                style="width: 200px"
+                              />
+                            </center>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="invoce-header">
+                            <div class="mb-9 receit-title">{Company}</div>
+                            <div class="mb-9">{Document}</div>
+                            <div class="mb-9">{Tel}</div>
+                            <div class="mb-9">{Mail}</div>
+                            <div>
+                                {Address}
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                      <table class="details">
+                        <tr>
+                          <td colspan="2">
+                            <center>
+                              ------------------------------------------------------
+                            </center>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Usuario: {User}</td>
+                          <td></td>
+                        </tr>
+                        <tr>
+                          <td>Hora.:</td>
+                          <td>{Hour}</td>
+                        </tr>
+                        <tr>
+                          <td>Fecha.:</td>
+                          <td>{Date}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="2">
+                            <center>
+                              ------------------------------------------------------
+                            </center>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="2">PRODUCTOS</td>
+                        </tr>
+                        {Products}
+                        <tr>
+                          <td colspan="2">
+                            <center>
+                              ------------------------------------------------------
+                            </center>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Total</td>
+                          <td></td>
+                        </tr>
+                        {Totals}
+                        <tr>
+                          <td colspan="2">
+                            <center>
+                              ------------------------------------------------------
+                            </center>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td>{TotalPrice}</td>
+                        </tr>
+                      </table>
+                      <div class="qr-code">
+                        <img
+                          style="width: 100px"
+                          src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
+                          alt="QR Code"
+                        />
+                      </div>
+                  </body>
+                </html>
+                """;
+            return template;
         }
     }
 }

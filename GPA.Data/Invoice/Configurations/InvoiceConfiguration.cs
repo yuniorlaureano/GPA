@@ -16,6 +16,7 @@ namespace GPA.Data.Invoice.Configurations
                 .IsRequired();
 
             builder.Property(x => x.Payment).HasColumnType("decimal(18,2)").IsRequired();
+            builder.Property(x => x.Code).IsRequired().HasMaxLength(50);
             builder.Property(x => x.Date).IsRequired();
             builder.Property(x => x.Note).HasMaxLength(300);
             builder.Property(x => x.Type).IsRequired();

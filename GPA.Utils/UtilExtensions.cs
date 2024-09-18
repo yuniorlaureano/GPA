@@ -1,4 +1,5 @@
-﻿using GPA.Utils.Exceptions;
+﻿using GPA.Utils.CodeGenerators;
+using GPA.Utils.Exceptions;
 using GPA.Utils.Middleware;
 using GPA.Utils.Permissions;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +19,8 @@ namespace GPA.Utils.Extensions
             services.AddScoped<IPermissionComparer, PermissionComparer>();
             services.AddExceptionHandler<AttachmentDeserializingException>(HttpStatusCode.Unauthorized, includeStackTrace);
             services.AddExceptionHandler<AttachmentNotFoundException>(HttpStatusCode.BadRequest, includeStackTrace);
+            services.AddSingleton(new InvoiceCodeGenerator());
+            services.AddSingleton(new ProductCodeGenerator());
         }
     }
 }

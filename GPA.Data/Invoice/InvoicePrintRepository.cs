@@ -27,6 +27,7 @@ namespace GPA.Data.Invoice
 	                 INV.[Id]
                     ,INV.[Type]
                     ,INV.[Status]
+                    ,INV.[Code]
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
                     ,INV.[Date]

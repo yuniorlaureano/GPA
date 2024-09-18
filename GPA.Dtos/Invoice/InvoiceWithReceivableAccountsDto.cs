@@ -4,6 +4,7 @@
     {
         public Guid InvoiceId { get; set; }
         public byte InvoiceStatus { get; set; }
+        public string InvoiceCode { get; set; }
         public byte SaleType { get; set; }
         public DateTime Date { get; set; }
         public string InvoiceNote { get; set; }

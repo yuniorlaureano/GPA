@@ -12,10 +12,10 @@ namespace GPA.Bussiness.Services.Inventory.Validator
                 .NotNull().WithMessage("El nombre es requerido.")
                 .MaximumLength(200).WithMessage("El nombre admite máximo 200 caracteres.");
 
-            RuleFor(x => x.Code)
-                .NotEmpty().WithMessage("El código del producto es requerido.")
-                .NotNull().WithMessage("El código del producto es requerido.")
-                .MaximumLength(50).WithMessage("El código admite máximo 50 caracteres.");
+            //RuleFor(x => x.Code)
+            //    .NotEmpty().WithMessage("El código del producto es requerido.")
+            //    .NotNull().WithMessage("El código del producto es requerido.")
+            //    .MaximumLength(50).WithMessage("El código admite máximo 50 caracteres.");
 
             RuleFor(x => x.Price)
                 .NotEmpty().WithMessage("El precio es requerido.")

@@ -17,6 +17,7 @@ using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.CodeGenerators;
 using GPA.Utils.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -48,6 +49,7 @@ namespace GPA.Business.Services.Invoice
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IInvoiceAttachmentRepository _invoiceAttachmentRepository;
         private readonly IMapper _mapper;
+        private readonly InvoiceCodeGenerator _invoiceCodeGenerator;
         private readonly ILogger<InvoiceService> _logger;
 
         public InvoiceService(
@@ -61,6 +63,7 @@ namespace GPA.Business.Services.Invoice
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IInvoiceAttachmentRepository invoiceAttachmentRepository,
             IMapper mapper,
+            InvoiceCodeGenerator invoiceCodeGenerator,
             ILogger<InvoiceService> logger)
         {
             _clientRepository = clientRepository;
@@ -73,6 +76,7 @@ namespace GPA.Business.Services.Invoice
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _invoiceAttachmentRepository = invoiceAttachmentRepository;
             _mapper = mapper;
+            _invoiceCodeGenerator = invoiceCodeGenerator;
             _logger = logger;
         }
 
@@ -154,6 +158,7 @@ namespace GPA.Business.Services.Invoice
             invoice.CreatedBy = _userContextService.GetCurrentUserId();
             invoice.CreatedAt = DateTimeOffset.UtcNow;
             invoice.Date = DateTime.UtcNow;
+            invoice.Code = _invoiceCodeGenerator.GenerateCode();
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(savedInvoice);
@@ -205,6 +210,7 @@ namespace GPA.Business.Services.Invoice
                 newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
                 newInvoice.UpdatedAt = DateTimeOffset.UtcNow;
                 newInvoice.Date = savedInvoice.Date;
+                newInvoice.Code = savedInvoice.Code;
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);

@@ -62,6 +62,7 @@ namespace GPA.Bussiness.Services.Invoice.Mappers
                 .ForMember(dest => dest.ClientEmail, src => src.MapFrom(x => x.Client.Email))
                 .ForMember(dest => dest.ClientPhone, src => src.MapFrom(x => x.Client.Phone))
                 .ForMember(dest => dest.SaleType, src => src.MapFrom(x => x.Type))
+                .ForMember(dest => dest.InvoiceCode, src => src.MapFrom(x => x.Code))
                 .ForMember(dest => dest.InvoiceStatus, src => src.MapFrom(x => x.Status))
                 .ForMember(dest => dest.InvoiceNote, src => src.MapFrom(x => x.Note))
                 .ForMember(dest => dest.InvoiceId, src => src.MapFrom(x => x.Id))

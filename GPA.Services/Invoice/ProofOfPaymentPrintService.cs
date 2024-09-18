@@ -1,20 +1,22 @@
-﻿using GPA.Data.General;
+﻿using DinkToPdf;
+using GPA.Data.General;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Invoice;
+using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
 using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using System.Globalization;
+using System.Text;
 
 namespace GPA.Business.Services.Invoice
 {
     public interface IProofOfPaymentPrintService
     {
-        Task<Stream> PrintInvoice(Guid invoiceId);
+        Task<byte[]> PrintInvoice(Guid invoiceId);
     }
 
     public class ProofOfPaymentPrintService : InvoicePrintServiceBase, IProofOfPaymentPrintService
@@ -23,22 +25,25 @@ namespace GPA.Business.Services.Invoice
         private readonly IUserContextService _userContextService;
         private readonly IClientRepository _clientRepository;
         private readonly IPrintRepository _printRepository;
+        private readonly IReportPdfBase _reportPdfBase;
 
         public ProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IClientRepository clientRepository,
             IUserContextService userContextService,
-            IPrintRepository printRepository
+            IPrintRepository printRepository,
+            IReportPdfBase reportPdfBase
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
             _userContextService = userContextService;
             _clientRepository = clientRepository;
             _printRepository = printRepository;
+            _reportPdfBase = reportPdfBase;
         }
 
-        public async Task<Stream> PrintInvoice(Guid invoiceId)
+        public async Task<byte[]> PrintInvoice(Guid invoiceId)
         {
             var invoice = await _invoicePrintRepository.GetInvoiceById(invoiceId);
             var client = await _clientRepository.GetClientAsync(invoice.ClientId);
@@ -82,48 +87,19 @@ namespace GPA.Business.Services.Invoice
             return await GenerateInvoice(invoicePrintData);
         }
 
-        public async Task<Stream> GenerateInvoice(InvoicePrintData invoicePrintData)
+        public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
+            //using var logo = await GetLogo(invoicePrintData.CompanyLogo);
+
+            //var qrCodeImage = GenerateQRCode(invoicePrintData.Invoice.Id.ToString());
+
+            // Convert Bitmap to XImage
+            //XImage qrCodeXImage = LoadImage(qrCodeImage);
+
+            //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
             Dictionary<string, decimal> accumulatedAddons = new();
-            var separator = "------------------------------------------------";
-            PdfDocument document = new PdfDocument();
-            document.Info.Title = invoicePrintData.CompanyDocument;
 
-            PdfPage page = document.AddPage();
-            page.Width = XUnit.FromMillimeter(80);
-            XGraphics gfx = XGraphics.FromPdfPage(page);
-
-            var widthWithMargin = XUnit.FromMillimeter(80);
-            //set logo
-            using var logo = await GetLogo(invoicePrintData.CompanyLogo);
-            var distanceFormImageHeader = 0;
-            if (logo is not null)
-            {
-                distanceFormImageHeader = 50;
-                XImage logoXImage = XImage.FromStream(logo);
-                gfx.DrawImage(logoXImage, new XRect(60, 0, 100, 100));
-            }
-
-            double y = 50 + distanceFormImageHeader;
-            //write title
-            XFont fontBold = new("Verdana", 10, XFontStyleEx.Bold);
-            XFont font = new("Verdana", 10, XFontStyleEx.Regular);
-            WriteFileLine(gfx, invoicePrintData.CompanyName, fontBold, XBrushes.Black, new XRect(0, y, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, $"{invoicePrintData.CompanyDocumentPrefix} {invoicePrintData.CompanyDocument}".Trim(), font, XBrushes.Black, new XRect(0, y + 20, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, $"{invoicePrintData.CompanyPhonePrefix} {invoicePrintData.CompanyPhone}".Trim(), font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyEmail, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, invoicePrintData.CompanyAddress, font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-
-            WriteFileLine(gfx, "RECIBO DE PAGO", fontBold, XBrushes.Black, new XRect(0, y + 7, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, FormatDate(DateTime.Now), font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            //WriteFileLine(gfx, "No: 899", font, XBrushes.Black, new XRect(0, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 15, widthWithMargin, 20), XStringFormats.Center, ref y);
-
-            WriteFileLine(gfx, "Recibí de:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, $"{invoicePrintData.Client.Name} {invoicePrintData.Client.LastName}", font, XBrushes.Black, new XRect(63, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-
+            var htmlContent = GetTemplate();
 
             var totalPrice = 0.0M;
             var totalAddon = 0.0M;
@@ -139,31 +115,188 @@ namespace GPA.Business.Services.Invoice
                 }
             }
 
-            WriteFileLine(gfx, "Monto:", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-
+            var amounts = new StringBuilder();
+            amounts.Append($"""
+                <tr>
+                    <th>Monto:</th>
+                    <td>{totalPrice.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                </tr>
+                """);
 
             foreach (var item in accumulatedAddons)
             {
-                WriteFileLine(gfx, item.Key, fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-                WriteFileLine(gfx, item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+                amounts.Append($"""
+                      <tr>
+                        <th>{item.Key}</th>
+                        <td>{item.Value.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                      </tr>
+                """);
             }
 
-            WriteFileLine(gfx, separator, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, "Total", fontBold, XBrushes.Black, new XRect(6, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, (totalPrice + totalAddon).ToString("C2", CultureInfo.GetCultureInfo("en-US")), font, XBrushes.Black, new XRect(120, y, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            htmlContent = htmlContent
+                .Replace("{Company}", invoicePrintData.CompanyName)
+                .Replace("{Document}", $"{invoicePrintData.CompanyDocumentPrefix} {invoicePrintData.CompanyDocument}")
+                .Replace("{Tel}", $"{invoicePrintData.CompanyPhonePrefix} {invoicePrintData.CompanyPhone}")
+                .Replace("{Mail}", $"{invoicePrintData.CompanyEmail}")
+                .Replace("{Address}", $"{invoicePrintData.CompanyAddress}")
+                .Replace("{Date}", $"{FormatDate(DateTime.Now)}")
+                .Replace("{Client}", $"{invoicePrintData.Client.Name} {invoicePrintData.Client.LastName}")
+                .Replace("{Amounts}", amounts.ToString())
+                .Replace("{Total}", (totalPrice + totalAddon).ToString("C2", CultureInfo.GetCultureInfo("en-US")))
+                .Replace("{Concept}", $"Factura {invoicePrintData.Invoice.Code}")
+                .Replace("{Signer}", invoicePrintData.Signer);
 
+            var globalSettings = new GlobalSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = new PechkinPaperSize("65mm", "297mm"),
+                Margins = new MarginSettings(0, 0, 0, 0)
+            };
 
-            WriteFileLine(gfx, "Concepto:", fontBold, XBrushes.Black, new XRect(6, y + 50, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
-            WriteFileLine(gfx, "CAD - PAGO RECARGO 2018-19", font, XBrushes.Black, new XRect(15, y + 12, widthWithMargin, 20), XStringFormats.TopLeft, ref y);
+            return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
+        }
 
-            WriteFileLine(gfx, "________________________________", font, XBrushes.Black, new XRect(1, y + 50, widthWithMargin, 20), XStringFormats.Center, ref y);
-            WriteFileLine(gfx, invoicePrintData.Signer, font, XBrushes.Black, new XRect(1, y + 10, widthWithMargin, 20), XStringFormats.Center, ref y);
+        private string GetTemplate()
+        {
+            var template = """
+                <!DOCTYPE html>
+                <html lang="en">
+                  <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>Invoice</title>
+                    <style>
+                      html {
+                        font-family: Verdana, Geneva, Tahoma, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        font-size: 12px;
+                        display: flex;
+                        justify-content: center;
+                        flex-direction: column;
+                      }
 
-            MemoryStream stream = new();
-            document.Save(stream, false);
-            stream.Position = 0;
-            return stream;
+                      table {
+                        width: 100%;
+                      }
+                      body {
+                        margin: 5px;
+                        padding: 0;
+                      }
+
+                      table tr td:nth-child(2) {
+                        text-align: right;
+                      }
+                      .qr-code {
+                        text-align: center;
+                        margin-top: 20px;
+                      }
+
+                      /* invoice header */
+                      .invoce-header {
+                        text-align: center;
+                      }
+                      .mb-9 {
+                        margin-bottom: 9px;
+                      }
+
+                      .receit-title {
+                        font-size: 20px;
+                        font-weight: bold;
+                        align-items: center;
+                      }
+
+                      .bold {
+                        font-weight: bold;
+                      }
+
+                      .m0 {
+                        margin: 0;
+                      }
+                      .p0 {
+                        padding: 0;
+                      }
+
+                      /* details */
+                      table.details th,
+                      td {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <table>
+                      <tr>
+                        <td class="title">
+                          <center>
+                            <img
+                              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSz7xOJSrO_80yAlVx3xLYSExnII1jTTPdTOA&s"
+                              style="width: 200px"
+                            />
+                          </center>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="invoce-header">
+                          <div class="mb-9 receit-title">{Company}</div>
+                          <div class="mb-9">{Document}</div>
+                          <div class="mb-9">{Tel}</div>
+                          <div class="mb-9">{Mail}</div>
+                          <div>{Address}</div>
+                          <div>------------------------------------------------------</div>
+                          <b class="bold">RECIBO DE PAGO</b>
+                          <div>{Date}</div>
+                          <div>------------------------------------------------------</div>
+                        </td>
+                      </tr>
+                    </table>
+                    <table class="details">
+                      <tr>
+                        <th>Recibí de:</th>
+                        <td>{Client}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2">
+                          <center>
+                            ------------------------------------------------------
+                          </center>
+                        </td>
+                      </tr>
+                      {Amounts}
+                      <tr>
+                        <td colspan="2">
+                          <center>
+                            ------------------------------------------------------
+                          </center>
+                        </td>
+                      </tr>
+                      <tr>
+                         <th>Total</th>
+                         <td>{Total}</td>                        
+                      </tr>
+
+                    </table>
+                    <div>
+                      <br />
+                      <br />
+                      <div class="bold">Concento:</div>
+                      <div style="margin-left: 20px">{Concept}</div>
+
+                      <br />
+                      <br />
+                      <br />
+                      <br />
+                      <div style="border-top: solid 1px black; text-align: center">
+                        {Signer}
+                      </div>
+                    </div>
+                  </body>
+                </html>
+                
+                """;
+            return template;
         }
     }
 }

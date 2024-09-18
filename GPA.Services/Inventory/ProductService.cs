@@ -8,6 +8,7 @@ using GPA.Dtos.Inventory;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
+using GPA.Utils.CodeGenerators;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
@@ -30,6 +31,7 @@ namespace GPA.Business.Services.Inventory
         private readonly IMapper _mapper;
         private readonly IAddonRepository _addonRepository;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly ProductCodeGenerator _productCodeGenerator;
         private readonly ILogger<ProductService> _logger;
 
         public ProductService(
@@ -38,6 +40,7 @@ namespace GPA.Business.Services.Inventory
             IMapper mapper,
             IAddonRepository addonRepository,
             IBlobStorageServiceFactory blobStorageServiceFactory,
+            ProductCodeGenerator productCodeGenerator,
             ILogger<ProductService> logger)
         {
             _repository = repository;
@@ -45,6 +48,7 @@ namespace GPA.Business.Services.Inventory
             _mapper = mapper;
             _addonRepository = addonRepository;
             _blobStorageServiceFactory = blobStorageServiceFactory;
+            _productCodeGenerator = productCodeGenerator;
             _logger = logger;
         }
 
@@ -73,6 +77,7 @@ namespace GPA.Business.Services.Inventory
             MapAddons(newProduct, dto.Addons);
             newProduct.CreatedBy = _userContextService.GetCurrentUserId();
             newProduct.CreatedAt = DateTimeOffset.UtcNow;
+            newProduct.Code = _productCodeGenerator.GenerateCode();
             var savedProduct = await _repository.AddAsync(newProduct);
 
             var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
@@ -95,7 +100,7 @@ namespace GPA.Business.Services.Inventory
             await MapAddons(newProduct, dto.Addons, dto.Id.Value);
             newProduct.UpdatedBy = _userContextService.GetCurrentUserId();
             newProduct.UpdatedAt = DateTimeOffset.UtcNow;
-
+            newProduct.Code = savedProduct.Code;
             await _repository.UpdateAsync(savedProduct, newProduct, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;

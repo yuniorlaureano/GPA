@@ -129,6 +129,7 @@ namespace GPA.Data.Inventory
 	                 INV.[Id]
                     ,INV.[Type]
                     ,INV.[Status]
+                    ,INV.[Code]
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
                     ,INV.[Date]
@@ -276,7 +277,7 @@ namespace GPA.Data.Inventory
                 });
             }
 
-            var termFilter = invoiceListFilter?.Term is { Length: > 0 } ? $"AND CONCAT(CL.Name, ' ', CL.LastName) LIKE CONCAT('%', @Term, '%')" : "";
+            var termFilter = invoiceListFilter?.Term is { Length: > 0 } ? $"AND (CONCAT(CL.Name, ' ', CL.LastName) LIKE CONCAT('%', @Term, '%') OR INV.[Code] LIKE CONCAT('%', @Term, '%'))" : "";
             var dateFilter = invoiceListFilter?.From is null || invoiceListFilter?.To is null ? "" : $"AND INV.[Date] BETWEEN @From AND @To";
             var statusFilter = invoiceListFilter?.Status == -1 ? "" : "AND INV.[Status] = @Status";
             var typeFilter = invoiceListFilter?.SaleType == -1 ? "" : "AND INV.[Type] = @Type";

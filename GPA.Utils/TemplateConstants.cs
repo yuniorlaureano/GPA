@@ -250,6 +250,7 @@
       <table>
         <tr>
           <th>Producto</th>
+          <th>Código</th>
           <th>Precio</th>
           <th>Entraron</th>
           <th>Salieron</th>

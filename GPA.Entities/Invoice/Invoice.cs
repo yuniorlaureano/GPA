@@ -6,6 +6,7 @@ namespace GPA.Common.Entities.Invoice
 {
     public class Invoice : Entity<Guid>
     {
+        public string Code { get; set; }
         public SaleType Type { get; set; }
         public InvoiceStatus Status { get; set; }
         public decimal Payment { get; set; }

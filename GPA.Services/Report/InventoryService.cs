@@ -61,8 +61,8 @@ namespace GPA.Business.Services.Inventory
         public async Task<byte[]> ExportSales(RequestFilterDto filter)
         {
             _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
-            var transactions = await _repository.GetAllInvoicesAsync(filter);
-            var htmlContent = await GetSaleTemplate(transactions);
+            var sales = await _repository.GetAllInvoicesAsync(filter);
+            var htmlContent = await GetSaleTemplate(sales);
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -250,6 +250,7 @@ namespace GPA.Business.Services.Inventory
                 content.Append($@"
                     <tr class=""content"">
                     <td>{GetSaleStatus(invoice.Status)}</td>
+                    <td>{invoice.Code}</td>
                     <td>{GetSaleType(invoice.Type)}</td>
                     <td>{invoice.Date.ToString("MM d yyyy")}</td>
                     <td>{invoice.Note}</td>
