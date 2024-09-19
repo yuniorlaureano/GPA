@@ -94,11 +94,12 @@ namespace GPA.Api.Controllers.Security
 
             if (!result.Succeeded)
             {
+                var errors = new List<string>();
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
+                    errors.Add(error.Description);
                 }
-                return BadRequest(ModelState);
+                return BadRequest(errors);
             }
             _logger.LogInformation("'{User}' ha creado un usuario", _userContextService.GetCurrentUserName());
             await AddHistory(entity, ActionConstants.Add, _userContextService.GetCurrentUserId());
@@ -125,8 +126,19 @@ namespace GPA.Api.Controllers.Security
 
             if (savedEntity is null)
             {
-                ModelState.AddModelError("model", "The requested user does not exists");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El usuario no existe" });
+            }
+
+            var byEmail = await _userManager.FindByEmailAsync(model.Email);
+            if (byEmail is not null && savedEntity.Id != byEmail.Id)
+            {
+                return BadRequest(new[] { $"El email '{model.Email}' pertenece a otro usuario" });
+            }
+
+            var byName = await _userManager.FindByNameAsync(model.UserName);
+            if (byName is not null && savedEntity.Id != byName.Id)
+            {
+                return BadRequest(new[] { $"El nombre de usuario '{model.UserName}' pertenece a otro usuario" });
             }
 
             var originalUserName = savedEntity.UserName;
@@ -149,16 +161,14 @@ namespace GPA.Api.Controllers.Security
         {
             if (photo is null)
             {
-                ModelState.AddModelError("model", "Debe proveer la foto");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Debe proveer la foto" });
             }
 
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             if (user is null)
             {
-                ModelState.AddModelError("model", "El usuario no existe");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El usuario no existe" });
             }
 
             var uploadResult = await _blobStorageServiceFactory.UploadFile(photo, folder: "users/", isPublic: true);
@@ -167,8 +177,7 @@ namespace GPA.Api.Controllers.Security
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError("usuario", "Error modificando el usuario");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Error modificando el usuario" });
             }
 
             _logger.LogInformation("'{User}' ha cambiado la foto de perfil del usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), user.UserName);
@@ -198,11 +207,12 @@ namespace GPA.Api.Controllers.Security
 
             if (!result.Succeeded)
             {
+                var errors = new List<string>();
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
+                    errors.Add(error.Description);
                 }
-                return BadRequest(ModelState);
+                return BadRequest(errors);
             }
 
             _logger.LogInformation("'{User}' ha eliminado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);

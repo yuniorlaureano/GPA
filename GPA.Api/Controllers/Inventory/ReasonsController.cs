@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -43,7 +44,7 @@ namespace GPA.Inventory.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             var entity = await _reasonService.AddAsync(reason);

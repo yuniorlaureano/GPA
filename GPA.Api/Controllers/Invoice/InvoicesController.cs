@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using FluentValidation;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Invoice;
 using GPA.Common.DTOs;
@@ -124,7 +125,7 @@ namespace GPA.Invoice.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             try

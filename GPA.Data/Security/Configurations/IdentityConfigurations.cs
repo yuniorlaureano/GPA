@@ -22,6 +22,9 @@ namespace GPA.Data.Security.Configurations
                 b.Property(b => b.UserName).HasMaxLength(30);
                 b.Property(b => b.Email).HasMaxLength(254);
 
+                b.HasIndex(b => b.Email).IsUnique();
+                b.HasIndex(b => b.UserName).IsUnique();
+
                 b.HasMany(p => p.Profiles)
                     .WithOne(p => p.User)
                     .HasForeignKey(p => p.UserId);

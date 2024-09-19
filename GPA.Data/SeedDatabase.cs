@@ -41,6 +41,7 @@ namespace GPA.Data
                 NormalizedUserName = "ADMIN",
                 Email = "admin@gmail.com",
                 NormalizedEmail = "admin@gmail.com".ToUpper(),
+                EmailConfirmed = true,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
 

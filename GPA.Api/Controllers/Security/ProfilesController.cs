@@ -1,4 +1,5 @@
-﻿using GPA.Api.Utils.Filters;
+﻿using GPA.Api.Extensions;
+using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Security;
 using GPA.Common.DTOs;
 using GPA.Dtos.Security;
@@ -55,7 +56,7 @@ namespace GPA.Api.Controllers.Security
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             if (model is null)

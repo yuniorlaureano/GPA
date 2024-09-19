@@ -12,6 +12,8 @@ namespace GPA.Data.Security.Configurations
             builder.ToTable("Profiles", GPASchema.SECURITY);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+            builder.HasIndex(b => b.Name).IsUnique();
+
             builder.HasMany(p => p.Users) 
                 .WithOne(p => p.Profile)
                 .HasForeignKey(p => p.ProfileId);
