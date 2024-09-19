@@ -82,6 +82,7 @@ namespace GPA.Data.Inventory
 		                    ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                 WHERE 
 	                [p].[Deleted] = CAST(0 AS bit) 
+                    AND CONVERT(date, [t0].[Date]) >= @StartDate
                 GROUP BY 
 	                [p].[Id], 
 	                [p].[Name]
@@ -119,6 +120,9 @@ namespace GPA.Data.Inventory
             var insert = @"
                 IF EXISTS (SELECT 1 FROM [GPA].[Inventory].[StockCycles] WHERE Id = @CycleId AND IsClose = 0)
                 BEGIN
+                    DECLARE @EndDate DATE;
+                    SELECT TOP 1 @EndDate=EndDate FROM [GPA].[Inventory].[StockCycles] WHERE Id = @CycleId
+
 	                UPDATE [GPA].[Inventory].[StockCycles]
 	                SET [IsClose] = 1,
 						[UpdatedBy] = @UpdatedBy,
@@ -165,6 +169,7 @@ namespace GPA.Data.Inventory
 				                ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
 	                WHERE 
 		                [p].[Deleted] = CAST(0 AS bit) 
+                        AND CONVERT(date, [t0].[Date]) <= @EndDate
 	                GROUP BY 
 		                [p].[Id], 
 		                [p].[Name]

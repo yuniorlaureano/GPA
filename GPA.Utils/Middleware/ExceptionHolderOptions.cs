@@ -42,7 +42,6 @@ namespace GPA.Utils.Middleware
                 context.Response.StatusCode = (int)ex.StatusCode;
                 return JsonSerializer.Serialize(new
                 {
-                    StatusCode = context.Response.StatusCode,
                     Message = ex.MessageHandler(exceptionType.Message),
                     Detailed = ex.IncludeStackTrace ? exceptionType.StackTrace : null
                 });
@@ -52,7 +51,6 @@ namespace GPA.Utils.Middleware
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 return JsonSerializer.Serialize(new
                 {
-                    StatusCode = context.Response.StatusCode,
                     Message = exceptionType.Message,
                 });
             }

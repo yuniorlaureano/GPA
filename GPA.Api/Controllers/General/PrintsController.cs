@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
 using GPA.Data.Inventory;
@@ -50,7 +51,7 @@ namespace GPA.Api.Controllers.General
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             var entity = await _printService.AddAsync(model);
@@ -63,7 +64,7 @@ namespace GPA.Api.Controllers.General
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _printService.UpdateAsync(id, model);
@@ -84,7 +85,7 @@ namespace GPA.Api.Controllers.General
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _printService.SavePhoto(printInformationUploadPhotoDto);

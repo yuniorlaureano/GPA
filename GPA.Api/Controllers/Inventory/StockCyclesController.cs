@@ -50,7 +50,7 @@ namespace GPA.Inventory.Api.Controllers
             var validationResult = await _creationValidator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                return BadRequest(validationResult.Errors);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var cycleId = await _stockCycleService.OpenCycleAsync(model);

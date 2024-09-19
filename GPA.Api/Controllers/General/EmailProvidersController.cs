@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
 using GPA.Dtos.General;
@@ -49,7 +50,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _emailProviderService.CreateConfigurationAsync(model);
@@ -62,7 +63,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _emailProviderService.UpdateConfigurationAsync(model);
@@ -75,7 +76,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _emailServiceFactory.SendMessageAsync(message);

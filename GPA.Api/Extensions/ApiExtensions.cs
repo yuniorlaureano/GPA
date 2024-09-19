@@ -2,6 +2,7 @@
 using GPA.Data;
 using GPA.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -83,6 +84,11 @@ namespace GPA.Api.Extensions
                     options.BaseAddress = new Uri(sendGridUrl);
                 });
             }
+        }
+
+        public static IEnumerable<string> ErrorMessage(this ModelStateDictionary modelState) 
+        {
+            return modelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage));
         }
     }
 }

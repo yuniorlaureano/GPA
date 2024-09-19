@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Security;
 using GPA.Business.Services.Security;
@@ -69,15 +70,14 @@ namespace GPA.Api.Controllers.Security
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("User: '{User}' login failed. '{@Error}'", model.UserName, ModelState.Select(x => x.Value));
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user is null)
             {
                 _logger.LogWarning("User: '{User}' login failed. El usuario no existe", model.UserName);
-                ModelState.AddModelError("usuario", "El usuario no existe");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El usuario no existe" });
             }
 
             var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
@@ -85,8 +85,7 @@ namespace GPA.Api.Controllers.Security
             if (!resultd)
             {
                 _logger.LogWarning("User: '{User}' login failed. Usuario inválido", model.UserName);
-                ModelState.AddModelError("usuario", "Usuario inválido");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Usuario inválido" });
             }
 
             BlobStorageFileResult? photo = GetUserPhoto(user);
@@ -120,15 +119,14 @@ namespace GPA.Api.Controllers.Security
         {
             if (model is null)
             {
-                ModelState.AddModelError("model", "The model is null");
                 _logger.LogError("Sign up failed. Modelo nulo");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Sign up failed. Modelo nulo" });
             }
 
             var validationResult = await _signUpValidator.ValidateAsync(model);
             if (!validationResult.IsValid)
             {
-                return BadRequest(validationResult.Errors);
+                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
             }
 
             var entity = new GPAUser
@@ -149,14 +147,15 @@ namespace GPA.Api.Controllers.Security
                 return Created();
             }
 
+            var errors = new List<string>();
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(error.Code, error.Description);
+                errors.Add(error.Description);
             }
 
             _logger.LogError("Error signing up. {@Error}", result.Errors.Select(x => x.Description));
 
-            return BadRequest(ModelState);
+            return BadRequest(errors);
         }
 
         [HttpGet("profile/{profileId}/change")]
@@ -201,23 +200,20 @@ namespace GPA.Api.Controllers.Security
             if (userByEmail is not null && userByEmail.Id != userId)
             {
                 _logger.LogWarning("El usuario '{User}' intentó cambiar su correo '{Correo}' al uno existenten", User?.Identity?.Name, model.Email);
-                ModelState.AddModelError("usuario", "El correo ya está registrado");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El correo ya está registrado" });
             }
 
             if (user is null)
             {
                 _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{User}' no existe", User?.Identity?.Name);
-                ModelState.AddModelError("usuario", "El usuario no existe");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El usuario no existe" });
             }
 
             var userClaim = User.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId);
             if (user.Id.ToString() != userClaim.Value)
             {
                 _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{User}' intentó modificar un perfil de otra persona", User?.Identity?.Name);
-                ModelState.AddModelError("usuario", "Solo debe modificar su propio usuario");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Solo debe modificar su propio usuario" });
             }
 
             user.FirstName = model.FirstName;
@@ -229,8 +225,7 @@ namespace GPA.Api.Controllers.Security
             if (!result.Succeeded)
             {
                 _logger.LogWarning("Error editando perfil de usuario. Usuario '{User}', causa '{@Error}'", User?.Identity?.Name, result.Errors.Select(x => x.Description));
-                ModelState.AddModelError("usuario", "Error modificando el usuario");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Error modificando el usuario" });
             }
 
             BlobStorageFileResult? photo = GetUserPhoto(user);
@@ -259,7 +254,7 @@ namespace GPA.Api.Controllers.Security
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             _logger.LogInformation("Intento de cambio de contraseña. Usuario '{User}'", email);
@@ -267,16 +262,14 @@ namespace GPA.Api.Controllers.Security
             if (user is null)
             {
                 _logger.LogInformation("Intento de cambio de contraseña. El usuario '{User}' no existe", email);
-                ModelState.AddModelError("usuario", "No existe usuario registrado con ese correo");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
             var timeSpan = DateTimeOffset.Now - user.TOTPAccessCodeAttemptsDate;
             if (user.TOTPAccessCodeAttempts == 3 && timeSpan.Minutes < 1)
             {
                 _logger.LogInformation("Intento de cambio de contraseña. Máximo de intentos alcanzado para '{User}'", email);
-                ModelState.AddModelError("usuario", "Debe esperar un minuto para volver a intentar");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Debe esperar un minuto para volver a intentar" });
             }
 
             var emailProvider = new EmailTokenProvider<GPAUser>();
@@ -301,8 +294,7 @@ namespace GPA.Api.Controllers.Security
             catch (Exception ex)
             {
                 _logger.LogInformation("Intento de cambio de contraseña. Error enviando correo a '{User}'", email);
-                ModelState.AddModelError("usuario", "Error enviando el correo");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Error enviando el correo" });
             }
 
             _logger.LogInformation("Intento de cambio de contraseña. Código enviado a '{User}'", email);
@@ -315,7 +307,7 @@ namespace GPA.Api.Controllers.Security
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             _logger.LogInformation("Intento de cambio de contraseña. Usuario '{User}'", model.userName);
@@ -323,24 +315,20 @@ namespace GPA.Api.Controllers.Security
             if (model.Password != model.ConfirmPassword)
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Las contraseñas no coinciden usuario '{User}'", model.userName);
-                ModelState.AddModelError("usuario", "Las contraseñas deben coincidir");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Las contraseñas deben coincidir" });
             }
 
             var user = await _userManager.FindByNameAsync(model.userName);
             if (user is null)
             {
                 _logger.LogWarning("Intento de cambio de contraseña. el usuario no existe, usuario '{User}'", model.userName);
-                ModelState.AddModelError("usuario", "No existe usuario registrado con ese correo");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
             if (user.TOTPAccessCodeAttempts == 3)
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", model.userName);
-                ModelState.AddModelError("usuario", "Máximo de intentos alcanzados");
-                ModelState.AddModelError("usuario", "Debe solicitar otro código de verificación");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Máximo de intentos alcanzados", "Debe solicitar otro código de verificación" });
             }
 
             var emailProvider = new EmailTokenProvider<GPAUser>();
@@ -350,9 +338,7 @@ namespace GPA.Api.Controllers.Security
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{User}'", model.userName);
                 await UpdateTOTPCodeAttempts(user);
-                ModelState.AddModelError("usuario", "El código ingresado no es válido.");
-                ModelState.AddModelError("usuario", "Debe ingresar el código que recibió vía correo");
-                return BadRequest(ModelState);
+                return BadRequest(new[]{ "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo"});
             }
 
             var passwordHasher = new PasswordHasher<GPAUser>();
@@ -370,16 +356,14 @@ namespace GPA.Api.Controllers.Security
         {
             if (photo is null)
             {
-                ModelState.AddModelError("model", "Debe proveer la foto");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Debe proveer la foto" });
             }
 
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             if (user is null)
             {
-                ModelState.AddModelError("model", "El usuario no existe");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "El usuario no existe" });
             }
 
             var uploadResult = await _blobStorageServiceFactory.UploadFile(photo, folder: "users/", isPublic: true);
@@ -388,8 +372,7 @@ namespace GPA.Api.Controllers.Security
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                ModelState.AddModelError("usuario", "Error modificando el usuario");
-                return BadRequest(ModelState);
+                return BadRequest(new[] { "Error modificando el usuario" });
             }
 
             BlobStorageFileResult? blobStorage = GetUserPhoto(user);

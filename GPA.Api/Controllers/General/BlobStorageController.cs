@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
 using GPA.Dtos.General;
@@ -49,7 +50,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _blobStorageConfigurationService.CreateConfigurationAsync(model);
@@ -62,7 +63,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _blobStorageConfigurationService.UpdateConfigurationAsync(model);
@@ -75,7 +76,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             var fileResult = await _blobStorageServiceFactory.UploadFile(file);
@@ -88,7 +89,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             var fileResult = await _blobStorageServiceFactory.DownloadFile(fullFileName, isPublic);
@@ -101,7 +102,7 @@ namespace GPA.General.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(ModelState.ErrorMessage());
             }
 
             await _blobStorageServiceFactory.DeleteFile(fullFileName, isPublic);
