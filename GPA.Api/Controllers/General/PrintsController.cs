@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using GPA.Api.Utils.Filters;
 using GPA.Common.DTOs;
+using GPA.Data.Inventory;
 using GPA.Dtos.General;
+using GPA.Entities.Report;
 using GPA.Services.General;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -15,11 +17,16 @@ namespace GPA.Api.Controllers.General
     public class PrintsController : ControllerBase
     {
         private readonly IPrintService _printService;
+        private readonly IReportTemplateRepository _reportTemplateRepository;
         private readonly IMapper _mapper;
 
-        public PrintsController(IPrintService printService, IMapper mapper)
+        public PrintsController(
+            IPrintService printService,
+            IReportTemplateRepository reportTemplateRepository,
+            IMapper mapper)
         {
             _printService = printService;
+            _reportTemplateRepository = reportTemplateRepository;
             _mapper = mapper;
         }
 
@@ -81,6 +88,28 @@ namespace GPA.Api.Controllers.General
             }
 
             await _printService.SavePhoto(printInformationUploadPhotoDto);
+            return NoContent();
+        }
+
+        [HttpGet("templates")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetReportTemplates()
+        {
+            return Ok(await _reportTemplateRepository.GetTemplates());
+        }
+
+        [HttpGet("templates/{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetReportTemplateById(Guid id)
+        {
+            return Ok(await _reportTemplateRepository.GetTemplateById(id));
+        }
+
+        [HttpPut("templates/{id}")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.General}.{Components.PrintInformation}", permission: Permissions.Update)]
+        public async Task<IActionResult> UpdateTemplate(Guid id, [FromBody] ReportTemplate model)
+        {
+            await _reportTemplateRepository.UpdateTemplate(id, model);
             return NoContent();
         }
     }

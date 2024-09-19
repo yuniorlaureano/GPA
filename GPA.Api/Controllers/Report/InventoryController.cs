@@ -23,8 +23,8 @@ namespace GPA.Api.Controllers.Report
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Reporting}.{Components.Report}", permission: Permissions.ExistenceReport)]
         public async Task<IActionResult> PrintExistence([FromQuery] RequestFilterDto filter)
         {
-            var report = await _stockReportsService.ExportExistenceToExcelAsync(filter);
-            return File(report, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "existence-report.xlsx");
+            var report = await _stockReportsService.ExportExistence(filter);
+            return File(report, "application/pdf", "generated.pdf");
         }
 
         [HttpGet("stockcycles/{stockCycleId}/print")]

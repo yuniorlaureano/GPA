@@ -2,6 +2,7 @@
 using GPA.Data.General;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using GPA.Entities.Report;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Invoice;
@@ -87,7 +88,8 @@ namespace GPA.Business.Services.Invoice
             //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
             Dictionary<string, decimal> accumulatedAddons = new();
 
-            var htmlContent = await GetTemplate();
+            var template = await GetTemplate();
+            var htmlContent = template.Template;
 
             var products = new StringBuilder();
             var totalPrice = 0.0M;
@@ -157,25 +159,27 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Logo}", logo)
                 .Replace("{QrCode}", qrCodeImage);
 
+            var width = $"{template.Width}mm" ?? "65mm";
+            var height = $"{template.Height}mm" ?? "297mm";
             var globalSettings = new GlobalSettings
             {
                 ColorMode = ColorMode.Color,
                 Orientation = Orientation.Portrait,
-                PaperSize = new PechkinPaperSize("65mm", "297mm"),
+                PaperSize = new PechkinPaperSize(width, height),
                 Margins = new MarginSettings(0, 0, 0, 0)
             };
 
             return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
         }
 
-        private async Task<string> GetTemplate()
+        private async Task<ReportTemplate> GetTemplate()
         {
             var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.INVOICE_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template de impresión no exíste");
             }
-            return template.Template;
+            return template;
         }
     }
 }

@@ -87,7 +87,8 @@ namespace GPA.Data.Inventory
                   PRO.Deleted = 0 AND (
 	              @Search IS NULL
 	              OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-	              OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
+	              OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
+	              OR CA.[Name] LIKE CONCAT('%', @Search, '%'))
                 ORDER BY PRO.Id
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
@@ -103,10 +104,13 @@ namespace GPA.Data.Inventory
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Inventory].[Products] PRO
+                    JOIN [GPA].[Inventory].[Categories] CA
+		                ON PRO.CategoryId = CA.Id AND CA.Deleted = 0
                 WHERE PRO.Deleted = 0 AND (
 	                @Search IS NULL
 	                OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
-	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%'))
+	                OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
+                    OR CA.[Name] LIKE CONCAT('%', @Search, '%'))
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();

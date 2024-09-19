@@ -16,6 +16,7 @@ namespace GPA.Business.Services.Inventory
     {
         Task<byte[]> ExportExistenceToExcelAsync(RequestFilterDto filter);
         Task<byte[]> ExportStockCycleDetails(Guid stockCycleId);
+        Task<byte[]> ExportExistence(RequestFilterDto filter);
         Task<byte[]> ExportTransactions(RequestFilterDto filter);
         Task<byte[]> ExportSales(RequestFilterDto filter);
     }
@@ -63,6 +64,38 @@ namespace GPA.Business.Services.Inventory
             _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
             var sales = await _repository.GetAllInvoicesAsync(filter);
             var htmlContent = await GetSaleTemplate(sales);
+            return _reportPdfBase.GeneratePdf(htmlContent);
+        }
+
+        public async Task<byte[]> ExportExistence(RequestFilterDto filter)
+        {
+            _logger.LogInformation("El usuario '{UserId}' está generando el reporte de existencia", _userContextService.GetCurrentUserId());
+            var existences = await _repository.GetAllExistenceAsync(filter);
+            var content = new StringBuilder();
+
+            foreach (var item in existences)
+            {
+                var type = item.ProductType == ProductType.RawProduct ? "Materia prima" : "Producto terminado";
+                content.Append($@"
+                    <tr class=""content"">
+                    <td>{item.ProductCode}</td>
+                    <td>{item.ProductName}</td>
+                    <td>{type}</td>
+                    <td>{item.Input}</td>
+                    <td>{item.Output}</td>
+                    <td>{item.Stock}</td>
+                    <td>{(double)Math.Round(item.Price * item.Stock, 2)}</td>
+                  </tr>
+                ");
+            }
+
+            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.EXISTENCE_TEMPLATE);
+            if (template == null || template.Template is null)
+            {
+                throw new Exception("El template para el reporte no existe");
+            }
+
+            var htmlContent = template.Template.Replace("{{Content}}", content.ToString());
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -296,7 +329,7 @@ namespace GPA.Business.Services.Inventory
                 1 => "Guardado",
                 2 => "Cancelado",
                 _ => ""
-            };  
+            };
         }
     }
 }

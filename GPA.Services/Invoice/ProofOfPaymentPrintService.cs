@@ -3,13 +3,13 @@ using GPA.Data.General;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
 using GPA.Entities.General;
+using GPA.Entities.Report;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Invoice;
 using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
-using PdfSharp.Drawing;
 using System.Globalization;
 using System.Text;
 
@@ -76,7 +76,7 @@ namespace GPA.Business.Services.Invoice
             invoicePrintData.InvoicePrintDetails.AddRange(invoiceDetails.Select(detail => new InvoicePrintDetails
             {
                 RawInvoiceDetails = detail,
-                RawInvoiceDetailsAddon = invoiceDetailsAddon[detail.Id]
+                RawInvoiceDetailsAddon = invoiceDetailsAddon.ContainsKey(detail.Id) ? invoiceDetailsAddon[detail.Id] : []
             }));
 
             var printConfiguration = await _printRepository.GetCurrentPrintInformationAsync();
@@ -95,7 +95,8 @@ namespace GPA.Business.Services.Invoice
         {
             Dictionary<string, decimal> accumulatedAddons = new();
 
-            var htmlContent = await GetTemplate();
+            var template = await GetTemplate();
+            var htmlContent = template.Template;
             var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
 
             var totalPrice = 0.0M;
@@ -144,25 +145,27 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Signer}", invoicePrintData.Signer)
                 .Replace("{Logo}", logo);
 
+            var width = $"{template.Width}mm" ?? "65mm";
+            var height = $"{template.Height}mm" ?? "297mm";
             var globalSettings = new GlobalSettings
             {
                 ColorMode = ColorMode.Color,
                 Orientation = Orientation.Portrait,
-                PaperSize = new PechkinPaperSize("65mm", "297mm"),
+                PaperSize = new PechkinPaperSize(width, height),
                 Margins = new MarginSettings(0, 0, 0, 0)
             };
 
             return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
         }
 
-        private async Task<string> GetTemplate()
+        private async Task<ReportTemplate> GetTemplate()
         {
             var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.PROOF_OF_PAYMENT_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template de impresión no exíste");
             }
-            return template.Template;
+            return template;
         }
     }
 }

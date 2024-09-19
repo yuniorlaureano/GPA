@@ -2,6 +2,7 @@
 using GPA.Data.General;
 using GPA.Data.Inventory;
 using GPA.Data.Invoice;
+using GPA.Entities.Report;
 using GPA.Entities.Unmapped;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Invoice;
@@ -85,7 +86,8 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
-            var htmlContent = await GetTemplate();
+            var template = await GetTemplate();
+            var htmlContent = template.Template;
             var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
             htmlContent = htmlContent
                 .Replace("{Company}", invoicePrintData.CompanyName)
@@ -97,29 +99,31 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Client}", $"{invoicePrintData.Client.Name} {invoicePrintData.Client.LastName}")
                 .Replace("{PaymentDate}", invoicePrintData.ReceivableAccounts.Date.ToString("MMM d yyyy"))
                 .Replace("{Paid}", invoicePrintData.ReceivableAccounts.Payment.ToString("C2", CultureInfo.GetCultureInfo("en-US")))
-                .Replace("{Pending}", invoicePrintData.ReceivableAccounts.PendingPayment.ToString("C2", CultureInfo.GetCultureInfo("en-US")))
+                .Replace("{Pending}", (invoicePrintData.ReceivableAccounts.PendingPayment - invoicePrintData.ReceivableAccounts.Payment).ToString("C2", CultureInfo.GetCultureInfo("en-US")))
                 .Replace("{Signer}", invoicePrintData.Signer)
                 .Replace("{Logo}", logo);
 
+            var width = $"{template.Width}mm" ?? "65mm";
+            var height = $"{template.Height}mm" ?? "297mm";
             var globalSettings = new GlobalSettings
             {
                 ColorMode = ColorMode.Color,
                 Orientation = Orientation.Portrait,
-                PaperSize = new PechkinPaperSize("65mm", "297mm"),
+                PaperSize = new PechkinPaperSize(width, height),
                 Margins = new MarginSettings(0, 0, 0, 0)
             };
 
             return _reportPdfBase.GeneratePdf(htmlContent, settings: globalSettings);
         }
 
-        private async Task<string> GetTemplate()
+        private async Task<ReportTemplate> GetTemplate()
         {
             var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE);
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template de impresión no exíste");
             }
-            return template.Template;
+            return template;
         }
     }
 }

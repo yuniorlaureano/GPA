@@ -149,6 +149,80 @@
 """;
         }
 
+        public static string ExistenceTemplate()
+        {
+            return """ 
+<html lang="en">
+  <head>
+<meta charset="UTF-8" />
+    <style>
+      table {
+        color: #242424;
+        font-size: 0.85rem;
+        border: solid 1px #e6e9ed;
+        width: 100%;
+        margin-bottom: 1rem;
+        vertical-align: top;
+        border-color: #dee2e6;
+        caption-side: bottom;
+        border-collapse: collapse;
+        box-sizing: border-box;
+        display: table;
+        border-collapse: separate;
+        box-sizing: border-box;
+        text-indent: initial;
+        unicode-bidi: isolate;
+        border-color: gray;
+        padding: 0;
+        border-spacing: 0;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border: solid 1px #f5f7f8;
+        vertical-align: bottom;
+        margin: 0;
+      }
+
+      th {
+        background-color: #f8f9fa;
+      }
+
+      td {
+        vertical-align: top;
+      }
+      .content:nth-child(odd) {
+        background-color: #f5f4f4;
+      }
+
+      .header {
+        background-color: #f8f9fa;
+        font-weight: 400 !important;
+        font-size: 17px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="text-align: center">Transacciones</h1>
+    <table>
+      <tr class="header">
+        <th>Código</th>
+        <th>Producto</th>
+        <th>Tipo</th>
+        <th>Entrada</th>
+        <th>Salida</th>
+        <th>Existencia</th>
+        <th>Monto en producto</th>
+      </tr>
+      {{Content}}
+    </table>
+  </body>
+</html>
+""";
+        }
+
         public static string StockDetailsTemplate()
         {
             return """ 
@@ -716,8 +790,9 @@
         public static string TRANSACTION_TEMPLATE = "TRANSACTION_TEMPLATE";
         public static string STOCK_CYCLE_DETAILS_TEMPLATE = "STOCK_CYCLE_DETAILS_TEMPLATE";
         public static string SALE_TEMPLATE = "SALE_TEMPLATE";
-        public static string INVOICE_TEMPLATE = "INVOICE_TEMPATE";
+        public static string INVOICE_TEMPLATE = "INVOICE_TEMPLATE";
         public static string PROOF_OF_PAYMENT_TEMPLATE = "PROOF_OF_PAYMENT_TEMPLATE";
         public static string RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE = "RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE";
+        public static string EXISTENCE_TEMPLATE = "EXISTENCE_TEMPLATE";
     }
 }

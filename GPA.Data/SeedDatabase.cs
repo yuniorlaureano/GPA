@@ -107,19 +107,31 @@ namespace GPA.Data
                 {
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.INVOICE_TEMPLATE,
-                    Template = TemplateConstants.InvoiceTemplate()
+                    Template = TemplateConstants.InvoiceTemplate(),
+                    Width = 65,
+                    Height = 200
                 },
                 new ReportTemplate
                 {
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.PROOF_OF_PAYMENT_TEMPLATE,
-                    Template = TemplateConstants.ProofOfPaymentTemplate()
+                    Template = TemplateConstants.ProofOfPaymentTemplate(),
+                    Width = 65,
+                    Height = 200
                 },
                 new ReportTemplate
                 {
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE,
-                    Template = TemplateConstants.ReceivableProofOfPaymentTemplate()
+                    Template = TemplateConstants.ReceivableProofOfPaymentTemplate(),
+                    Width = 65,
+                    Height = 200
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.EXISTENCE_TEMPLATE,
+                    Template = TemplateConstants.ExistenceTemplate()
                 }
             );
         }
