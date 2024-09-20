@@ -89,7 +89,6 @@ namespace GPA.Data.Security
                 ,USR.[UserName]
                 ,USR.[Email]
                 ,USR.Invited
-	            ,USR.Deleted
                 ,USR.EmailConfirmed
 	            ,CAST(IIF(USRP.ProfileId IS NULL, 0, 1) AS BIT) AS IsAssigned
               FROM [GPA].[Security].[Users] USR
