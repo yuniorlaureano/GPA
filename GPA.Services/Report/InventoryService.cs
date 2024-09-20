@@ -1,12 +1,14 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Data.Inventory;
 using GPA.Entities.General;
+using GPA.Entities.Report;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.Caching;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
@@ -32,6 +34,7 @@ namespace GPA.Business.Services.Inventory
         private readonly ILogger<InventoryService> _logger;
         private const string _initial = "initial";
         private const string _final = "final";
+        private readonly IGenericCache<ReportTemplate> _cache;
 
         public InventoryService(
             IUserContextService userContextService,
@@ -40,7 +43,8 @@ namespace GPA.Business.Services.Inventory
             IReportExcel reportExcel,
             IReportPdfBase reportPdfBase,
             IReportTemplateRepository reportTemplateRepository,
-            ILogger<InventoryService> logger)
+            ILogger<InventoryService> logger,
+            IGenericCache<ReportTemplate> cache)
         {
             _userContextService = userContextService;
             _repository = repository;
@@ -49,6 +53,7 @@ namespace GPA.Business.Services.Inventory
             _reportPdfBase = reportPdfBase;
             _reportTemplateRepository = reportTemplateRepository;
             _logger = logger;
+            _cache = cache;
         }
 
         public async Task<byte[]> ExportTransactions(RequestFilterDto filter)
@@ -89,7 +94,11 @@ namespace GPA.Business.Services.Inventory
                 ");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.EXISTENCE_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.EXISTENCE_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.EXISTENCE_TEMPLATE);
+            });
+
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");
@@ -214,7 +223,10 @@ namespace GPA.Business.Services.Inventory
                     </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_CYCLE_DETAILS_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.STOCK_CYCLE_DETAILS_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.STOCK_CYCLE_DETAILS_TEMPLATE);
+            });
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");
@@ -266,7 +278,11 @@ namespace GPA.Business.Services.Inventory
                   </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.TRANSACTION_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.TRANSACTION_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.TRANSACTION_TEMPLATE);
+            });
+
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");
@@ -292,7 +308,11 @@ namespace GPA.Business.Services.Inventory
                   </tr>");
             }
 
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.SALE_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.SALE_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.SALE_TEMPLATE);
+            });
+
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template para el reporte no existe");

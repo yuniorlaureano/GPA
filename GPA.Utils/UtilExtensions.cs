@@ -1,4 +1,9 @@
-﻿using GPA.Utils.CodeGenerators;
+﻿using GPA.Common.DTOs;
+using GPA.Common.DTOs.Inventory;
+using GPA.Dtos.Cache;
+using GPA.Entities.Report;
+using GPA.Utils.Caching;
+using GPA.Utils.CodeGenerators;
 using GPA.Utils.Exceptions;
 using GPA.Utils.Middleware;
 using GPA.Utils.Permissions;
@@ -21,6 +26,11 @@ namespace GPA.Utils.Extensions
             services.AddExceptionHandler<AttachmentNotFoundException>(HttpStatusCode.BadRequest, includeStackTrace);
             services.AddSingleton(new InvoiceCodeGenerator());
             services.AddSingleton(new ProductCodeGenerator());
+            services.AddSingleton<IGenericCache<string>, GenericCache<string>>();
+            services.AddSingleton<IGenericCache<ReportTemplate>, GenericCache<ReportTemplate>>();
+            services.AddSingleton<IGenericCache<ResponseDto<CategoryDto>>, GenericCache<ResponseDto<CategoryDto>>>();
+            services.AddSingleton<IGenericCache<ResponseDto<ReasonDto>>, GenericCache<ResponseDto<ReasonDto>>>();
+            services.AddSingleton<IGenericCache<UserPermissionProfileCache>, GenericCache<UserPermissionProfileCache>>();
         }
     }
 }

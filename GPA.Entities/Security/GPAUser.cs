@@ -11,6 +11,7 @@ namespace GPA.Common.Entities.Security
         public byte TOTPAccessCodeAttempts { get; set; }
         public DateTimeOffset TOTPAccessCodeAttemptsDate { get; set; }
         public bool Deleted { get; set; }
+        public bool Invited { get; set; }
 
         public Guid? CreatedBy { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }

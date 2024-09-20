@@ -12,6 +12,7 @@ namespace GPA.Data.Security
         Task<RawUser?> GetUserByIdAsync(Guid id);
         Task<IEnumerable<RawUser>> GetUsersAsync(RequestFilterDto filter);
         Task<int> GetUsersCountAsync(RequestFilterDto filter);
+        Task<bool> IsUserActive(Guid id);
     }
 
     public class GPAUserRepository : Repository<GPAUser>, IGPAUserRepository
@@ -30,11 +31,12 @@ namespace GPA.Data.Security
 	                UserName,
 	                Photo,
 	                Email,
+	                Invited,
 	                Deleted,
+                    EmailConfirmed,
                     CAST(0 AS BIT) AS IsAssigned
                 FROM [GPA].[Security].[Users]
-                WHERE 
-                  Deleted = 0 AND (
+                WHERE (
 	              @Search IS NULL
 	              OR CONCAT(FirstName, ' ', LastName) LIKE CONCAT('%', @Search, '%')
 	              OR UserName LIKE CONCAT('%', @Search, '%')
@@ -57,12 +59,13 @@ namespace GPA.Data.Security
 	                UserName,
 	                Photo,
 	                Email,
+                    Invited,
 	                Deleted,
+                    EmailConfirmed,
                     CAST(0 AS BIT ) IsAssigned
                 FROM [GPA].[Security].[Users]
                 WHERE 
                     Id = @Id    
-                    AND Deleted = 0
             ";
 
             return await _context.Database.SqlQueryRaw<RawUser>(query, new SqlParameter("@Id", id)).FirstOrDefaultAsync();
@@ -74,8 +77,7 @@ namespace GPA.Data.Security
                 SELECT 
 	                 COUNT(1) AS [Value]
                 FROM [GPA].[Security].[Users]
-                WHERE 
-                  Deleted = 0 AND (  
+                WHERE (  
 	              @Search IS NULL
 	              OR CONCAT(FirstName, ' ', LastName) LIKE CONCAT('%', @Search, '%')
 	              OR UserName LIKE CONCAT('%', @Search, '%')
@@ -83,6 +85,11 @@ namespace GPA.Data.Security
             ";
             var (_, _, Search) = PagingHelper.GetPagingParameter(filter);
             return await _context.Database.SqlQueryRaw<int>(query, Search).FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> IsUserActive(Guid id)
+        {
+            return await _context.Users.AnyAsync(x => x.Id == id && !x.Deleted);
         }
     }
 }

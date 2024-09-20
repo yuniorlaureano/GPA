@@ -8,6 +8,7 @@ using GPA.Data;
 using GPA.Dtos.Audit;
 using GPA.Dtos.General;
 using GPA.Dtos.Security;
+using GPA.Services.General;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.General.Email;
 using GPA.Services.General.Security;
@@ -37,6 +38,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IEmailServiceFactory _emailServiceFactory;
         private readonly IAesHelper _aesHelper;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
+        private readonly IPasswordResetTemplate _passwordResetTemplate;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
@@ -48,6 +50,7 @@ namespace GPA.Api.Controllers.Security
             IEmailServiceFactory emailServiceFactory,
             IAesHelper aesHelper,
             IBlobStorageServiceFactory blobStorageServiceFactory,
+            IPasswordResetTemplate passwordResetTemplate,
             ILogger<AuthController> logger)
         {
             _jwtService = jwtService;
@@ -58,6 +61,7 @@ namespace GPA.Api.Controllers.Security
             _emailServiceFactory = emailServiceFactory;
             _aesHelper = aesHelper;
             _blobStorageServiceFactory = blobStorageServiceFactory;
+            _passwordResetTemplate = passwordResetTemplate;
             _logger = logger;
         }
 
@@ -78,6 +82,21 @@ namespace GPA.Api.Controllers.Security
             {
                 _logger.LogWarning("User: '{User}' login failed. El usuario no existe", model.UserName);
                 return BadRequest(new[] { "El usuario no existe" });
+            }
+
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
+            }
+
+            if (!user.Invited)
+            {
+                return Unauthorized(new[] { "El usuario no ha sido invitado", "Comuniquese con el administrador para que le envíe otra invitación" });
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invietación" });
             }
 
             var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
@@ -111,51 +130,6 @@ namespace GPA.Api.Controllers.Security
             _logger.LogInformation("User: '{User}' logged in.", model.UserName);
 
             return Ok(new { token = token, permissions = permissions });
-        }
-
-        [AllowAnonymous]
-        [HttpPost("signup")]
-        public async Task<IActionResult> SignUp(SignUpDto model)
-        {
-            if (model is null)
-            {
-                _logger.LogError("Sign up failed. Modelo nulo");
-                return BadRequest(new[] { "Sign up failed. Modelo nulo" });
-            }
-
-            var validationResult = await _signUpValidator.ValidateAsync(model);
-            if (!validationResult.IsValid)
-            {
-                return BadRequest(validationResult.Errors.Select(x => x.ErrorMessage));
-            }
-
-            var entity = new GPAUser
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                UserName = model.UserName,
-                SecurityStamp = Guid.NewGuid().ToString()
-            };
-            var passwordHasher = new PasswordHasher<GPAUser>();
-            entity.PasswordHash = passwordHasher.HashPassword(entity, model.Password);
-            var result = await _userManager.CreateAsync(entity, model.Password);
-
-            if (result.Succeeded)
-            {
-                await AddHistory(entity, ActionConstants.SignUp, Guid.Empty);
-                return Created();
-            }
-
-            var errors = new List<string>();
-            foreach (var error in result.Errors)
-            {
-                errors.Add(error.Description);
-            }
-
-            _logger.LogError("Error signing up. {@Error}", result.Errors.Select(x => x.Description));
-
-            return BadRequest(errors);
         }
 
         [HttpGet("profile/{profileId}/change")]
@@ -207,6 +181,11 @@ namespace GPA.Api.Controllers.Security
             {
                 _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{User}' no existe", User?.Identity?.Name);
                 return BadRequest(new[] { "El usuario no existe" });
+            }
+
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
             }
 
             var userClaim = User.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId);
@@ -265,6 +244,16 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
+            }
+
+            if (!user.Invited)
+            {
+                return Unauthorized(new[] { "El usuario no ha sido invitado", "Comuniquese con el administrador para que le envíe otra invitación" });
+            }
+
             var timeSpan = DateTimeOffset.Now - user.TOTPAccessCodeAttemptsDate;
             if (user.TOTPAccessCodeAttempts == 3 && timeSpan.Minutes < 1)
             {
@@ -275,10 +264,12 @@ namespace GPA.Api.Controllers.Security
             var emailProvider = new EmailTokenProvider<GPAUser>();
             var token = await emailProvider.GenerateAsync("password-reset", _userManager, user);
 
+            var template = await _passwordResetTemplate.GetPasswordResetTemplate();
             var message = new EmailMessage
             {
                 Subject = "Código de verificación",
-                Body = $"Su código de verificación es: {token}",
+                Body = template.Replace("{Code}", token),
+                IsBodyHtml = true,
                 To = new List<string> { email },
             };
 
@@ -325,6 +316,16 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
+            }
+
+            if (!user.Invited)
+            {
+                return Unauthorized(new[] { "El usuario no ha sido invitado" });
+            }
+
             if (user.TOTPAccessCodeAttempts == 3)
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", model.userName);
@@ -338,7 +339,7 @@ namespace GPA.Api.Controllers.Security
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{User}'", model.userName);
                 await UpdateTOTPCodeAttempts(user);
-                return BadRequest(new[]{ "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo"});
+                return BadRequest(new[] { "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo" });
             }
 
             var passwordHasher = new PasswordHasher<GPAUser>();
@@ -364,6 +365,11 @@ namespace GPA.Api.Controllers.Security
             if (user is null)
             {
                 return BadRequest(new[] { "El usuario no existe" });
+            }
+
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
             }
 
             var uploadResult = await _blobStorageServiceFactory.UploadFile(photo, folder: "users/", isPublic: true);

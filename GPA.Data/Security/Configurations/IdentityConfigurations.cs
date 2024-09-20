@@ -21,6 +21,7 @@ namespace GPA.Data.Security.Configurations
                 b.Property(b => b.PasswordHash).HasMaxLength(256);
                 b.Property(b => b.UserName).HasMaxLength(30);
                 b.Property(b => b.Email).HasMaxLength(254);
+                b.Property(b => b.Invited).IsRequired();
 
                 b.HasIndex(b => b.Email).IsUnique();
                 b.HasIndex(b => b.UserName).IsUnique();

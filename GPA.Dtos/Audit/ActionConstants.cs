@@ -13,5 +13,7 @@
         public const string UnAssignAll = "UnAssignAll";
         public const string SignUp = "SignUp";
         public const string ResetPassword = "ResetPassword";
+        public const string Activate = "Activate";
+        public const string Inviting = "Inviting";
     }
 }

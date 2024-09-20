@@ -7,7 +7,9 @@ using GPA.Common.Entities.Security;
 using GPA.Data;
 using GPA.Dtos.Audit;
 using GPA.Dtos.Security;
+using GPA.Services.General;
 using GPA.Services.General.BlobStorage;
+using GPA.Services.General.Email;
 using GPA.Services.Security;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +34,8 @@ namespace GPA.Api.Controllers.Security
         private readonly ILogger<UsersController> _logger;
         private readonly IValidator<GPAUserCreationDto> _creationValidator;
         private readonly IValidator<GPAUserUpdateDto> _updateValidator;
+        private readonly IEmailServiceFactory _emailServiceFactory;
+        private readonly IUserInvitationTemplate _userInvitationTemplate;
 
         public UsersController(
             UserManager<GPAUser> userManager,
@@ -42,7 +46,9 @@ namespace GPA.Api.Controllers.Security
             GPADbContext context,
             IValidator<GPAUserCreationDto> creationValidator,
             IValidator<GPAUserUpdateDto> updateValidator,
-            ILogger<UsersController> logger)
+            IEmailServiceFactory emailServiceFactory,
+            ILogger<UsersController> logger,            
+            IUserInvitationTemplate userInvitationTemplate)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -52,7 +58,9 @@ namespace GPA.Api.Controllers.Security
             _context = context;
             _creationValidator = creationValidator;
             _updateValidator = updateValidator;
+            _emailServiceFactory = emailServiceFactory;
             _logger = logger;
+            _userInvitationTemplate = userInvitationTemplate;
         }
 
         [HttpGet("{id}")]
@@ -90,6 +98,7 @@ namespace GPA.Api.Controllers.Security
             entity.Deleted = false;
             entity.CreatedAt = DateTimeOffset.UtcNow;
             entity.CreatedBy = _userContextService.GetCurrentUserId();
+            entity.Invited = false;
             var result = await _userManager.CreateAsync(entity, $"Dummy-Password-{Guid.NewGuid().ToString()}*-$#$%");
 
             if (!result.Succeeded)
@@ -127,6 +136,12 @@ namespace GPA.Api.Controllers.Security
             if (savedEntity is null)
             {
                 return BadRequest(new[] { "El usuario no existe" });
+            }
+
+
+            if (savedEntity.Deleted)
+            {
+                return BadRequest(new[] { "El usuario está desabilitado" });
             }
 
             var byEmail = await _userManager.FindByEmailAsync(model.Email);
@@ -217,6 +232,103 @@ namespace GPA.Api.Controllers.Security
 
             _logger.LogInformation("'{User}' ha eliminado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
             await AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
+            return NoContent();
+        }
+
+        [HttpGet("{id}/enable")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
+        public async Task<IActionResult> EnableUser(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            var entity = await _userManager.FindByIdAsync(id.ToString());
+
+            if (entity is null)
+            {
+                return BadRequest();
+            }
+
+            entity.Deleted = false;
+            entity.Invited = false;
+            entity.UpdatedAt = DateTimeOffset.UtcNow;
+            entity.UpdatedBy = _userContextService.GetCurrentUserId();
+            var result = await _userManager.UpdateAsync(entity);
+
+            if (!result.Succeeded)
+            {
+                var errors = new List<string>();
+                foreach (var error in result.Errors)
+                {
+                    errors.Add(error.Description);
+                }
+                return BadRequest(errors);
+            }
+
+            _logger.LogInformation("'{User}' ha habilitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
+            await AddHistory(entity, ActionConstants.Activate, _userContextService.GetCurrentUserId());
+            return NoContent();
+        }
+
+        [HttpGet("{id}/invite")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
+        public async Task<IActionResult> InviteUser(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest();
+            }
+
+            var entity = await _userManager.FindByIdAsync(id.ToString());
+
+            if (entity is null)
+            {
+                return BadRequest(new[] { "El usuario no existe" });
+            }
+
+            if (entity.Deleted)
+            {
+                return BadRequest(new[] { "El usuario está desabilitado. Debe habilitarlo primero" });
+            }
+
+            var template = await _userInvitationTemplate.GetUserInvitationEmailTemplate();
+            var message = new EmailMessage
+            {
+                Subject = "Invitación de usuario",
+                Body = template,
+                IsBodyHtml = true,
+                To = new List<string> { entity.Email },
+            };
+
+            try
+            {
+                await _emailServiceFactory.SendMessageAsync(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Intento de cambio de contraseña. Error enviando correo a '{User}'", entity.Email);
+                return BadRequest(new[] { "Error enviando el correo de invitación" });
+            }
+
+            entity.Invited = true;
+            entity.UpdatedAt = DateTimeOffset.UtcNow;
+            entity.UpdatedBy = _userContextService.GetCurrentUserId();
+            var result = await _userManager.UpdateAsync(entity);
+
+            if (!result.Succeeded)
+            {
+                var errors = new List<string>();
+                foreach (var error in result.Errors)
+                {
+                    errors.Add(error.Description);
+                }
+                return BadRequest(errors);
+            }
+
+            _logger.LogInformation("'{User}' ha invitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
+            await AddHistory(entity, ActionConstants.Inviting, _userContextService.GetCurrentUserId());
             return NoContent();
         }
 

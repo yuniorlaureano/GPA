@@ -9,6 +9,7 @@ using GPA.Services.Invoice;
 using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.Caching;
 using System.Globalization;
 using System.Text;
 
@@ -26,6 +27,8 @@ namespace GPA.Business.Services.Invoice
         private readonly IPrintRepository _printRepository;
         private readonly IReportPdfBase _reportPdfBase;
         private readonly IReportTemplateRepository _reportTemplateRepository;
+        private readonly IGenericCache<ReportTemplate> _cache;
+        private readonly IGenericCache<string> _logoCache;
 
         public InvoicePrintService(
             IInvoicePrintRepository invoicePrintRepository,
@@ -33,7 +36,9 @@ namespace GPA.Business.Services.Invoice
             IUserContextService userContextService,
             IPrintRepository printRepository,
             IReportPdfBase reportPdfBase,
-            IReportTemplateRepository reportTemplateRepository
+            IReportTemplateRepository reportTemplateRepository,
+            IGenericCache<ReportTemplate> cache,
+            IGenericCache<string> logoCache
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
@@ -41,6 +46,8 @@ namespace GPA.Business.Services.Invoice
             _printRepository = printRepository;
             _reportPdfBase = reportPdfBase;
             _reportTemplateRepository = reportTemplateRepository;
+            _cache = cache;
+            _logoCache = logoCache;
         }
 
         public async Task<byte[]> PrintInvoice(Guid invoiceId)
@@ -82,7 +89,11 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
-            var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+            var logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+            {
+                return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+            });
+
             var qrCodeImage = ConvertQrCodeToDataUri(GenerateQRCode(invoicePrintData.Invoice.Id.ToString()));
 
             //_logger.LogInformation("El usuario '{UserId}' está generando el reporte ciclos de inventario", _userContextService.GetCurrentUserId());
@@ -174,7 +185,11 @@ namespace GPA.Business.Services.Invoice
 
         private async Task<ReportTemplate> GetTemplate()
         {
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.INVOICE_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.INVOICE_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.INVOICE_TEMPLATE);
+            });
+
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template de impresión no exíste");

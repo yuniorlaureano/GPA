@@ -4,6 +4,7 @@ using GPA.Entities.Unmapped;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace GPA.Data.Security
 {
@@ -20,7 +21,7 @@ namespace GPA.Data.Security
         Task<List<RawProfile>> GetProfilesByUserId(Guid userId);
         Task<bool> ProfileExists(Guid profileId, Guid userId);
         Task<bool> ProfileExists(Guid userId);
-        Task<(Guid id, string? value)?> GetProfileValue(Guid profileId);
+        Task<(Guid id, string? value, bool isDeleted)?> GetProfileValue(Guid profileId, Guid userId);
         Task AddHistory(GPAProfile profile, string action, Guid by);
         Task AddUserProfileHistory(Guid userId, Guid profileId, string action, Guid by);
     }
@@ -169,18 +170,39 @@ namespace GPA.Data.Security
             return await _context.UserProfile.AnyAsync(x => x.UserId == userId);
         }
 
-        public async Task<(Guid id, string? value)?> GetProfileValue(Guid profileId)
+        public async Task<(Guid id, string? value, bool isDeleted)?> GetProfileValue(Guid profileId, Guid userId)
         {
-            var profile = await _context.Profiles
-                .Where(x => x.Id == profileId)
-                .FirstOrDefaultAsync();
+            var query = @"
+                SELECT TOP 1
+                    @Profile = P.[Value],
+                    @UserDeleted = U.[Deleted]
+                FROM [Security].[Profiles] P
+	                JOIN  [Security].[UserProfiles] UP
+		                ON P.Id = UP.ProfileId AND P.Id = @ProfileId
+	                JOIN [Security].[Users] U ON UP.UserId = U.Id AND U.Id = @UserId
+            ";
 
-            if (profile is null)
+            var userDeletedParameter = new SqlParameter("@UserDeleted", SqlDbType.Bit);
+            userDeletedParameter.Direction = ParameterDirection.Output;
+
+            var profileParameter = new SqlParameter("@Profile", SqlDbType.NVarChar, -1);
+            profileParameter.Direction = ParameterDirection.Output;
+
+            await _context.Database.ExecuteSqlRawAsync(
+                query, 
+                new SqlParameter("@ProfileId", profileId),
+                new SqlParameter("@UserId", userId),
+                userDeletedParameter, profileParameter);
+
+            var isDeleted = (bool)userDeletedParameter.Value;
+            var profileValue = (string)profileParameter.Value;
+
+            if (string.IsNullOrEmpty(profileValue))
             {
                 return null;
             }
 
-            return (profile.Id, profile.Value);
+            return (profileId, profileValue, isDeleted);
         }
 
         public async Task<IEnumerable<RawProfile>> GetProfilesAsync(RequestFilterDto filter)

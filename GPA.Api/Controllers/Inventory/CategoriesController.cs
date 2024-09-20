@@ -4,6 +4,7 @@ using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Utils.Caching;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,15 +19,18 @@ namespace GPA.Inventory.Api.Controllers
         private readonly ICategoryService _categoryService;
         private readonly IMapper _mapper;
         private readonly IValidator<CategoryDto> _validator;
+        private readonly IGenericCache<ResponseDto<CategoryDto>> _cache;
 
         public CategoriesController(
             ICategoryService categoryService,
             IMapper mapper,
-            IValidator<CategoryDto> validator)
+            IValidator<CategoryDto> validator,
+            IGenericCache<ResponseDto<CategoryDto>> cache)
         {
             _categoryService = categoryService;
             _mapper = mapper;
             _validator = validator;
+            _cache = cache;
         }
 
         [HttpGet("{id}")]
@@ -40,7 +44,11 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Category}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _categoryService.GetCategoriesAsync(filter));
+            var categories = await _cache.GetOrCreate(CacheType.Common, $"{filter.Page}-{filter.PageSize}-{filter.Search}", async () =>
+            {
+                return await _categoryService.GetCategoriesAsync(filter);
+            });
+            return Ok(categories);
         }
 
         [HttpPost()]

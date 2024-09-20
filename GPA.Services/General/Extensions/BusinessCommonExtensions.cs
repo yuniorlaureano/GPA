@@ -23,6 +23,8 @@ namespace GPA.Business.General.Extensions
             services.AddTransient<IBlobStorageServiceFactory, BlobStorageServiceFactory>();
             services.AddTransient<IPrintService, PrintService>();
             services.AddTransient<IDashboardService, DashboardService>();
+            services.AddTransient<IUserInvitationTemplate, UserInvitationTemplate>();
+            services.AddTransient<IPasswordResetTemplate, PasswordResetTemplate>();
         }
     }
 }

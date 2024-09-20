@@ -42,6 +42,8 @@ namespace GPA.Data
                 Email = "admin@gmail.com",
                 NormalizedEmail = "admin@gmail.com".ToUpper(),
                 EmailConfirmed = true,
+                Invited = true,
+                Deleted = false,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
 
@@ -133,6 +135,18 @@ namespace GPA.Data
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.EXISTENCE_TEMPLATE,
                     Template = TemplateConstants.ExistenceTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.USER_INVITATION_TEMPLATE,
+                    Template = TemplateConstants.GetUserInvitationEmailTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.PASSWORD_RESET_TEMPLATE,
+                    Template = TemplateConstants.GetPasswordResetTemplate()
                 }
             );
         }

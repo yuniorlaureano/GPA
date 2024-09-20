@@ -9,6 +9,7 @@ using GPA.Services.Invoice;
 using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
+using GPA.Utils.Caching;
 using System.Globalization;
 
 namespace GPA.Business.Services.Invoice
@@ -27,7 +28,8 @@ namespace GPA.Business.Services.Invoice
         private readonly IReportPdfBase _reportPdfBase;
         private readonly IReceivableAccountRepository _receivableAccountRepository;
         private readonly IReportTemplateRepository _reportTemplateRepository;
-
+        private readonly IGenericCache<ReportTemplate> _cache;
+        private readonly IGenericCache<string> _logoCache;
 
         public ReceivableAccountProofOfPaymentPrintService(
             IInvoicePrintRepository invoicePrintRepository,
@@ -37,7 +39,9 @@ namespace GPA.Business.Services.Invoice
             IPrintRepository printRepository,
             IReportPdfBase reportPdfBase,
             IReceivableAccountRepository receivableAccountRepository,
-            IReportTemplateRepository reportTemplateRepository
+            IReportTemplateRepository reportTemplateRepository,
+            IGenericCache<ReportTemplate> cache,
+            IGenericCache<string> logoCache
             ) : base(blobStorageServiceFactory)
         {
             _invoicePrintRepository = invoicePrintRepository;
@@ -47,7 +51,8 @@ namespace GPA.Business.Services.Invoice
             _reportPdfBase = reportPdfBase;
             _receivableAccountRepository = receivableAccountRepository;
             _reportTemplateRepository = reportTemplateRepository;
-
+            _cache = cache;
+            _logoCache = logoCache;
         }
 
         public async Task<byte[]> PrintInvoice(Guid receivableId)
@@ -88,7 +93,12 @@ namespace GPA.Business.Services.Invoice
         {
             var template = await GetTemplate();
             var htmlContent = template.Template;
-            var logo = await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+            
+            var logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+            {
+                return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+            });
+
             htmlContent = htmlContent
                 .Replace("{Company}", invoicePrintData.CompanyName)
                 .Replace("{Document}", $"{invoicePrintData.CompanyDocumentPrefix} {invoicePrintData.CompanyDocument}")
@@ -118,7 +128,11 @@ namespace GPA.Business.Services.Invoice
 
         private async Task<ReportTemplate> GetTemplate()
         {
-            var template = await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE);
+            var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE, async () =>
+            {
+                return await _reportTemplateRepository.GetTemplateByCode(TemplateConstants.RECEIVABLE_PROOF_OF_PAYMENT_TEMPLATE);
+            });
+
             if (template == null || template.Template is null)
             {
                 throw new Exception("El template de impresión no exíste");

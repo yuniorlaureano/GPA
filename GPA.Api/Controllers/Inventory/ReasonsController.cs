@@ -4,6 +4,7 @@ using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
 using GPA.Common.DTOs.Inventory;
+using GPA.Utils.Caching;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,13 @@ namespace GPA.Inventory.Api.Controllers
     public class ReasonsController : ControllerBase
     {
         private readonly IReasonService _reasonService;
+        private readonly IGenericCache<ResponseDto<ReasonDto>> _cache;
         private readonly IMapper _mapper;
 
-        public ReasonsController(IReasonService reasonService, IMapper mapper)
+        public ReasonsController(IReasonService reasonService, IGenericCache<ResponseDto<ReasonDto>> cache, IMapper mapper)
         {
             _reasonService = reasonService;
+            _cache = cache;
             _mapper = mapper;
         }
 
@@ -35,7 +38,11 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            return Ok(await _reasonService.GetAllAsync(filter));
+            var reasons = await _cache.GetOrCreate(CacheType.Utility, $"{filter.Page}-{filter.PageSize}-{filter.Search}", async () =>
+            {
+                return await _reasonService.GetAllAsync(filter);
+            });
+            return Ok(reasons);
         }
 
         [HttpPost()]
