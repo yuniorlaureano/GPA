@@ -12,14 +12,12 @@ namespace GPA.Api.Utils.Filters
     public class ProfileFilterAttribute : Attribute, IAsyncAuthorizationFilter
     {
         private readonly PermissionPathWithValue permissionPath;
-        private readonly string _path = "";
-        private readonly string _permission = "";
+        private string errorMessage = "";
 
         public ProfileFilterAttribute(string path, string permission)
         {
             var pathTokens = path.Split('.');
-            _path = path;
-            _permission = permission;
+            errorMessage = $"Permiso '{PermissionsTranslate.Translates[permission]}', en '{PermissionsTranslate.Translates[pathTokens[2]]}' requerido.";
             permissionPath = SetPermissionPath(pathTokens, permission);
         }
 
@@ -67,6 +65,7 @@ namespace GPA.Api.Utils.Filters
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
+                return;
             }
 
             if (cachedProfile?.IsUserDeleted == true)
@@ -84,12 +83,13 @@ namespace GPA.Api.Utils.Filters
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
+                return;
             }
 
             var valid = ValidatePermission(permissionComparer, cachedProfile?.Value, context);
             if (!valid)
             {
-                context.Result = new ObjectResult(SetPermissionMessage(_path.Split("."), _permission))
+                context.Result = new ObjectResult(errorMessage)
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
@@ -114,14 +114,6 @@ namespace GPA.Api.Utils.Filters
                 module: pathTokens[1],
                 component: pathTokens[2],
                 valueToCompare: permission);
-        }
-
-        private PermissionMessage SetPermissionMessage(string[] pathTokens, string permission)
-        {
-            return new PermissionMessage
-            {
-                Message = $"Permiso '{PermissionsTranslate.Translates[permission]}', en '{PermissionsTranslate.Translates[pathTokens[2]]}' requerido."
-            };
         }
 
         private string GetToken(AuthorizationFilterContext context)
