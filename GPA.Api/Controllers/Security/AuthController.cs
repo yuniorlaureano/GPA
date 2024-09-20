@@ -345,6 +345,7 @@ namespace GPA.Api.Controllers.Security
             var passwordHasher = new PasswordHasher<GPAUser>();
             user.SecurityStamp = Guid.NewGuid().ToString();
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
+            user.EmailConfirmed = true;
             await _userManager.UpdateAsync(user);
             await AddHistory(user, ActionConstants.ResetPassword, user.Id);
             _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{User}'", model.userName);
