@@ -17,6 +17,7 @@ namespace GPA.Data.Security
         Task<bool> IsUserActive(Guid id);
         Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id, string token);
         Task AddInvitationTokenAsync(InvitationToken invitationToken);
+        Task RedimeInvitationAsync(Guid userId);
     }
 
     public class GPAUserRepository : Repository<GPAUser>, IGPAUserRepository
@@ -123,6 +124,15 @@ namespace GPA.Data.Security
         public async Task AddInvitationTokenAsync(InvitationToken invitationToken)
         {
             _context.InvitationTokens.Add(invitationToken);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RedimeInvitationAsync(Guid userId)
+        {
+            await _context.InvitationTokens
+                .Where(x => x.UserId == userId)
+                .ExecuteUpdateAsync(x => x.SetProperty(p => p.Revoked, true));
+
             await _context.SaveChangesAsync();
         }
 

@@ -16,6 +16,7 @@ namespace GPA.Business.Services.Security
         Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter);
         Task<RawInvitationToken?> GetInvitationTokenAsync(Guid userId, string token);
         Task AddInvitationTokenAsync(InvitationToken invitationToken);
+        Task RedimeInvitationAsync(Guid userId);
     }
 
     public class GPAUserService : IGPAUserService
@@ -70,6 +71,11 @@ namespace GPA.Business.Services.Security
         public async Task AddInvitationTokenAsync(InvitationToken invitationToken)
         {
             await _repository.AddInvitationTokenAsync(invitationToken);
+        }
+
+        public async Task RedimeInvitationAsync(Guid userId)
+        {
+            await _repository.RedimeInvitationAsync(userId);
         }
     }
 }

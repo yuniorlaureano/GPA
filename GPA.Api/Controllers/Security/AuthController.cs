@@ -490,8 +490,10 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "Error enviando el correo" });
             }
 
+            await _gPAProfileService.AssignProfileToUser(Guid.Parse(profileId), user.Id);
+
             _logger.LogInformation("Redención de invitación. Código enviado a '{User}'", user.Email);
-            return Ok(new { id = user.Id, firstName = user.FirstName, lastName = user.LastName, email = user.Email });
+            return Ok(new { id = user.Id, firstName = user.FirstName, lastName = user.LastName, email = user.Email, userName = user.UserName });
         }
 
         [AllowAnonymous]
@@ -547,7 +549,10 @@ namespace GPA.Api.Controllers.Security
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
             user.EmailConfirmed = true;
             await _userManager.UpdateAsync(user);
+            await _gPAUserService.RedimeInvitationAsync(user.Id);
+
             await AddHistory(user, ActionConstants.InvitationAccepted, user.Id);
+            
             _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{User}'", user.Email);
             return Ok();
         }
