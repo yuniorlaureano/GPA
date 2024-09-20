@@ -8,6 +8,8 @@ namespace GPA.Services.General.Security
     {
         string Encrypt(string plainText);
         string Decrypt(string data);
+        string Encrypt(string plainText, string key, string iv);
+        string Decrypt(string data, string key, string iv);
     }
 
     public class AesHelper : IAesHelper
@@ -52,6 +54,51 @@ namespace GPA.Services.General.Security
             {
                 ICryptoTransform decryptor = aes.CreateDecryptor(
                     Encoding.UTF8.GetBytes(Key), Encoding.UTF8.GetBytes(IV));
+
+                using (MemoryStream ms = new MemoryStream(encryptedData))
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader sr = new StreamReader(cs))
+                        {
+                            return sr.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }
+
+        public string Encrypt(string plainText, string key, string iv)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = Encoding.UTF8.GetBytes(iv);
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter sw = new StreamWriter(cs))
+                        {
+                            sw.Write(plainText);
+                        }
+                    }
+
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+        public string Decrypt(string data, string key, string iv)
+        {
+            var encryptedData = Convert.FromBase64String(data);
+            using (Aes aes = Aes.Create())
+            {
+                ICryptoTransform decryptor = aes.CreateDecryptor(
+                    Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(iv));
 
                 using (MemoryStream ms = new MemoryStream(encryptedData))
                 {

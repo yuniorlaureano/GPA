@@ -3,6 +3,8 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
+using GPA.Entities.Security;
+using GPA.Entities.Unmapped.Security;
 using GPA.Services.Security;
 using System.Text;
 
@@ -10,8 +12,10 @@ namespace GPA.Business.Services.Security
 {
     public interface IGPAUserService
     {
-        public Task<GPAUserDto?> GetUserByIdAsync(Guid id);
-        public Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter);
+        Task<GPAUserDto?> GetUserByIdAsync(Guid id);
+        Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter);
+        Task<RawInvitationToken?> GetInvitationTokenAsync(Guid userId, string token);
+        Task AddInvitationTokenAsync(InvitationToken invitationToken);
     }
 
     public class GPAUserService : IGPAUserService
@@ -56,6 +60,16 @@ namespace GPA.Business.Services.Security
                 Count = await _repository.GetUsersCountAsync(filter),
                 Data = _mapper.Map<IEnumerable<GPAUserDto>>(entities)
             };
+        }
+
+        public async Task<RawInvitationToken?> GetInvitationTokenAsync(Guid userId, string token)
+        {
+            return await _repository.GetInvitationTokenAsync(userId, token);
+        }
+
+        public async Task AddInvitationTokenAsync(InvitationToken invitationToken)
+        {
+            await _repository.AddInvitationTokenAsync(invitationToken);
         }
     }
 }

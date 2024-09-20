@@ -10,6 +10,7 @@ using GPA.Dtos.Security;
 using GPA.Services.General;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.General.Email;
+using GPA.Services.General.Security;
 using GPA.Services.Security;
 using GPA.Utils.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
 
 namespace GPA.Api.Controllers.Security
 {
@@ -36,6 +39,7 @@ namespace GPA.Api.Controllers.Security
         private readonly IValidator<GPAUserUpdateDto> _updateValidator;
         private readonly IEmailServiceFactory _emailServiceFactory;
         private readonly IUserInvitationTemplate _userInvitationTemplate;
+        private readonly IAesHelper _aesHelper;
 
         public UsersController(
             UserManager<GPAUser> userManager,
@@ -48,7 +52,8 @@ namespace GPA.Api.Controllers.Security
             IValidator<GPAUserUpdateDto> updateValidator,
             IEmailServiceFactory emailServiceFactory,
             ILogger<UsersController> logger,            
-            IUserInvitationTemplate userInvitationTemplate)
+            IUserInvitationTemplate userInvitationTemplate,
+            IAesHelper aesHelper)
         {
             _userManager = userManager;
             _mapper = mapper;
@@ -61,6 +66,7 @@ namespace GPA.Api.Controllers.Security
             _emailServiceFactory = emailServiceFactory;
             _logger = logger;
             _userInvitationTemplate = userInvitationTemplate;
+            _aesHelper = aesHelper;
         }
 
         [HttpGet("{id}")]
@@ -96,6 +102,7 @@ namespace GPA.Api.Controllers.Security
             var entity = _mapper.Map<GPAUser>(model);
             entity.Id = Guid.Empty;
             entity.Deleted = false;
+            entity.EmailConfirmed = false;
             entity.CreatedAt = DateTimeOffset.UtcNow;
             entity.CreatedBy = _userContextService.GetCurrentUserId();
             entity.Invited = false;
@@ -103,12 +110,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!result.Succeeded)
             {
-                var errors = new List<string>();
-                foreach (var error in result.Errors)
-                {
-                    errors.Add(error.Description);
-                }
-                return BadRequest(errors);
+                return BadRequest(result.Errors?.Select(x => x.Description)?? []);
             }
             _logger.LogInformation("'{User}' ha creado un usuario", _userContextService.GetCurrentUserName());
             await AddHistory(entity, ActionConstants.Add, _userContextService.GetCurrentUserId());
@@ -127,12 +129,11 @@ namespace GPA.Api.Controllers.Security
 
             if (model is null)
             {
-                ModelState.AddModelError("model", "The model is null");
+                ModelState.AddModelError("model", "El modelo está vacío");
                 return BadRequest(ModelState);
             }
 
             var savedEntity = await _userManager.FindByIdAsync(model.Id.ToString());
-
             if (savedEntity is null)
             {
                 return BadRequest(new[] { "El usuario no existe" });
@@ -252,7 +253,6 @@ namespace GPA.Api.Controllers.Security
             }
 
             entity.Deleted = false;
-            entity.Invited = false;
             entity.UpdatedAt = DateTimeOffset.UtcNow;
             entity.UpdatedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.UpdateAsync(entity);
@@ -272,9 +272,9 @@ namespace GPA.Api.Controllers.Security
             return NoContent();
         }
 
-        [HttpGet("{id}/invite")]
+        [HttpGet("{id}/invite/with-profile/{profileId}")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
-        public async Task<IActionResult> InviteUser(Guid id)
+        public async Task<IActionResult> InviteUser(Guid id, Guid profileId)
         {
             if (id == Guid.Empty)
             {
@@ -293,7 +293,17 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "El usuario está desabilitado. Debe habilitarlo primero" });
             }
 
+            var tokenData = new Dictionary<string, string>
+            {
+                { "userId", id.ToString() },
+                { "profileId", profileId.ToString() }
+            };
+
+            var token = _aesHelper.Encrypt(JsonSerializer.Serialize(tokenData));
+            var tokenDataAsB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
             var template = await _userInvitationTemplate.GetUserInvitationEmailTemplate();
+            template = template.Replace("{Token}", tokenDataAsB64);
+
             var message = new EmailMessage
             {
                 Subject = "Invitación de usuario",
@@ -317,6 +327,16 @@ namespace GPA.Api.Controllers.Security
             entity.UpdatedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.UpdateAsync(entity);
 
+            await _gPAUserService.AddInvitationTokenAsync(new Entities.Security.InvitationToken()
+            {
+                Token = tokenDataAsB64,
+                Expiration = DateTime.UtcNow.AddDays(1),
+                UserId = id,
+                Revoked = false,
+                CreatedBy = _userContextService.GetCurrentUserId(),
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+            
             if (!result.Succeeded)
             {
                 var errors = new List<string>();

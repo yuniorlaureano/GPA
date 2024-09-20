@@ -25,6 +25,7 @@ namespace GPA.Business.General.Extensions
             services.AddTransient<IDashboardService, DashboardService>();
             services.AddTransient<IUserInvitationTemplate, UserInvitationTemplate>();
             services.AddTransient<IPasswordResetTemplate, PasswordResetTemplate>();
+            services.AddTransient<IInvitationRedemptionTemplate, InvitationRedemptionTemplate>();
         }
     }
 }

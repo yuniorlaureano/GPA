@@ -6,6 +6,7 @@ using GPA.Data.Security.Configurations;
 using GPA.Entities.General;
 using GPA.Entities.Inventory;
 using GPA.Entities.Report;
+using GPA.Entities.Security;
 using GPA.Entities.Unmapped.Audit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -65,6 +66,7 @@ namespace GPA.Data
         //SECURITY ADDED DINAMICALLY BY EF-CORE
         public DbSet<GPAProfile> Profiles { get; set; }
         public DbSet<GPAUserProfile> UserProfile { get; set; }
+        public DbSet<InvitationToken> InvitationTokens { get; set; }
 
         //COMMON
         public DbSet<Delivery> Deliveries { get; set; }

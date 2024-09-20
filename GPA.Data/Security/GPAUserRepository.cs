@@ -1,6 +1,8 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
+using GPA.Entities.Security;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Security;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,8 @@ namespace GPA.Data.Security
         Task<IEnumerable<RawUser>> GetUsersAsync(RequestFilterDto filter);
         Task<int> GetUsersCountAsync(RequestFilterDto filter);
         Task<bool> IsUserActive(Guid id);
+        Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id, string token);
+        Task AddInvitationTokenAsync(InvitationToken invitationToken);
     }
 
     public class GPAUserRepository : Repository<GPAUser>, IGPAUserRepository
@@ -91,5 +95,36 @@ namespace GPA.Data.Security
         {
             return await _context.Users.AnyAsync(x => x.Id == id && !x.Deleted);
         }
+
+        public async Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id, string token)
+        {
+            var query = @"
+                SELECT 
+	               [Id]
+                  ,[Token]
+                  ,[Expiration]
+                  ,[UserId]
+                  ,[Revoked]
+                  ,[CreatedBy]
+                  ,[CreatedAt]
+                FROM [GPA].[Security].[InvitationTokens]
+                WHERE 
+                        [UserId] = @Id 
+                    AND  [Token] = @Token
+            ";
+
+            return await _context.Database.SqlQueryRaw<RawInvitationToken>(
+                query, 
+                new SqlParameter("@Id", id),
+                new SqlParameter("@Token", token)
+            ).FirstOrDefaultAsync();
+        }
+
+        public async Task AddInvitationTokenAsync(InvitationToken invitationToken)
+        {
+            _context.InvitationTokens.Add(invitationToken);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

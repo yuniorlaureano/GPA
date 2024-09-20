@@ -842,11 +842,9 @@
                       <div class="content">
                         <h1>Invitación al sistema GPA</h1>
                         <p>
-                          Esta invitación es para que puedas reestablecer tu contraseña en el
-                          para acceder al sistema GPA. Al presionar aceptar invitación serás
-                          redirigido a la página de cambio de contraseña.
+                          <b>Válida por 24 horas</b>. Para completar el proceso debe hacer click en <b>Aceptar invitación</b>
                         </p>
-                        <a href="{Link}">Aceptar invitación</a>
+                        <a href="http://localhost:4200/auth/invitation-redemption/{Token}">Aceptar invitación</a>
                       </div>
                     </div>
                   </body>
@@ -907,17 +905,82 @@
                         />
                       </div>
                       <div class="content">
-                        <h1>Restablecimiento de contraseña mediante código TOTP</h1>
+                        <h1>Código TOTP</h1>
                         <p>
-                          El siguiente código es su código de verificación para restablecer su
-                          contraseña. Por favor, no comparta este código con nadie. El código es válio por 9 minutos: {Code}
+                          Código de reestablecimiento de contraseña. Por favor, no comparta este código con nadie. El código es válio por 9 minutos: {Code}
                         </p>
-                        <a href="{Link}">Reestablecer contraseña</a>
+                      </div>
+                    </div>
+                  </body>
+                </html>                   
+                """;
+        }
+
+        public static string GetInvitationRedemptionTemplate()
+        {
+            return """
+                <html>
+                  <head>
+                    <style>
+                      body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                      }
+                      .container {
+                        width: 100%;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        padding: 20px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                      }
+                      .header {
+                        text-align: center;
+                        padding: 20px 0;
+                      }
+                      .header img {
+                        max-width: 150px;
+                      }
+                      .content {
+                        text-align: center;
+                        padding: 20px 0;
+                      }
+                      .content a {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        background-color: #007bff;
+                        color: #ffffff;
+                        text-decoration: none;
+                        border-radius: 5px;
+                      }
+                      .content a:hover {
+                        background-color: #0056b3;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="container">
+                      <div class="header">
+                        <img
+                          src="{Logo}"
+                          alt="Company Logo"
+                        />
+                      </div>
+                      <div class="content">
+                        <h1>Validando invitación al sistema GPA</h1>
+                        <p>
+                          El siguiente código es para completar el proceso de invitación. El código es <b>válido por 9 minutos</b>.
+                        </p>
+                        <br/>
+                        Código: {Code}
+                        <br/>
+                        Usuario: {User}
                       </div>
                     </div>
                   </body>
                 </html>
-                
                 """;
         }
 
@@ -930,5 +993,6 @@
         public static string EXISTENCE_TEMPLATE = "EXISTENCE_TEMPLATE";
         public static string USER_INVITATION_TEMPLATE = "USER_INVITATION_TEMPLATE";
         public static string PASSWORD_RESET_TEMPLATE = "PASSWORD_RESET_TEMPLATE";
+        public static string USER_INVITATION_REDEMPTION_TEMPLATE = "USER_INVITATION_REDEMPTION_TEMPLATE";
     }
 }

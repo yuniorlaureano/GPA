@@ -328,5 +328,6 @@ namespace GPA.Data.Security
 
             await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
         }
+    
     }
 }

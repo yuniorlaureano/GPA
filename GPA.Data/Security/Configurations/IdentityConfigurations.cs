@@ -1,5 +1,6 @@
 ﻿using GPA.Common.Entities.Security;
 using GPA.Data.Schemas;
+using GPA.Entities.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace GPA.Data.Security.Configurations
@@ -38,6 +39,23 @@ namespace GPA.Data.Security.Configurations
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.HasOne(p => p.User)
                     .WithMany(p => p.Profiles)
+                    .HasForeignKey(p => p.UserId);
+            });
+
+            modelBuilder.Entity<InvitationToken>(b =>
+            {
+                b.ToTable("InvitationTokens", GPASchema.SECURITY);
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
+                b.Property(x => x.UserId).IsRequired();
+                b.Property(x => x.Token).IsRequired();
+                b.Property(x => x.Expiration).IsRequired();
+                b.Property(x => x.Revoked).IsRequired();
+                b.Property(x => x.CreatedBy).IsRequired();
+                b.Property(x => x.CreatedAt).IsRequired();
+
+                b.HasOne(p => p.User)
+                    .WithMany(p => p.InvitationTokens)
                     .HasForeignKey(p => p.UserId);
             });
         }

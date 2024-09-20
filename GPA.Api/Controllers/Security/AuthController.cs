@@ -21,6 +21,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 
 namespace GPA.Api.Controllers.Security
@@ -39,6 +40,8 @@ namespace GPA.Api.Controllers.Security
         private readonly IAesHelper _aesHelper;
         private readonly IBlobStorageServiceFactory _blobStorageServiceFactory;
         private readonly IPasswordResetTemplate _passwordResetTemplate;
+        private readonly IGPAUserService _gPAUserService;
+        private readonly IInvitationRedemptionTemplate _invitationRedemptionTemplate;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
@@ -51,6 +54,8 @@ namespace GPA.Api.Controllers.Security
             IAesHelper aesHelper,
             IBlobStorageServiceFactory blobStorageServiceFactory,
             IPasswordResetTemplate passwordResetTemplate,
+            IGPAUserService gPAUserService,
+            IInvitationRedemptionTemplate invitationRedemptionTemplate,
             ILogger<AuthController> logger)
         {
             _jwtService = jwtService;
@@ -62,6 +67,8 @@ namespace GPA.Api.Controllers.Security
             _aesHelper = aesHelper;
             _blobStorageServiceFactory = blobStorageServiceFactory;
             _passwordResetTemplate = passwordResetTemplate;
+            _gPAUserService = gPAUserService;
+            _invitationRedemptionTemplate = invitationRedemptionTemplate;
             _logger = logger;
         }
 
@@ -96,7 +103,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!user.EmailConfirmed)
             {
-                return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invietación" });
+                return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invitación" });
             }
 
             var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
@@ -326,6 +333,11 @@ namespace GPA.Api.Controllers.Security
                 return Unauthorized(new[] { "El usuario no ha sido invitado" });
             }
 
+            if (!user.EmailConfirmed)
+            {
+                return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invitación" });
+            }
+
             if (user.TOTPAccessCodeAttempts == 3)
             {
                 _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", model.userName);
@@ -400,6 +412,144 @@ namespace GPA.Api.Controllers.Security
             _logger.LogInformation("El usuario '{User}' cambió su foto de perfil", user.UserName);
             await AddHistory(user, ActionConstants.Update, user.Id);
             return Ok(new { token = token, permissions = permissions });
+        }
+
+        [AllowAnonymous]
+        [HttpGet("totp-invitation/{token}/send")]
+        public async Task<IActionResult> SendTOTPInvitationCode([FromRoute] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(ModelState.ErrorMessage());
+            }
+
+            var serializedToken = Encoding.UTF8.GetString(Convert.FromBase64String(token));
+            var decryptedToken = _aesHelper.Decrypt(serializedToken);
+            var tokenData = JsonSerializer.Deserialize<Dictionary<string,string>>(decryptedToken);
+
+            var userId = tokenData["userId"];
+            var profileId = tokenData["profileId"];
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                return BadRequest(new[] { "No existe el usuario" });
+            }
+
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
+            }
+
+            if (!user.Invited)
+            {
+                return Unauthorized(new[] { "El usuario no ha sido invitado", "Comuniquese con el administrador para que le envíe otra invitación" });
+            }
+
+            var invitationToken = await _gPAUserService.GetInvitationTokenAsync(user.Id, token);
+            if (invitationToken is null)
+            {
+                return BadRequest(new[] { "El token de invitación no existe" });
+            }
+
+            var isExpired = (invitationToken.Expiration - DateTime.UtcNow).TotalDays;
+            if (isExpired <= 0)
+            {
+                return BadRequest(new[] { "El token de invitación está expirado" });
+            }
+
+            if (invitationToken.Revoked)
+            {
+                return BadRequest(new[] { "El token de invitación ha sido revocado" });
+            }
+
+            var emailProvider = new EmailTokenProvider<GPAUser>();
+            var totpcode = await emailProvider.GenerateAsync("invitation-redemption", _userManager, user);
+
+            var template = await _invitationRedemptionTemplate.GetInvitationRedemptionTemplate();
+            var message = new EmailMessage
+            {
+                Subject = "Código de verificación",
+                Body = template.Replace("{Code}", totpcode).Replace("{User}", user.UserName),
+                IsBodyHtml = true,
+                To = new List<string> { user.Email },
+            };
+
+            user.LastTOTPCode = _aesHelper.Encrypt(totpcode);
+            user.TOTPAccessCodeAttempts = 0;
+            user.TOTPAccessCodeAttemptsDate = DateTimeOffset.Now;
+            await _userManager.UpdateAsync(user);
+
+            try
+            {
+                await _emailServiceFactory.SendMessageAsync(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Redención de invitación. Error enviando correo a '{User}'", user.Email);
+                return BadRequest(new[] { "Error enviando el correo" });
+            }
+
+            _logger.LogInformation("Redención de invitación. Código enviado a '{User}'", user.Email);
+            return Ok(new { id = user.Id, firstName = user.FirstName, lastName = user.LastName, email = user.Email });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password-for-invitation")]
+        public async Task<IActionResult> SetPasswordAfterInvitationRedemption([FromBody] PasswordResetInvitationDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState.ErrorMessage());
+            }
+
+            if (model.Password != model.ConfirmPassword)
+            {
+                _logger.LogWarning("Aceptando invitación. Las contraseñas no coinciden usuario");
+                return BadRequest(new[] { "Las contraseñas deben coincidir" });
+            }
+
+            var user = await _userManager.FindByIdAsync(model.userId);
+            if (user is null)
+            {
+                _logger.LogWarning("Intento de cambio de contraseña. El usuario no existe, usuario '{User}'", user.Email);
+                return BadRequest(new[] { "El usaurio no existe." });
+            }
+
+            if (user.Deleted)
+            {
+                return Unauthorized(new[] { "El usuario está desabilitado" });
+            }
+
+            if (!user.Invited)
+            {
+                return Unauthorized(new[] { "El usuario no ha sido invitado" });
+            }
+
+            if (user.TOTPAccessCodeAttempts == 3)
+            {
+                _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", user.Email);
+                return BadRequest(new[] { "Máximo de intentos alcanzados", "Debe solicitar otro código de verificación" });
+            }
+
+            var emailProvider = new EmailTokenProvider<GPAUser>();
+            var isTOTPCodeValid = await emailProvider.ValidateAsync("invitation-redemption", model.Code, _userManager, user);
+
+            if (!isTOTPCodeValid || model.Code != _aesHelper.Decrypt(user.LastTOTPCode))
+            {
+                _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{User}'", user.Email);
+                await UpdateTOTPCodeAttempts(user);
+                return BadRequest(new[] { "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo" });
+            }
+
+            var passwordHasher = new PasswordHasher<GPAUser>();
+            user.SecurityStamp = Guid.NewGuid().ToString();
+            user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
+            await AddHistory(user, ActionConstants.InvitationAccepted, user.Id);
+            _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{User}'", user.Email);
+            return Ok();
         }
 
         private static BlobStorageFileResult? GetUserPhoto(GPAUser? user)

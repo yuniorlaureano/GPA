@@ -15,5 +15,6 @@
         public const string ResetPassword = "ResetPassword";
         public const string Activate = "Activate";
         public const string Inviting = "Inviting";
+        public const string InvitationAccepted = "InvitationAccepted";
     }
 }

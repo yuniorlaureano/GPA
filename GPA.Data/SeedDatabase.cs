@@ -147,6 +147,12 @@ namespace GPA.Data
                     Id = GuidHelper.NewSequentialGuid(),
                     Code = TemplateConstants.PASSWORD_RESET_TEMPLATE,
                     Template = TemplateConstants.GetPasswordResetTemplate()
+                },
+                new ReportTemplate
+                {
+                    Id = GuidHelper.NewSequentialGuid(),
+                    Code = TemplateConstants.USER_INVITATION_REDEMPTION_TEMPLATE,
+                    Template = TemplateConstants.GetInvitationRedemptionTemplate()
                 }
             );
         }

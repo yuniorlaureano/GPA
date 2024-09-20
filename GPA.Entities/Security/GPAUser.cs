@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using GPA.Entities.Security;
+using Microsoft.AspNetCore.Identity;
 
 namespace GPA.Common.Entities.Security
 {
@@ -21,5 +22,6 @@ namespace GPA.Common.Entities.Security
         public DateTimeOffset? DeletedAt { get; set; }
 
         public ICollection<GPAUserProfile> Profiles { get; set; }
+        public ICollection<InvitationToken> InvitationTokens { get; set; }
     }
 }
