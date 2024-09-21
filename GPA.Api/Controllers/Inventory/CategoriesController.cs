@@ -44,10 +44,11 @@ namespace GPA.Inventory.Api.Controllers
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Category}", permission: Permissions.Read)]
         public async Task<IActionResult> Get([FromQuery] RequestFilterDto filter)
         {
-            var categories = await _cache.GetOrCreate(CacheType.Common, $"{filter.Page}-{filter.PageSize}-{filter.Search}", async () =>
-            {
-                return await _categoryService.GetCategoriesAsync(filter);
-            });
+            //var categories = await _cache.GetOrCreate(CacheType.Common, $"{filter.Page}-{filter.PageSize}-{filter.Search}", async () =>
+            //{
+            //    return await _categoryService.GetCategoriesAsync(filter);
+            //});
+            var categories = await _categoryService.GetCategoriesAsync(filter);
             return Ok(categories);
         }
 
