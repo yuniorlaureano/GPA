@@ -1,18 +1,14 @@
-﻿using GPA.Common.Entities.Security;
-
-namespace GPA.Entities.Security
+﻿namespace GPA.Dtos.Unmapped
 {
-    public class InvitationToken
+    public class RawInvitationTokenDto
     {
         public Guid Id { get; set; }
-        public string Token { get; set; }
         public DateTime Expiration { get; set; }
         public Guid UserId { get; set; }
         public bool Revoked { get; set; }
         public bool Redeemed { get; set; }
         public Guid CreatedBy { get; set; }
+        public string? CreatedByName { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-
-        public GPAUser User { get; set; }
     }
 }

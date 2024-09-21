@@ -7,6 +7,7 @@
         public DateTime Expiration { get; set; }
         public Guid UserId { get; set; }
         public bool Revoked { get; set; }
+        public bool Redeemed { get; set; }
         public Guid CreatedBy { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }

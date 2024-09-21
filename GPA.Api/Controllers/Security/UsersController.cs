@@ -83,6 +83,13 @@ namespace GPA.Api.Controllers.Security
             return Ok(await _gPAUserService.GetUsersAsync(filter));
         }
 
+        [HttpGet("{userId}/invitations")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Read)]
+        public async Task<IActionResult> GetInvitations(Guid userId)
+        {
+            return Ok(await _gPAUserService.GetInvitationTokensAsync(userId));
+        }
+
         [HttpPost()]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Create)]
         public async Task<IActionResult> Post(GPAUserCreationDto model)
@@ -350,6 +357,14 @@ namespace GPA.Api.Controllers.Security
             _logger.LogInformation("'{User}' ha invitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
             await AddHistory(entity, ActionConstants.Inviting, _userContextService.GetCurrentUserId());
             return NoContent();
+        }
+
+        [HttpGet("invitations/{invitationId}/revoke")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Security}.{Components.User}", permission: Permissions.Update)]
+        public async Task<IActionResult> RevokeInvitation(Guid invitationId)
+        {
+            await _gPAUserService.RevokeInvitationAsync(invitationId);
+            return Ok();
         }
 
         private async Task AddHistory(GPAUser model, string action, Guid by)

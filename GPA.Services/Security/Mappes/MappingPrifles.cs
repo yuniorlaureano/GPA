@@ -2,7 +2,9 @@
 using GPA.Common.DTOs.Unmapped;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
+using GPA.Dtos.Unmapped;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Security;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GPA.Bussiness.Services.Security.Mappers
@@ -21,6 +23,9 @@ namespace GPA.Bussiness.Services.Security.Mappers
 
             CreateMap<RawProfile, RawProfileDto>();
             CreateMap<RawProfileDto, RawProfile>();
+
+            CreateMap<RawInvitationTokenDto, RawInvitationToken>();
+            CreateMap<RawInvitationToken, RawInvitationTokenDto>();
         }
     }
 

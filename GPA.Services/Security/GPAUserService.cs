@@ -3,6 +3,7 @@ using GPA.Common.DTOs;
 using GPA.Common.DTOs.Unmapped;
 using GPA.Data.Security;
 using GPA.Dtos.Security;
+using GPA.Dtos.Unmapped;
 using GPA.Entities.Security;
 using GPA.Entities.Unmapped.Security;
 using GPA.Services.Security;
@@ -16,7 +17,9 @@ namespace GPA.Business.Services.Security
         Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter);
         Task<RawInvitationToken?> GetInvitationTokenAsync(Guid userId, string token);
         Task AddInvitationTokenAsync(InvitationToken invitationToken);
-        Task RedimeInvitationAsync(Guid userId);
+        Task RedeemInvitationAsync(Guid userId);
+        Task RevokeInvitationAsync(Guid userId);
+        Task<IEnumerable<RawInvitationTokenDto>> GetInvitationTokensAsync(Guid userId);
     }
 
     public class GPAUserService : IGPAUserService
@@ -54,7 +57,7 @@ namespace GPA.Business.Services.Security
 
         public async Task<ResponseDto<GPAUserDto>> GetUsersAsync(RequestFilterDto filter)
         {
-            filter.Search = Encoding.UTF8.GetString(Convert.FromBase64String(filter.Search ?? string.Empty));
+            filter.Search = filter.Search;
             var entities = await _repository.GetUsersAsync(filter);
             return new ResponseDto<GPAUserDto>
             {
@@ -73,9 +76,29 @@ namespace GPA.Business.Services.Security
             await _repository.AddInvitationTokenAsync(invitationToken);
         }
 
-        public async Task RedimeInvitationAsync(Guid userId)
+        public async Task RedeemInvitationAsync(Guid userId)
         {
-            await _repository.RedimeInvitationAsync(userId);
+            await _repository.RedeemInvitationAsync(userId);
+        }
+
+        public async Task RevokeInvitationAsync(Guid userId)
+        {
+            await _repository.RevokeInvitationAsync(userId);
+        }
+
+        public async Task<IEnumerable<RawInvitationTokenDto>> GetInvitationTokensAsync(Guid userId)
+        {
+            var invitations =  await _repository.GetInvitationTokensAsync(userId);
+            var users = await _repository.GetUsersAsync(invitations.Select(i => i.CreatedBy).ToList());
+
+            var invitationsDto = new List<RawInvitationTokenDto>();
+            foreach (var item in invitations)
+            {
+                var invitation = _mapper.Map<RawInvitationTokenDto>(item);
+                invitation.CreatedByName = users.FirstOrDefault(x => x.Id == item.CreatedBy)?.UserName;
+                invitationsDto.Add(invitation);
+            }
+            return invitationsDto;
         }
     }
 }

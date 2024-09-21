@@ -463,6 +463,11 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "El token de invitación ha sido revocado" });
             }
 
+            if (invitationToken.Redeemed)
+            {
+                return BadRequest(new[] { "El token de invitación ha sido utilizado", "Si olvidó su contreña restablezcala" });
+            }
+
             var emailProvider = new EmailTokenProvider<GPAUser>();
             var totpcode = await emailProvider.GenerateAsync("invitation-redemption", _userManager, user);
 
@@ -549,7 +554,7 @@ namespace GPA.Api.Controllers.Security
             user.PasswordHash = passwordHasher.HashPassword(user, model.Password);
             user.EmailConfirmed = true;
             await _userManager.UpdateAsync(user);
-            await _gPAUserService.RedimeInvitationAsync(user.Id);
+            await _gPAUserService.RedeemInvitationAsync(user.Id);
 
             await AddHistory(user, ActionConstants.InvitationAccepted, user.Id);
             
