@@ -110,6 +110,7 @@ namespace GPA.Api.Controllers.Security
             entity.Id = Guid.Empty;
             entity.Deleted = false;
             entity.EmailConfirmed = false;
+            entity.Invited = false;
             entity.CreatedAt = DateTimeOffset.UtcNow;
             entity.CreatedBy = _userContextService.GetCurrentUserId();
             entity.Invited = false;
@@ -171,6 +172,7 @@ namespace GPA.Api.Controllers.Security
             savedEntity.UserName = model.UserName;
             savedEntity.UpdatedAt = DateTimeOffset.UtcNow;
             savedEntity.UpdatedBy = _userContextService.GetCurrentUserId();
+            savedEntity.SecurityStamp = Guid.NewGuid().ToString();
             await _userManager.UpdateAsync(savedEntity);
 
             _logger.LogInformation("'{User}' ha modificado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), originalUserName);
@@ -235,12 +237,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!result.Succeeded)
             {
-                var errors = new List<string>();
-                foreach (var error in result.Errors)
-                {
-                    errors.Add(error.Description);
-                }
-                return BadRequest(errors);
+                return BadRequest(result.Errors.Select(x => x.Description));
             }
 
             _logger.LogInformation("'{User}' ha eliminado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
@@ -272,16 +269,12 @@ namespace GPA.Api.Controllers.Security
             entity.Deleted = false;
             entity.UpdatedAt = DateTimeOffset.UtcNow;
             entity.UpdatedBy = _userContextService.GetCurrentUserId();
+            entity.SecurityStamp = Guid.NewGuid().ToString();
             var result = await _userManager.UpdateAsync(entity);
 
             if (!result.Succeeded)
             {
-                var errors = new List<string>();
-                foreach (var error in result.Errors)
-                {
-                    errors.Add(error.Description);
-                }
-                return BadRequest(errors);
+                return BadRequest(result.Errors.Select(x => x.Description));
             }
 
             _logger.LogInformation("'{User}' ha habilitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
@@ -369,12 +362,7 @@ namespace GPA.Api.Controllers.Security
                         
             if (!result.Succeeded)
             {
-                var errors = new List<string>();
-                foreach (var error in result.Errors)
-                { 
-                    errors.Add(error.Description);
-                }
-                return BadRequest(errors);
+                return BadRequest(result.Errors.Select(x => x.Description));
             }
 
             _logger.LogInformation("'{User}' ha invitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
