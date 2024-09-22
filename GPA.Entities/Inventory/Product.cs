@@ -11,7 +11,7 @@ namespace GPA.Common.Entities.Inventory
         public decimal Price { get; set; }
         public string Description { get; set; }
         public ProductType Type { get; set; }
-        public int UnitValue { get; set; }
+        public double UnitValue { get; set; }
         public Guid UnitId { get; set; }
         public Unit Unit { get; set; }
 

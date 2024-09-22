@@ -33,7 +33,7 @@ namespace GPA.Data.Invoice
                     ,max(CD.[PendingPayment]) AS PendingPayment 
                     ,sum(CD.[Payment]) AS Payment
                 FROM [GPA].[Invoice].[ClientPaymentsDetails] CD
-	                JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id
+	                JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id AND INV.[Status] = 1
 	                JOIN Invoice.Clients C ON INV.ClientId =  C.Id
                 WHERE 1 = 1
                     {search}
@@ -66,7 +66,7 @@ namespace GPA.Data.Invoice
                   FROM [GPA].[Invoice].[ClientPaymentsDetails]
                   WHERE InvoiceId IN (
 	                SELECT Id FROM [GPA].[Invoice].[Invoices]
-	                WHERE ClientId = {0} AND PaymentStatus  = 1
+	                WHERE ClientId = {0} AND PaymentStatus  = 1 AND [Status] = 1
                   ) AND Payment = 0", clientId).ToListAsync();
 
         }
@@ -79,7 +79,7 @@ namespace GPA.Data.Invoice
             var query = @$"SELECT 
                                COUNT(1) AS [Value]
                         FROM [GPA].[Invoice].[ClientPaymentsDetails] CD
-	                        JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id
+	                        JOIN Invoice.Invoices INV ON CD.InvoiceId =  INV.Id AND INV.[Status] = 1
 	                        JOIN Invoice.Clients C ON INV.ClientId =  C.Id
                         WHERE 1 = 1
                             {search}

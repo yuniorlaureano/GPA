@@ -10,7 +10,7 @@
         public string Description { get; set; }
         public byte Type { get; set; }
 
-        public int UnitValue { get; set; }
+        public double UnitValue { get; set; }
         public Guid UnitId { get; set; }
         public string Unit { get; set; }
 
