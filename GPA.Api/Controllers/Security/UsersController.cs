@@ -216,6 +216,11 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest();
             }
 
+            if (id == _userContextService.GetCurrentUserId())
+            {
+                return BadRequest("No puede desabilitar su propia cuenta de usuario");
+            }
+
             var entity = await _userManager.FindByIdAsync(id.ToString());
 
             if (entity is null)
@@ -250,6 +255,11 @@ namespace GPA.Api.Controllers.Security
             if (id == Guid.Empty)
             {
                 return BadRequest();
+            }
+
+            if (id == _userContextService.GetCurrentUserId())
+            {
+                return BadRequest("No puede habilitar su propia cuenta de usuario");
             }
 
             var entity = await _userManager.FindByIdAsync(id.ToString());
@@ -288,6 +298,11 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest();
             }
 
+            if (id == _userContextService.GetCurrentUserId())
+            {
+                return BadRequest("No puede invitar su propia cuenta de usuario");
+            }
+
             var entity = await _userManager.FindByIdAsync(id.ToString());
 
             if (entity is null)
@@ -300,8 +315,24 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "El usuario está desabilitado. Debe habilitarlo primero" });
             }
 
+            if (entity.EmailConfirmed)
+            {
+                return BadRequest(new[] { "El usuario ya es parte de la aplicación", "Solo debe iniciar el proceso de recuperar contraseña" });
+            }
+
+            var invitationToken = new Entities.Security.InvitationToken()
+            {
+                Expiration = DateTime.UtcNow.AddDays(1),
+                UserId = id,
+                Revoked = false,
+                CreatedBy = _userContextService.GetCurrentUserId(),
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+            await _gPAUserService.AddInvitationTokenAsync(invitationToken);
+
             var tokenData = new Dictionary<string, string>
             {
+                { "id", invitationToken.Id.ToString() },
                 { "userId", id.ToString() },
                 { "profileId", profileId.ToString() }
             };
@@ -310,6 +341,8 @@ namespace GPA.Api.Controllers.Security
             var tokenDataAsB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(token));
             var template = await _userInvitationTemplate.GetUserInvitationEmailTemplate();
             template = template.Replace("{Token}", tokenDataAsB64);
+
+            await _gPAUserService.SetInvitationTokenAsync(invitationToken.Id, tokenDataAsB64);
 
             var message = new EmailMessage
             {
@@ -333,22 +366,12 @@ namespace GPA.Api.Controllers.Security
             entity.UpdatedAt = DateTimeOffset.UtcNow;
             entity.UpdatedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.UpdateAsync(entity);
-
-            await _gPAUserService.AddInvitationTokenAsync(new Entities.Security.InvitationToken()
-            {
-                Token = tokenDataAsB64,
-                Expiration = DateTime.UtcNow.AddDays(1),
-                UserId = id,
-                Revoked = false,
-                CreatedBy = _userContextService.GetCurrentUserId(),
-                CreatedAt = DateTimeOffset.UtcNow
-            });
-            
+                        
             if (!result.Succeeded)
             {
                 var errors = new List<string>();
                 foreach (var error in result.Errors)
-                {
+                { 
                     errors.Add(error.Description);
                 }
                 return BadRequest(errors);

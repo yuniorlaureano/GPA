@@ -1,6 +1,7 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
+using GPA.Entities;
 using GPA.Entities.Security;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Security;
@@ -17,10 +18,11 @@ namespace GPA.Data.Security
         Task<IEnumerable<RawUser>> GetUsersAsync(RequestFilterDto filter);
         Task<int> GetUsersCountAsync(RequestFilterDto filter);
         Task<bool> IsUserActive(Guid id);
-        Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id, string token);
+        Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id);
         Task AddInvitationTokenAsync(InvitationToken invitationToken);
+        Task SetInvitationTokenAsync(Guid id, string token);
         Task RedeemInvitationAsync(Guid userId);
-        Task RevokeInvitationAsync(Guid userId);
+        Task RevokeInvitationAsync(Guid id, Guid revokedBy);
         Task<IEnumerable<RawInvitationToken>> GetInvitationTokensAsync(Guid userId);
         Task<IEnumerable<RawUser>> GetUsersAsync(List<Guid> ids);
     }
@@ -109,7 +111,7 @@ namespace GPA.Data.Security
             return await _context.Users.AnyAsync(x => x.Id == id && !x.Deleted);
         }
 
-        public async Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id, string token)
+        public async Task<RawInvitationToken?> GetInvitationTokenAsync(Guid id)
         {
             var query = @"
                 SELECT 
@@ -121,22 +123,33 @@ namespace GPA.Data.Security
                   ,[CreatedBy]
                   ,[CreatedAt]
                   ,[Redeemed]
+                  ,RevokedBy
+	              ,RevokedAt
                 FROM [GPA].[Security].[InvitationTokens]
                 WHERE 
-                        [UserId] = @Id 
-                    AND  [Token] = @Token
+                        [Id] = @Id 
             ";
 
             return await _context.Database.SqlQueryRaw<RawInvitationToken>(
                 query,
-                new SqlParameter("@Id", id),
-                new SqlParameter("@Token", token)
+                new SqlParameter("@Id", id)
             ).FirstOrDefaultAsync();
         }
 
         public async Task AddInvitationTokenAsync(InvitationToken invitationToken)
         {
             _context.InvitationTokens.Add(invitationToken);
+            await _context.SaveChangesAsync();
+            _context.Entry(invitationToken).State = EntityState.Detached;
+        }
+
+        public async Task SetInvitationTokenAsync(Guid id, string token)
+        {
+            await _context.InvitationTokens
+                .Where(x => x.Id == id)
+                .ExecuteUpdateAsync(
+                    x => x.SetProperty(p => p.Token, token));
+
             await _context.SaveChangesAsync();
         }
 
@@ -149,11 +162,14 @@ namespace GPA.Data.Security
             await _context.SaveChangesAsync();
         }
 
-        public async Task RevokeInvitationAsync(Guid userId)
+        public async Task RevokeInvitationAsync(Guid id, Guid revokedBy)
         {
             await _context.InvitationTokens
-                .Where(x => x.UserId == userId)
-                .ExecuteUpdateAsync(x => x.SetProperty(p => p.Revoked, true));
+                .Where(x => x.Id == id && !x.Revoked)
+                .ExecuteUpdateAsync(
+                    x => x.SetProperty(p => p.Revoked, true)
+                          .SetProperty(p => p.RevokedBy, revokedBy)
+                          .SetProperty(p => p.RevokedAt, DateTimeOffset.UtcNow));
 
             await _context.SaveChangesAsync();
         }
@@ -170,6 +186,8 @@ namespace GPA.Data.Security
                   ,[CreatedBy]
                   ,[CreatedAt]
                   ,[Redeemed]
+                  ,RevokedBy
+	              ,RevokedAt
                 FROM [GPA].[Security].[InvitationTokens]
                 WHERE 
                         [UserId] = @Id 

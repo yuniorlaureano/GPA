@@ -106,9 +106,9 @@ namespace GPA.Api.Controllers.Security
                 return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invitación" });
             }
 
-            var resultd = await _userManager.CheckPasswordAsync(user, model.Password);
+            var result = await _userManager.CheckPasswordAsync(user, model.Password);
 
-            if (!resultd)
+            if (!result)
             {
                 _logger.LogWarning("User: '{User}' login failed. Usuario inválido", model.UserName);
                 return BadRequest(new[] { "Usuario inválido" });
@@ -427,6 +427,7 @@ namespace GPA.Api.Controllers.Security
             var decryptedToken = _aesHelper.Decrypt(serializedToken);
             var tokenData = JsonSerializer.Deserialize<Dictionary<string,string>>(decryptedToken);
 
+            var tokenId = tokenData["id"];
             var userId = tokenData["userId"];
             var profileId = tokenData["profileId"];
 
@@ -446,7 +447,7 @@ namespace GPA.Api.Controllers.Security
                 return Unauthorized(new[] { "El usuario no ha sido invitado", "Comuniquese con el administrador para que le envíe otra invitación" });
             }
 
-            var invitationToken = await _gPAUserService.GetInvitationTokenAsync(user.Id, token);
+            var invitationToken = await _gPAUserService.GetInvitationTokenAsync(Guid.Parse(tokenId));
             if (invitationToken is null)
             {
                 return BadRequest(new[] { "El token de invitación no existe" });

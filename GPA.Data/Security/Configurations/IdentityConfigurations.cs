@@ -48,7 +48,7 @@ namespace GPA.Data.Security.Configurations
                 b.HasKey(x => x.Id);
                 b.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()");
                 b.Property(x => x.UserId).IsRequired();
-                b.Property(x => x.Token).IsRequired();
+                b.Property(x => x.Token);
                 b.Property(x => x.Expiration).IsRequired();
                 b.Property(x => x.Revoked).IsRequired();
                 b.Property(x => x.CreatedBy).IsRequired();

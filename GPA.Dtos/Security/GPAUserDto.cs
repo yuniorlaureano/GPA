@@ -13,6 +13,7 @@ namespace GPA.Dtos.Security
         public bool Invited { get; set; }
         public bool Deleted { get; set; }
         public bool EmailConfirmed { get; set; }
+        public bool CurrentUser { get; set; }
         public List<RawProfileDto> Profiles { get; set; } = new();
     }
 }
