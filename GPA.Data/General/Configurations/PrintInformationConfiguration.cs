@@ -23,7 +23,7 @@ namespace GPA.Data.General.Configurations
             builder.Property(x => x.CompanyPhonePrefix).HasMaxLength(10);
             builder.Property(x => x.CompanyEmail).HasMaxLength(254).IsRequired();
             builder.Property(x => x.Signer).HasMaxLength(100).IsRequired();
-            builder.Property(x => x.CompanyWebsite).IsRequired();
+            builder.Property(x => x.CompanyWebsite).HasMaxLength(254).IsRequired();
             builder.Property(x => x.Current).IsRequired();
 
         }
