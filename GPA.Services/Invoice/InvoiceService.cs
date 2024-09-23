@@ -108,7 +108,7 @@ namespace GPA.Business.Services.Invoice
             }
 
             MapProductCatalogToInvoiceDetail(invoiceDetailDto, productsCatalog);
-            await MapAddonsToProduct(invoiceDetailDto);
+            await MapAddonsToProduct(invoiceDetailDto, (InvoiceStatus)invoice.Status, invoice.Id.Value);
 
             return invoiceDto;
         }
@@ -348,12 +348,28 @@ namespace GPA.Business.Services.Invoice
 
 
 
-        private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products)
+        private async Task MapAddonsToProduct(IEnumerable<InvoiceListDetailDto> products, InvoiceStatus invoiceStatus, Guid id)
         {
+            if (invoiceStatus == InvoiceStatus.Saved || invoiceStatus == InvoiceStatus.Cancel)
+            {
+                var mappedAddons = await _addonRepository.GetAddonsByInvoiceIdAsDictionary(id);
+
+                foreach (var product in products)
+                {
+                    if (mappedAddons.ContainsKey(product.ProductId))
+                    {
+                        product.StockProduct.Addons = _mapper.Map<AddonDto[]>(mappedAddons[product.ProductId]);
+                        var (debit, credit) = AddonCalculator.CalculateAddon(product.StockProduct.Price, product.StockProduct.Addons);
+                        product.StockProduct.Debit = debit;
+                        product.StockProduct.Credit = credit;
+                    }
+                }
+                return;
+            } 
+            
             if (products is not null)
             {
-                var mappedAddons = await _addonRepository
-                    .GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());
+                var mappedAddons = await _addonRepository.GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());
 
                 foreach (var product in products)
                 {

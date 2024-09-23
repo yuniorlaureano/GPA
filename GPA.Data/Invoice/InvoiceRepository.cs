@@ -167,7 +167,7 @@ namespace GPA.Data.Invoice
                     {dateFilter}
                     {statusFilter}
                     {typeFilter}
-                ORDER BY Id
+                ORDER BY Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
                     ";
 

@@ -156,6 +156,7 @@ namespace GPA.Business.Services.Inventory
             {
                 var newStock = _mapper.Map<Stock>(dto);
                 var stockDetails = _mapper.Map<List<StockDetails>>(dto.StockDetails);
+                newStock.StockDetails = Enumerable.Empty<StockDetails>().ToList();
 
                 foreach (var detail in stockDetails)
                 {
@@ -194,6 +195,7 @@ namespace GPA.Business.Services.Inventory
             {
                 var newStock = _mapper.Map<Stock>(dto);
                 var stockDetails = _mapper.Map<List<StockDetails>>(dto.StockDetails);
+                newStock.StockDetails = Enumerable.Empty<StockDetails>().ToList();
 
                 foreach (var detail in stockDetails)
                 {

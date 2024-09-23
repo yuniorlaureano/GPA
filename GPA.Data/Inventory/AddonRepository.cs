@@ -5,10 +5,8 @@ using GPA.Dtos.Inventory;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Text.Json;
 
 namespace GPA.Data.Inventory
@@ -30,6 +28,8 @@ namespace GPA.Data.Inventory
         Task RemoveAddonFromAllProductAsync(Guid addonId, Guid createdBy);
         Task AssignAddonToAllProductAsync(Guid addonId, Guid createdBy);
         Task AddHistory(Addon addon, string action, Guid by);
+        Task<List<RawAddons>> GetAddonsByInvoiceId(Guid invoiceId);
+        Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByInvoiceIdAsDictionary(Guid invoiceId);
     }
 
     public class AddonRepository : Repository<Addon>, IAddonRepository
@@ -81,6 +81,50 @@ namespace GPA.Data.Inventory
 #pragma warning disable EF1002 // Possible SQL injection vulnerability.
 
             var addons = await GetAddonsByProductId(productIds);
+            Dictionary<Guid, List<RawAddons>> mappedAddons = new();
+            foreach (var addon in addons)
+            {
+                if (!mappedAddons.ContainsKey(addon.ProductId))
+                {
+                    mappedAddons.Add(addon.ProductId, new List<RawAddons>());
+                }
+
+                mappedAddons[addon.ProductId].Add(new RawAddons
+                {
+                    Id = addon.Id,
+                    Concept = addon.Concept,
+                    IsDiscount = addon.IsDiscount,
+                    Type = addon.Type,
+                    Value = addon.Value
+                });
+            }
+            return mappedAddons;
+        }
+
+        public async Task<List<RawAddons>> GetAddonsByInvoiceId(Guid invoiceId)
+        {
+#pragma warning disable EF1002 // Possible SQL injection vulnerability.
+            return await _context.Database.SqlQueryRaw<RawAddons>
+                    (
+                     @$"
+                        SELECT 
+	                         AD.[Id]
+	                        ,AD.[Concept]
+	                        ,AD.[IsDiscount]
+	                        ,AD.[Type]
+	                        ,AD.[Value]
+	                        ,PAD.ProductId
+                        FROM [Invoice].[InvoiceDetailsAddons] AD
+                        JOIN [Invoice].[InvoiceDetails] PAD ON AD.InvoiceDetailId = PAD.Id
+                            WHERE PAD.InvoiceId = '{invoiceId}'
+                    ").ToListAsync();
+        }
+
+        public async Task<Dictionary<Guid, List<RawAddons>>> GetAddonsByInvoiceIdAsDictionary(Guid invoiceId)
+        {
+#pragma warning disable EF1002 // Possible SQL injection vulnerability.
+
+            var addons = await GetAddonsByInvoiceId(invoiceId);
             Dictionary<Guid, List<RawAddons>> mappedAddons = new();
             foreach (var addon in addons)
             {

@@ -242,7 +242,7 @@ namespace GPA.Data.Inventory
 
                 _context.StockDetails.AddRange(stockDetails);
 
-                _context.Update(model);
+                var entry = _context.Update(model);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -353,7 +353,7 @@ namespace GPA.Data.Inventory
                     {transactionTypeFilter}
                     {reasonFilter}
                     {dateFilter}
-                ORDER BY Id
+                ORDER BY Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
 
