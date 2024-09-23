@@ -378,10 +378,10 @@ namespace GPA.Utils.Profiles
         public const string Upload = "upload";
         public const string Download = "download";
         public const string Print = "print";
-        public const string ExistenceReport = "existence-report";
-        public const string StockCycleReport = "stock-cycle-report";
-        public const string TransactionReport = "transaction-report";
-        public const string SaleReport = "sale-report";
+        public const string ExistenceReport = "existence_report";
+        public const string StockCycleReport = "stock_cycle_report";
+        public const string TransactionReport = "transaction_report";
+        public const string SaleReport = "sale_report";
     }
 
     public class Apps
