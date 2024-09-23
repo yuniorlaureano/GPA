@@ -10,6 +10,7 @@ using GPA.Services.Security;
 using GPA.Utils;
 using GPA.Utils.Caching;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text;
 
 namespace GPA.Business.Services.Inventory
@@ -186,19 +187,22 @@ namespace GPA.Business.Services.Inventory
                 content.Append($@"
                     <tr>
                       <td>
-                        {detail[_initial]?.ProductName}
+                        {detail[_initial]?.ProductName ?? detail[_final]?.ProductName}
+                      </td>
+                        <td>
+                        {detail[_initial]?.ProductCode ?? detail[_final]?.ProductCode}
                       </td>
                       <td>
                         <span class=""initial-detail""
-                          >{(detail[_initial]?.ProductPrice ?? 0.0M).ToString("C2")}</span
+                          >{(detail[_initial]?.ProductPrice ?? 0.0M).ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</span
                         >
                         <span class=""final-detail""
-                          >{(detail[_final]?.ProductPrice ?? 0.0M).ToString("C2")}</span
+                          >{(detail[_final]?.ProductPrice ?? 0.0M).ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</span
                         >
                       </td>
                       <td>
                         <span class=""initial-detail""
-                          >{detail[_initial]?.Input}</span
+                          >{detail[_initial]?.Input ?? 0}</span
                         >
                         <span class=""final-detail""
                           >{detail[_final]?.Input ?? 0}</span
@@ -206,7 +210,7 @@ namespace GPA.Business.Services.Inventory
                       </td>
                       <td>
                         <span class=""initial-detail""
-                          >{detail[_initial]?.Output}</span
+                          >{detail[_initial]?.Output ?? 0}</span
                         >
                         <span class=""final-detail""
                           >{detail[_final]?.Output ?? 0}</span
@@ -214,7 +218,7 @@ namespace GPA.Business.Services.Inventory
                       </td>
                       <td>
                         <span class=""initial-detail""
-                          >{detail[_initial]?.Stock}</span
+                          >{detail[_initial]?.Stock ?? 0}</span
                         >
                         <span class=""final-detail""
                           >{detail[_final]?.Stock ?? 0}</span

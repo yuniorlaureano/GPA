@@ -210,20 +210,21 @@ namespace GPA.Data.Inventory
 
         public async Task<IEnumerable<RawStockCycleDetails>> GetStockCycleDetailsAsync(Guid id)
         {
-            var query = @"
-                SELECT 
-                     [Id]
-                    ,[ProductId]
-                    ,[ProductPrice]
-                    ,[ProductName]
-                    ,[ProductType]
-                    ,[Stock]
-                    ,[Input]
-                    ,[Output]
-                    ,[Type]
-                    ,[StockCycleId]
-                FROM [GPA].[Inventory].[StockCycleDetails]
-                WHERE StockCycleId = @StockCycleId
+            var query = @"                
+              SELECT 
+                 STD.[Id]
+                ,STD.[ProductId]
+                ,STD.[ProductPrice]
+                ,STD.[ProductName]
+                ,P.[Code] AS ProductCode
+                ,STD.[ProductType]
+                ,STD.[Stock]
+                ,STD.[Input]
+                ,STD.[Output]
+                ,STD.[Type]
+                ,STD.[StockCycleId]
+            FROM [GPA].[Inventory].[StockCycleDetails] STD
+	            JOIN [Inventory].[Products] P ON STD.ProductId = P.Id
                     ";
 
             return await _context.Database
@@ -246,7 +247,7 @@ namespace GPA.Data.Inventory
                 WHERE Deleted = 0 
                     {DateFilter}
                     {IsCloseFilter}
-                ORDER BY Id
+                ORDER BY Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
                     ";
 
