@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace GPA.Utils.Caching
 {
@@ -44,7 +43,7 @@ namespace GPA.Utils.Caching
             {
                 cacheEntry = func();
                 _cache.Set(key, cacheEntry, GetCacheOptions(cacheType));
-                _logger.LogDebug("Cached key: {key}, {@Entity}", key, JsonSerializer.Serialize(cacheEntry));
+                _logger.LogDebug("Cached key: {key}", key);
             }
 
 
@@ -58,7 +57,7 @@ namespace GPA.Utils.Caching
             {
                 cacheEntry = await func();
                 _cache.Set(key, cacheEntry, GetCacheOptions(cacheType));
-                _logger.LogDebug("Cached key: {key}, {@Entity}", key, JsonSerializer.Serialize(cacheEntry));
+                _logger.LogDebug("Cached key: {key}", key);
             }
 
 
@@ -72,7 +71,7 @@ namespace GPA.Utils.Caching
             {
                 cacheEntry = await func();
                 _cache.Set(key, cacheEntry, GetCacheOptions(cacheType));
-                _logger.LogDebug("Cached key: {key}, {@Entity}", key, JsonSerializer.Serialize(cacheEntry));
+                _logger.LogDebug("Cached key: {key}", key);
             }
 
 
@@ -86,7 +85,7 @@ namespace GPA.Utils.Caching
             {
                 cacheEntry = func();
                 _cache.Set(key, cacheEntry, GetCacheOptions(cacheType));
-                _logger.LogDebug("Cached key: {key}, {@Entity}", key, JsonSerializer.Serialize(cacheEntry));
+                _logger.LogDebug("Cached key: {key}", key);
             }
 
 

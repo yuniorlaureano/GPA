@@ -146,10 +146,8 @@ namespace GPA.Data.Inventory
                     {typeFilter}
                     ";
 
-            var (Page, PageSize, _) = PagingHelper.GetPagingParameter(filter);
             var (from, to, status, saleType, term) = GetInvoiceFilterParameter(invoiceListFilter);
             var parameters = new List<SqlParameter>();
-            parameters.AddRange([Page, PageSize]);
 
             if (termFilter is { Length: > 0 })
             {
