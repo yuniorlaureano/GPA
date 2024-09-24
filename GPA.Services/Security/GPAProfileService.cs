@@ -6,6 +6,7 @@ using GPA.Dtos.Audit;
 using GPA.Dtos.Security;
 using GPA.Entities.Unmapped;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace GPA.Business.Services.Security
@@ -30,15 +31,18 @@ namespace GPA.Business.Services.Security
         private readonly IGPAProfileRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<GPAProfileService> _logger;
 
         public GPAProfileService(
             IGPAProfileRepository repository,
             IUserContextService userContextService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<GPAProfileService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<GPAProfileDto?> GetProfilesByIdAsync(Guid id)
@@ -95,7 +99,7 @@ namespace GPA.Business.Services.Security
             var savedEntity = await _repository.AddAsync(entity);
 
             await _repository.AddHistory(savedEntity, ActionConstants.Add, _userContextService.GetCurrentUserId());
-
+            _logger.LogInformation("El usuario '{UserId}' ha creado el perfil '{ProfileId}'", _userContextService.GetCurrentUserId(), savedEntity.Id);
             return new GPAProfileDto
             {
                 Id = savedEntity.Id,
@@ -127,6 +131,7 @@ namespace GPA.Business.Services.Security
                 entityState.Property(x => x.Id).IsModified = false;
             });
 
+            _logger.LogInformation("El usuario '{UserId}' ha modificado el perfil '{ProfileId}'", _userContextService.GetCurrentUserId(), savedEntity.Id);
             await _repository.AddHistory(savedEntity, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
 
@@ -135,6 +140,7 @@ namespace GPA.Business.Services.Security
             var createdBy = _userContextService.GetCurrentUserId();
             await _repository.AssignProfileToUser(profileId, userId, createdBy);
             await _repository.AddUserProfileHistory(userId, profileId, ActionConstants.Assign, _userContextService.GetCurrentUserId());
+            _logger.LogInformation("El usuario '{UserId}' ha asignado el perfil '{ProfileId}' al usuario '{AsignToId}'", _userContextService.GetCurrentUserId(), profileId, userId);
         }
 
         public async Task<ResponseDto<RawUser>> GetUsers(Guid profileId, RequestFilterDto filter)
@@ -151,6 +157,7 @@ namespace GPA.Business.Services.Security
         {
             await _repository.AddUserProfileHistory(userId, profileId, ActionConstants.UnAssign, _userContextService.GetCurrentUserId());
             await _repository.UnAssignProfileFromUser(profileId, userId);
+            _logger.LogInformation("El usuario '{UserId}' ha desasignado el perfil '{ProfileId}' al usuario '{AsignToId}'", _userContextService.GetCurrentUserId(), profileId, userId);
         }
 
         public Task<bool> ProfileExists(Guid profileId, Guid userId)
@@ -175,6 +182,7 @@ namespace GPA.Business.Services.Security
             await _repository.AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
 
             await _repository.RemoveAsync(entity);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado el perfil '{ProfileId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

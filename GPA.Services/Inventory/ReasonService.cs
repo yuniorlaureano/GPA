@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -18,7 +19,7 @@ namespace GPA.Business.Services.Inventory
 
         public Task UpdateAsync(ReasonDto deasonDto);
 
-        public Task RemoveAsync(int id);
+        //public Task RemoveAsync(int id);
     }
 
     public class ReasonService : IReasonService
@@ -26,15 +27,18 @@ namespace GPA.Business.Services.Inventory
         private readonly IReasonRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
+        private readonly ILogger<ReasonService> _logger;
 
         public ReasonService(
-            IReasonRepository repository, 
+            IReasonRepository repository,
             IUserContextService userContextService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<ReasonService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<ReasonDto?> GetByIdAsync(int id)
@@ -62,6 +66,7 @@ namespace GPA.Business.Services.Inventory
             reason.CreatedBy = _userContextService.GetCurrentUserId();
             reason.CreatedAt = DateTimeOffset.UtcNow;
             var savedReason = await _repository.AddAsync(reason);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado la razón '{ReasonId}'", _userContextService.GetCurrentUserId(), savedReason?.Id);
             return _mapper.Map<ReasonDto>(savedReason);
         }
 
@@ -81,12 +86,7 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-        }
-
-        public async Task RemoveAsync(int id)
-        {
-            var savedReason = await _repository.GetByIdAsync(query => query, x => x.Id == id);
-            await _repository.RemoveAsync(savedReason);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la razón '{ReasonId}'", _userContextService.GetCurrentUserId(), savedReason?.Id);
         }
     }
 }

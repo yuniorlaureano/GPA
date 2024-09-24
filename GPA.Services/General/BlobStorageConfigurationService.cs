@@ -70,7 +70,7 @@ namespace GPA.Services.General
             blobStorageConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
             blobStorageConfiguration.CreatedAt = DateTimeOffset.UtcNow;
             await _repository.CreateConfigurationAsync(blobStorageConfiguration);
-            _logger.LogInformation("El usuario '{User}' ha agregado la configuración de archivos para '{Provider}'", _userContextService.GetCurrentUserId(), dto.Provider);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado la configuración de archivos para '{Provider}'", _userContextService.GetCurrentUserId(), dto.Provider);
         }
 
         public async Task UpdateConfigurationAsync(BlobStorageConfigurationUpdateDto dto)
@@ -91,14 +91,14 @@ namespace GPA.Services.General
             blobStorageConfiguration.UpdatedBy = _userContextService.GetCurrentUserId();
             blobStorageConfiguration.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateConfigurationAsync(blobStorageConfiguration);
-            _logger.LogInformation("El usuario '{User}' ha modificado la configuración de archivos para '{ProviderId}'", _userContextService.GetCurrentUserId(), dto.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la configuración de archivos para '{ProviderId}'", _userContextService.GetCurrentUserId(), dto.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var configuration = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(configuration);
-            _logger.LogInformation("El usuario '{User}' ha eliminado la configuración de archivos para '{ProviderId}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado la configuración de archivos para '{ProviderId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

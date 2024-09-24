@@ -64,7 +64,7 @@ namespace GPA.Business.Services.Inventory
             newProvider.CreatedBy = _userContextService.GetCurrentUserId();
             newProvider.CreatedAt = DateTimeOffset.UtcNow;
             var savedProvider = await _repository.AddAsync(newProvider);
-            _logger.LogInformation("El usuario '{User}' ha agregado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), savedProvider.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado el proveedor '{ProviderId}'", _userContextService.GetCurrentUserId(), savedProvider?.Id);
             return _mapper.Map<ProviderDto>(savedProvider);
         }
 
@@ -84,14 +84,14 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-            _logger.LogInformation("El usuario '{User}' ha actualizado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), savedProvider.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado el proveedor '{ProviderId}'", _userContextService.GetCurrentUserId(), savedProvider.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var newProvider = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(newProvider);
-            _logger.LogInformation("El usuario '{User}' ha actualizado el proveedor '{Provider}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{User}' ha borrado el proveedor '{ProviderId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

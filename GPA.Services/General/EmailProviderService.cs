@@ -69,7 +69,7 @@ namespace GPA.Services.General
             var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
             emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
             await _repository.CreateConfigurationAsync(emailConfiguration);
-            _logger.LogInformation("El usuario '{User}' ha agregado la configuración de email para '{Engine}'", _userContextService.GetCurrentUserId(), dto.Engine);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado la configuración de email para '{Engine}'", _userContextService.GetCurrentUserId(), dto.Engine);
         }
 
         public async Task UpdateConfigurationAsync(EmailConfigurationUpdateDto dto)
@@ -89,14 +89,14 @@ namespace GPA.Services.General
             var emailConfiguration = _mapper.Map<EmailConfiguration>(dto);
             emailConfiguration.CreatedBy = _userContextService.GetCurrentUserId();
             await _repository.UpdateConfigurationAsync(emailConfiguration);
-            _logger.LogInformation("El usuario '{User}' ha modificado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), dto.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), dto.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var savedCEmailConfiguration = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedCEmailConfiguration);
-            _logger.LogInformation("El usuario '{User}' ha eliminado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado la configuración de email para '{EngineId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

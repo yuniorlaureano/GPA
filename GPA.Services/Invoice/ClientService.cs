@@ -79,7 +79,7 @@ namespace GPA.Business.Services.Invoice
             var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(savedClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
 
-            _logger.LogInformation("El usuario '{User}', ha agregado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), savedClient.Name + " " + savedClient.LastName);
+            _logger.LogInformation("El usuario '{UserId}', ha agregado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), savedClient.Id);
             return _mapper.Map<ClientDto>(savedClient);
         }
 
@@ -96,7 +96,7 @@ namespace GPA.Business.Services.Invoice
             newClient.UpdatedAt = DateTimeOffset.UtcNow;
             await _repository.UpdateAsync(newClient);
 
-            _logger.LogInformation("El usuario '{User}', ha modificado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), newClient.Name + " " + newClient.LastName);
+            _logger.LogInformation("El usuario '{UserId}', ha modificado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), newClient.Id);
             var credits = dto.Credits?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(newClient, credits, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
@@ -108,7 +108,7 @@ namespace GPA.Business.Services.Invoice
 
             await _repository.SoftDeleteClientAsync(id, _userContextService.GetCurrentUserId());
 
-            _logger.LogInformation("El usuario '{User}', ha borrado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), client.Name + " " + client.LastName);
+            _logger.LogInformation("El usuario '{UserId}', ha borrado el cliente: '{ClientId}'", _userContextService.GetCurrentUserName(), id);
             var credits = credit?.Select(x => new ClientCredit { Concept = x.Concept, Credit = x.Credit }).ToList();
             await _repository.AddHistory(_mapper.Map<Client>(client), credits, ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }

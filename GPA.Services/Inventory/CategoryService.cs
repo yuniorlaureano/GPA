@@ -58,7 +58,7 @@ namespace GPA.Business.Services.Inventory
             category.CreatedBy = _userContextService.GetCurrentUserId();
             category.CreatedAt = DateTimeOffset.UtcNow;
             var savedCategory = await _repository.AddAsync(category);
-            _logger.LogInformation("El usuario '{User}' ha creado la categoría '{Category}'", _userContextService.GetCurrentUserId(), savedCategory.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha creado la categoría '{CategoryId}'", _userContextService.GetCurrentUserId(), savedCategory.Id);
             return _mapper.Map<CategoryDto>(savedCategory);
         }
 
@@ -78,13 +78,13 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-            _logger.LogInformation("El usuario '{User}' ha modificado la categoría '{Category}'", _userContextService.GetCurrentUserId(), savedCategory.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la categoría '{CategoryId}'", _userContextService.GetCurrentUserId(), savedCategory.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             await _repository.SoftDeleteCategoryAsync(id);
-            _logger.LogInformation("El usuario '{User}' ha eliminado la categoría '{Category}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado la categoría '{CategoryId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

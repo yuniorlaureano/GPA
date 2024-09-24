@@ -88,7 +88,7 @@ namespace GPA.Business.Services.Invoice
             payment.CreatedAt = DateTimeOffset.UtcNow;
             payment.Date = DateTime.UtcNow;
             var savedClient = await _repository.AddAsync(payment);
-            _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar: {ReceivableId} para la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), savedClient.Id, dto.InvoiceId);
+            _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar: '{ReceivableId}' para la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), savedClient.Id, dto.InvoiceId);
             return _mapper.Map<ClientPaymentsDetailDto>(savedClient);
         }
 
@@ -114,12 +114,12 @@ namespace GPA.Business.Services.Invoice
                 if (hasMorePayments)
                 {
                     await CreateNextPayment(dto, pendingPayment);
-                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar {ReceivableId} para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
+                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar '{ReceivableId}' para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
                 }
                 else
                 {
                     await MarkInvoiceAsPayed(invoice);
-                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar {ReceivableId} para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
+                    _logger.LogInformation("El usuario '{UserId}', ha pagado la cuenta por cobrar '{ReceivableId}' para la factura '{InvoiceId}'. Pago pendiente '{PendingPayment}'", _userContextService.GetCurrentUserName(), dto.Id, dto.InvoiceId, pendingPayment);
                 }
             }
         }

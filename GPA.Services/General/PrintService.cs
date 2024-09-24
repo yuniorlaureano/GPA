@@ -62,9 +62,9 @@ namespace GPA.Services.General
         public async Task<RawPrintInformation> AddAsync(CreatePrintInformationDto model)
         {
             var printInformation = _mapper.Map<PrintInformation>(model);
-            var savedUnit = await _repository.AddAsync(printInformation);
-            _logger.LogInformation("El usuario '{User}' ha agregado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
-            return _mapper.Map<RawPrintInformation>(savedUnit);
+            var savedPrint = await _repository.AddAsync(printInformation);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado la información de impresión '{PrintId}'", _userContextService.GetCurrentUserId(), savedPrint.Id);
+            return _mapper.Map<RawPrintInformation>(savedPrint);
         }
 
         public async Task UpdateAsync(Guid Id, UpdatePrintInformationDto model)
@@ -76,7 +76,7 @@ namespace GPA.Services.General
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-            _logger.LogInformation("El usuario '{User}' ha modificado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la información de impresión '{PrintId}'", _userContextService.GetCurrentUserId(), Id);
         }
 
         public async Task SavePhoto(PrintInformationUploadPhotoDto dto)
@@ -89,13 +89,14 @@ namespace GPA.Services.General
 
             var uploadResult = await _blobStorageServiceFactory.UploadFile(dto.Photo, folder: "", isPublic: true);
             await _repository.SavePhoto(uploadResult.AsJson(), model.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha actualizado la foto de la información de impresión '{PrintId}'", _userContextService.GetCurrentUserId(), dto.PrintInformationId);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var model = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(model);
-            _logger.LogInformation("El usuario '{User}' ha eliminado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado la informacioón de impresión '{Print}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

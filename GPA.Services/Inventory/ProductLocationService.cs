@@ -4,6 +4,7 @@ using GPA.Common.DTOs.Inventory;
 using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Services.Security;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace GPA.Business.Services.Inventory
@@ -26,15 +27,17 @@ namespace GPA.Business.Services.Inventory
         private readonly IProductLocationRepository _repository;
         private readonly IUserContextService _userContextService;
         private readonly IMapper _mapper;
-
+        private readonly ILogger<ProductLocationService> _logger;
         public ProductLocationService(
             IProductLocationRepository repository,
-            IUserContextService userContextService, 
-            IMapper mapper)
+            IUserContextService userContextService,
+            IMapper mapper,
+            ILogger<ProductLocationService> logger)
         {
             _repository = repository;
             _userContextService = userContextService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<ProductLocationDto?> GetByIdAsync(Guid id)
@@ -62,6 +65,7 @@ namespace GPA.Business.Services.Inventory
             newProductLocation.CreatedBy = _userContextService.GetCurrentUserId();
             newProductLocation.CreatedAt = DateTimeOffset.UtcNow;
             var savedProductLocation = await _repository.AddAsync(newProductLocation);
+            _logger.LogInformation("El usuario '{UserId}' ha creado la ubicación de producto '{LocationId}'", _userContextService.GetCurrentUserId(), savedProductLocation?.Id);
             return _mapper.Map<ProductLocationDto>(savedProductLocation);
         }
 
@@ -81,12 +85,14 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la unicación de producto '{LocationId}'", _userContextService.GetCurrentUserId(), savedProductLocation?.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             var savedProductLocation = await _repository.GetByIdAsync(query => query, x => x.Id == id);
             await _repository.RemoveAsync(savedProductLocation);
+            _logger.LogInformation("El usuario '{UserId}' ha removido la unicación de producto '{LocationId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

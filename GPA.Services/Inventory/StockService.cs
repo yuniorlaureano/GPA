@@ -131,7 +131,7 @@ namespace GPA.Business.Services.Inventory
             newStock.Date = DateTime.UtcNow;
             var savedStock = await _repository.AddAsync(newStock);
             var action = dto.TransactionType == (int)TransactionType.Input ? "Entrada" : "Salida";
-            _logger.LogInformation("El usuario '{User}' ha realidado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha realidado una '{Transaction}' de inventario de inventario '{StockId}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return _mapper.Map<StockDto>(savedStock);
         }
@@ -168,7 +168,7 @@ namespace GPA.Business.Services.Inventory
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
                 var action = savedStock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
-                _logger.LogInformation("El usuario '{User}' ha actualizado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
+                _logger.LogInformation("El usuario '{UserId}' ha actualizado una '{Transaction}' de inventario de inventario '{StockId}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             }
         }
 
@@ -207,7 +207,7 @@ namespace GPA.Business.Services.Inventory
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
                 var action = savedStock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
-                _logger.LogInformation("El usuario '{User}' ha actualizado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
+                _logger.LogInformation("El usuario '{UserId}' ha actualizado una '{Transaction}' de inventario de inventario '{StockId}'", _userContextService.GetCurrentUserId(), action, savedStock.Id);
             }
         }
 
@@ -216,7 +216,7 @@ namespace GPA.Business.Services.Inventory
             var stock = await _repository.GetByIdAsync(entity => entity.Include(x => x.StockDetails));
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
             var action = stock.TransactionType == TransactionType.Input ? "Entrada" : "Salida";
-            _logger.LogInformation("El usuario '{User}' ha cancelado una '{Transaction}' de inventario de inventario '{Stock}'", _userContextService.GetCurrentUserId(), action, stock.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha cancelado una '{Transaction}' de inventario de inventario '{StockId}'", _userContextService.GetCurrentUserId(), action, stock.Id);
             if (stock is not null)
             {
                 await _repository.AddHistory(stock, stock.StockDetails, ActionConstants.Canceled, _userContextService.GetCurrentUserId());
@@ -238,6 +238,7 @@ namespace GPA.Business.Services.Inventory
                 UploadedBy = _userContextService.GetCurrentUserId()
             };
             await _stockAttachmentRepository.SaveAttachmentAsync(attachment);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado un adjunto al inventario '{StockId}'", _userContextService.GetCurrentUserId(), stockId);
         }
 
         public async Task<IEnumerable<StockAttachmentDto>> GetAttachmentByStockIdAsync(Guid stockId)
@@ -267,6 +268,7 @@ namespace GPA.Business.Services.Inventory
             }
 
             var file = await _blobStorageServiceFactory.DownloadFile(fileResult.UniqueFileName);
+            _logger.LogInformation("El usuario '{UserId}' ha descargado el adjunto '{AttachmentId}' del inventario '{StockId}'", _userContextService.GetCurrentUserId(), id, attachment.StockId);
             return (file, fileResult.UniqueFileName);
         }
 

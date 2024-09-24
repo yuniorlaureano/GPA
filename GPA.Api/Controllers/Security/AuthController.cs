@@ -76,33 +76,35 @@ namespace GPA.Api.Controllers.Security
         [HttpPost("login")]
         public async Task<IActionResult> Login(LogInDto model)
         {
-            _logger.LogInformation("User: '{User}' login attempt.", model.UserName);
+            _logger.LogInformation("Usuario: '{UserName}' intento de login.", model.UserName);
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("User: '{User}' login failed. '{@Error}'", model.UserName, ModelState.Select(x => x.Value));
                 return BadRequest(ModelState.ErrorMessage());
             }
 
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user is null)
             {
-                _logger.LogWarning("User: '{User}' login failed. El usuario no existe", model.UserName);
+                _logger.LogWarning("Usuario: '{UserName}' no existe", model.UserName);
                 return BadRequest(new[] { "El usuario no existe" });
             }
 
             if (user.Deleted)
             {
+                _logger.LogWarning("Usuario: '{UserId}' desabilitado", user.Id);
                 return Unauthorized(new[] { "El usuario está desabilitado" });
             }
 
             if (!user.Invited)
             {
+                _logger.LogWarning("Usuario: '{UserId}' no ha sido invitado", user.Id);
                 return Unauthorized(new[] { "El usuario no ha sido invitado", "Comuniquese con el administrador para que le envíe otra invitación" });
             }
 
             if (!user.EmailConfirmed)
             {
+                _logger.LogWarning("Usuario: '{UserId}' no ha confirmado su invitación", user.Id);
                 return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invitación" });
             }
 
@@ -110,7 +112,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!result)
             {
-                _logger.LogWarning("User: '{User}' login failed. Usuario inválido", model.UserName);
+                _logger.LogWarning("Usuario: '{UserId}' error autenticando", user.Id);
                 return BadRequest(new[] { "Usuario inválido" });
             }
 
@@ -134,7 +136,7 @@ namespace GPA.Api.Controllers.Security
             });
 
             var permissions = await GetProfilePermissions(profileId);
-            _logger.LogInformation("User: '{User}' logged in.", model.UserName);
+            _logger.LogWarning("Usuario: '{UserId}' authenticado", user.Id);
 
             return Ok(new { token = token, permissions = permissions });
         }
@@ -146,14 +148,14 @@ namespace GPA.Api.Controllers.Security
             var userId = user.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId).Value;
             if (userId is null)
             {
-                _logger.LogWarning("Usuario no authorizado '{User}'", User?.Identity?.Name);
+                _logger.LogWarning("Usuario no authorizado '{UserName}'", User?.Identity?.Name);
                 return Unauthorized();
             }
 
             var exists = await _gPAProfileService.ProfileExists(profileId, Guid.Parse(userId));
             if (!exists)
             {
-                _logger.LogWarning("El usuario no tiene acceso al perfil '{User}'", User?.Identity?.Name);
+                _logger.LogWarning("El usuario no tiene acceso al perfil '{UserId}'", userId);
                 return new ForbidResult($"El usuario no tiene acceso al perfil '{User?.Identity?.Name}'");
             }
 
@@ -166,7 +168,7 @@ namespace GPA.Api.Controllers.Security
                 Claims = claims.ToArray()
             });
 
-            _logger.LogWarning("El usuario '{User}' accedió con el perfil '{ProfileId}'", User?.Identity?.Name, profileId);
+            _logger.LogWarning("El usuario '{UserId}' accedió con el perfil '{ProfileId}'", userId, profileId);
             var permissions = await GetProfilePermissions(profileId.ToString());
             return Ok(new { token = token, permissions = permissions });
         }
@@ -180,13 +182,13 @@ namespace GPA.Api.Controllers.Security
 
             if (userByEmail is not null && userByEmail.Id != userId)
             {
-                _logger.LogWarning("El usuario '{User}' intentó cambiar su correo '{Correo}' al uno existenten", User?.Identity?.Name, model.Email);
+                _logger.LogWarning("El usuario '{UserId}' intentó cambiar su correo '{Correo}' al uno existenten", userId, model.Email);
                 return BadRequest(new[] { "El correo ya está registrado" });
             }
 
             if (user is null)
             {
-                _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{User}' no existe", User?.Identity?.Name);
+                _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{UserId}' no existe", userId);
                 return BadRequest(new[] { "El usuario no existe" });
             }
 
@@ -198,7 +200,7 @@ namespace GPA.Api.Controllers.Security
             var userClaim = User.Claims.FirstOrDefault(x => x.Type == GPAClaimTypes.UserId);
             if (user.Id.ToString() != userClaim.Value)
             {
-                _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{User}' intentó modificar un perfil de otra persona", User?.Identity?.Name);
+                _logger.LogWarning("Intento de editar perfil de usuario. El usuario '{UserId}' intentó modificar un perfil de otra persona", userId);
                 return BadRequest(new[] { "Solo debe modificar su propio usuario" });
             }
 
@@ -210,7 +212,7 @@ namespace GPA.Api.Controllers.Security
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
-                _logger.LogWarning("Error editando perfil de usuario. Usuario '{User}', causa '{@Error}'", User?.Identity?.Name, result.Errors.Select(x => x.Description));
+                _logger.LogWarning("Error editando perfil de usuario. Usuario '{UserId}', causa '{@Error}'", userId, result.Errors.Select(x => x.Description));
                 return BadRequest(new[] { "Error modificando el usuario" });
             }
 
@@ -230,6 +232,7 @@ namespace GPA.Api.Controllers.Security
             await AddHistory(user, ActionConstants.Update, user.Id);
 
             var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
+            _logger.LogWarning("Perfil de usuario '{UserId}' editado.", userId);
 
             return Ok(new { token = token, permissions = permissions });
         }
@@ -243,11 +246,11 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState.ErrorMessage());
             }
 
-            _logger.LogInformation("Intento de cambio de contraseña. Usuario '{User}'", email);
+            _logger.LogInformation("Intento de cambio de contraseña. Usuario '{UserEmail}'", email);
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null)
             {
-                _logger.LogInformation("Intento de cambio de contraseña. El usuario '{User}' no existe", email);
+                _logger.LogInformation("Intento de cambio de contraseña. El usuario '{UserId}' no existe", user.Id);
                 return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
@@ -264,7 +267,7 @@ namespace GPA.Api.Controllers.Security
             var timeSpan = DateTimeOffset.Now - user.TOTPAccessCodeAttemptsDate;
             if (user.TOTPAccessCodeAttempts == 3 && timeSpan.Minutes < 1)
             {
-                _logger.LogInformation("Intento de cambio de contraseña. Máximo de intentos alcanzado para '{User}'", email);
+                _logger.LogInformation("Intento de cambio de contraseña. Máximo de intentos alcanzado para '{UserId}'", user.Id);
                 return BadRequest(new[] { "Debe esperar un minuto para volver a intentar" });
             }
 
@@ -291,11 +294,11 @@ namespace GPA.Api.Controllers.Security
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Intento de cambio de contraseña. Error enviando correo a '{User}'", email);
+                _logger.LogInformation("Intento de cambio de contraseña. Error enviando correo a '{UserId}'", user.Id);
                 return BadRequest(new[] { "Error enviando el correo" });
             }
 
-            _logger.LogInformation("Intento de cambio de contraseña. Código enviado a '{User}'", email);
+            _logger.LogInformation("Intento de cambio de contraseña. Código enviado a '{UserId}'", user.Id);
             return Ok();
         }
 
@@ -308,39 +311,42 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(ModelState.ErrorMessage());
             }
 
-            _logger.LogInformation("Intento de cambio de contraseña. Usuario '{User}'", model.userName);
+            _logger.LogInformation("Intento de cambio de contraseña. Usuario '{UserName}'", model.userName);
 
             if (model.Password != model.ConfirmPassword)
             {
-                _logger.LogWarning("Intento de cambio de contraseña. Las contraseñas no coinciden usuario '{User}'", model.userName);
+                _logger.LogWarning("Intento de cambio de contraseña. Las contraseñas no coinciden usuario '{UserName}'", model.userName);
                 return BadRequest(new[] { "Las contraseñas deben coincidir" });
             }
 
             var user = await _userManager.FindByNameAsync(model.userName);
             if (user is null)
             {
-                _logger.LogWarning("Intento de cambio de contraseña. el usuario no existe, usuario '{User}'", model.userName);
+                _logger.LogWarning("Intento de cambio de contraseña. el usuario no existe, usuario '{UserName}'", model.userName);
                 return BadRequest(new[] { "No existe usuario registrado con ese correo" });
             }
 
             if (user.Deleted)
             {
+                _logger.LogWarning("El usuario '{UserId}' está desabilitado", user.Id);
                 return Unauthorized(new[] { "El usuario está desabilitado" });
             }
 
             if (!user.Invited)
             {
+                _logger.LogWarning("El usuario '{UserId}' no ha sido invitado", user.Id);
                 return Unauthorized(new[] { "El usuario no ha sido invitado" });
             }
 
             if (!user.EmailConfirmed)
             {
+                _logger.LogWarning("El usuario '{UserId}' no ha confirmado su invitación", user.Id);
                 return Unauthorized(new[] { "El usuario no ha confirmado su invitación", "Comuniquese con el administrador para que le envíe otra invitación con su nuevo código de invitación" });
             }
 
             if (user.TOTPAccessCodeAttempts == 3)
             {
-                _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", model.userName);
+                _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{UserId}'", user.Id);
                 return BadRequest(new[] { "Máximo de intentos alcanzados", "Debe solicitar otro código de verificación" });
             }
 
@@ -349,7 +355,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!isTOTPCodeValid || model.Code != _aesHelper.Decrypt(user.LastTOTPCode))
             {
-                _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{User}'", model.userName);
+                _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{UserId}'", user.Id);
                 await UpdateTOTPCodeAttempts(user);
                 return BadRequest(new[] { "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo" });
             }
@@ -360,7 +366,7 @@ namespace GPA.Api.Controllers.Security
             user.EmailConfirmed = true;
             await _userManager.UpdateAsync(user);
             await AddHistory(user, ActionConstants.ResetPassword, user.Id);
-            _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{User}'", model.userName);
+            _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{UserId}'", user.Id);
             return Ok();
         }
 
@@ -409,7 +415,7 @@ namespace GPA.Api.Controllers.Security
 
             var permissions = await GetProfilePermissions(User.Claims.First(x => x.Type == GPAClaimTypes.ProfileId).Value);
 
-            _logger.LogInformation("El usuario '{User}' cambió su foto de perfil", user.UserName);
+            _logger.LogInformation("El usuario '{UserId}' cambió su foto de perfil", user.Id);
             await AddHistory(user, ActionConstants.Update, user.Id);
             return Ok(new { token = token, permissions = permissions });
         }
@@ -492,13 +498,13 @@ namespace GPA.Api.Controllers.Security
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Redención de invitación. Error enviando correo a '{User}'", user.Email);
+                _logger.LogInformation("Redención de invitación. Error enviando correo a '{UserId}'", user.Id);
                 return BadRequest(new[] { "Error enviando el correo" });
             }
 
             await _gPAProfileService.AssignProfileToUser(Guid.Parse(profileId), user.Id);
 
-            _logger.LogInformation("Redención de invitación. Código enviado a '{User}'", user.Email);
+            _logger.LogInformation("Redención de invitación. Código enviado a '{UserId}'", user.Id);
             return Ok(new { id = user.Id, firstName = user.FirstName, lastName = user.LastName, email = user.Email, userName = user.UserName });
         }
 
@@ -536,7 +542,7 @@ namespace GPA.Api.Controllers.Security
 
             if (user.TOTPAccessCodeAttempts == 3)
             {
-                _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{User}'", user.Email);
+                _logger.LogWarning("Intento de cambio de contraseña. Máximo de intentos alcanzado, '{UserId}'", user.Id);
                 return BadRequest(new[] { "Máximo de intentos alcanzados", "Debe solicitar otro código de verificación" });
             }
 
@@ -545,7 +551,7 @@ namespace GPA.Api.Controllers.Security
 
             if (!isTOTPCodeValid || model.Code != _aesHelper.Decrypt(user.LastTOTPCode))
             {
-                _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{User}'", user.Email);
+                _logger.LogWarning("Intento de cambio de contraseña. Código TOTP inválido, '{UserId}'", user.Id);
                 await UpdateTOTPCodeAttempts(user);
                 return BadRequest(new[] { "El código ingresado no es válido.", "Debe ingresar el código que recibió vía correo" });
             }
@@ -559,7 +565,7 @@ namespace GPA.Api.Controllers.Security
 
             await AddHistory(user, ActionConstants.InvitationAccepted, user.Id);
             
-            _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{User}'", user.Email);
+            _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{UserId}'", user.Id);
             return Ok();
         }
 

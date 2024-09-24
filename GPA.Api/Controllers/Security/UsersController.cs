@@ -51,7 +51,7 @@ namespace GPA.Api.Controllers.Security
             IValidator<GPAUserCreationDto> creationValidator,
             IValidator<GPAUserUpdateDto> updateValidator,
             IEmailServiceFactory emailServiceFactory,
-            ILogger<UsersController> logger,            
+            ILogger<UsersController> logger,
             IUserInvitationTemplate userInvitationTemplate,
             IAesHelper aesHelper)
         {
@@ -118,9 +118,9 @@ namespace GPA.Api.Controllers.Security
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors?.Select(x => x.Description)?? []);
+                return BadRequest(result.Errors?.Select(x => x.Description) ?? []);
             }
-            _logger.LogInformation("'{User}' ha creado un usuario", _userContextService.GetCurrentUserName());
+            _logger.LogInformation("'{UserId}' ha creado el usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), entity.Id);
             await AddHistory(entity, ActionConstants.Add, _userContextService.GetCurrentUserId());
             return Created($"/{entity.Id}", new { Id = entity.Id, Email = entity.Email, UserName = entity.UserName });
         }
@@ -175,7 +175,7 @@ namespace GPA.Api.Controllers.Security
             savedEntity.SecurityStamp = Guid.NewGuid().ToString();
             await _userManager.UpdateAsync(savedEntity);
 
-            _logger.LogInformation("'{User}' ha modificado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), originalUserName);
+            _logger.LogInformation("'{UserId}' ha modificado el usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), savedEntity.Id);
             await AddHistory(savedEntity, ActionConstants.Update, _userContextService.GetCurrentUserId());
             return NoContent();
         }
@@ -205,7 +205,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "Error modificando el usuario" });
             }
 
-            _logger.LogInformation("'{User}' ha cambiado la foto de perfil del usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), user.UserName);
+            _logger.LogInformation("'{User}' ha cambiado la foto de perfil del usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), user.Id);
             return Ok();
         }
 
@@ -240,7 +240,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(result.Errors.Select(x => x.Description));
             }
 
-            _logger.LogInformation("'{User}' ha eliminado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
+            _logger.LogInformation("'{User}' ha eliminado al usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), entity.Id);
             await AddHistory(entity, ActionConstants.Remove, _userContextService.GetCurrentUserId());
             return NoContent();
         }
@@ -277,7 +277,7 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(result.Errors.Select(x => x.Description));
             }
 
-            _logger.LogInformation("'{User}' ha habilitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
+            _logger.LogInformation("'{User}' ha habilitado al usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), entity.Id);
             await AddHistory(entity, ActionConstants.Activate, _userContextService.GetCurrentUserId());
             return NoContent();
         }
@@ -359,13 +359,13 @@ namespace GPA.Api.Controllers.Security
             entity.UpdatedAt = DateTimeOffset.UtcNow;
             entity.UpdatedBy = _userContextService.GetCurrentUserId();
             var result = await _userManager.UpdateAsync(entity);
-                        
+
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors.Select(x => x.Description));
             }
 
-            _logger.LogInformation("'{User}' ha invitado al usuario '{ModifiedUser}'", _userContextService.GetCurrentUserName(), entity.UserName);
+            _logger.LogInformation("'{User}' ha invitado al usuario '{AffectedUserId}'", _userContextService.GetCurrentUserName(), entity.Id);
             await AddHistory(entity, ActionConstants.Inviting, _userContextService.GetCurrentUserId());
             return NoContent();
         }

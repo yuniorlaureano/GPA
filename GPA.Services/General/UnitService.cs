@@ -59,7 +59,7 @@ namespace GPA.Business.Services.General
         {
             var unit = _mapper.Map<Unit>(dto);
             var savedUnit = await _repository.AddAsync(unit);
-            _logger.LogInformation("El usuario '{User}' ha agregado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado la unidad '{UnitId}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
             return _mapper.Map<UnitDto>(savedUnit);
         }
 
@@ -77,13 +77,13 @@ namespace GPA.Business.Services.General
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-            _logger.LogInformation("El usuario '{User}' ha modificado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado la unidad '{UnitId}'", _userContextService.GetCurrentUserId(), savedUnit.Id);
         }
 
         public async Task RemoveAsync(Guid id)
         {
             await _repository.SoftDeleteUnitAsync(id);
-            _logger.LogInformation("El usuario '{User}' ha eliminado la unidad '{Unit}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado la unidad '{UnitId}'", _userContextService.GetCurrentUserId(), id);
         }
     }
 }

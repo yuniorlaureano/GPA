@@ -67,7 +67,7 @@ namespace GPA.Business.Services.Inventory
             var savedAddon = await _repository.AddAsync(addon);
 
             await _repository.AddHistory(savedAddon, ActionConstants.Add, _userContextService.GetCurrentUserId());
-            _logger.LogInformation("El usuario '{User}' ha creado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha creado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
             return _mapper.Map<AddonDto>(savedAddon);
         }
 
@@ -87,7 +87,7 @@ namespace GPA.Business.Services.Inventory
             {
                 entityState.Property(x => x.Id).IsModified = false;
             });
-            _logger.LogInformation("El usuario '{User}' ha modificado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado el agregado: '{AddonId}'", _userContextService.GetCurrentUserId(), savedAddon.Id);
             await _repository.AddHistory(newAddon, ActionConstants.Update, _userContextService.GetCurrentUserId());
         }
 
@@ -102,25 +102,25 @@ namespace GPA.Business.Services.Inventory
 
         public Task RemoveAddonFromProductAsync(Guid addonId, Guid productId)
         {
-            _logger.LogInformation("El usuario '{User}' ha desasignado el agregado: '{AddonId}' del producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
+            _logger.LogInformation("El usuario '{UserId}' ha desasignado el agregado: '{AddonId}' del producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
             return _repository.RemoveAddonFromProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToProductAsync(Guid addonId, Guid productId)
         {
-            _logger.LogInformation("El usuario '{User}' ha asignado el agregado '{AddonId}' al producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
+            _logger.LogInformation("El usuario '{UserId}' ha asignado el agregado '{AddonId}' al producto '{ProductId}'", _userContextService.GetCurrentUserId(), addonId, productId);
             return _repository.AssignAddonToProductAsync(addonId, productId, _userContextService.GetCurrentUserId());
         }
 
         public Task RemoveAddonFromAllProductAsync(Guid addonId)
         {
-            _logger.LogInformation("El usuario '{User}' ha desasignado el agregado '{AddonId}' de todos los productos", _userContextService.GetCurrentUserId(), addonId);
+            _logger.LogInformation("El usuario '{UserId}' ha desasignado el agregado '{AddonId}' de todos los productos", _userContextService.GetCurrentUserId(), addonId);
             return _repository.RemoveAddonFromAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
         public Task AssignAddonToAllProductAsync(Guid addonId)
         {
-            _logger.LogInformation("El usuario '{User}' ha asignado el agregado '{AddonId}' a todos los productos", _userContextService.GetCurrentUserId(), addonId);
+            _logger.LogInformation("El usuario '{UserId}' ha asignado el agregado '{AddonId}' a todos los productos", _userContextService.GetCurrentUserId(), addonId);
             return _repository.AssignAddonToAllProductAsync(addonId, _userContextService.GetCurrentUserId());
         }
 
@@ -128,7 +128,7 @@ namespace GPA.Business.Services.Inventory
         {
             var addon = await _repository.GetAddonsAsync(id);
             await _repository.SoftDeleteAddonAsync(id);
-            _logger.LogInformation("El usuario '{User}' ha eliminado el agregado '{AddonId}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado el agregado '{AddonId}'", _userContextService.GetCurrentUserId(), id);
             await _repository.AddHistory(_mapper.Map<Addon>(addon), ActionConstants.Remove, _userContextService.GetCurrentUserId());
         }
     }

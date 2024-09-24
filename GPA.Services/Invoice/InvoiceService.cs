@@ -165,7 +165,7 @@ namespace GPA.Business.Services.Invoice
             await AddReceivableAccount(invoice, addons);
             await _repository.AddHistory(savedInvoice, savedInvoice.InvoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
 
-            _logger.LogInformation("El usuario '{User}', Ha actualizado la factura '{InvoiceId}', con estado de pago: {PaymentStatus}, y estado", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(invoice.PaymentStatus), Enum.GetName(invoice.Status));
+            _logger.LogInformation("El usuario '{UserId}', ha creado la factura '{InvoiceId}', con estado de pago: '{PaymentStatus}', y estado '{Status}'", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(invoice.PaymentStatus), Enum.GetName(invoice.Status));
             return _mapper.Map<InvoiceDto>(savedInvoice);
         }
 
@@ -215,13 +215,13 @@ namespace GPA.Business.Services.Invoice
                 await AddStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
                 await _repository.AddHistory(newInvoice, invoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
-                _logger.LogInformation("El usuario '{User}', Ha actualizado la factura '{InvoiceId}', con estado de pago: {PaymentStatus}, y estado", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(newInvoice.PaymentStatus), Enum.GetName(newInvoice.Status));
+                _logger.LogInformation("El usuario '{UserId}', Ha actualizado la factura '{InvoiceId}', con estado de pago: '{PaymentStatus}', y estado '{Status}'", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(newInvoice.PaymentStatus), Enum.GetName(newInvoice.Status));
             }
         }
 
         public async Task CancelAsync(Guid id)
         {
-            _logger.LogInformation("El usuario '{User}', ha cancelado la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), id);
+            _logger.LogInformation("El usuario '{UserId}', ha cancelado la factura '{InvoiceId}'", _userContextService.GetCurrentUserName(), id);
             await _repository.CancelAsync(id, _userContextService.GetCurrentUserId());
         }
 
@@ -240,6 +240,7 @@ namespace GPA.Business.Services.Invoice
                 UploadedBy = _userContextService.GetCurrentUserId()
             };
             await _invoiceAttachmentRepository.SaveAttachmentAsync(attachment);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado un adjunto a la factura '{InvoiceId}'", _userContextService.GetCurrentUserId(), invoiceId);
         }
 
         public async Task<IEnumerable<InvoiceAttachmentDto>> GetAttachmentByInvoiceIdAsync(Guid invoiceId)
@@ -269,6 +270,7 @@ namespace GPA.Business.Services.Invoice
             }
 
             var file = await _blobStorageServiceFactory.DownloadFile(fileResult.UniqueFileName);
+            _logger.LogInformation("El usuario '{UserId}' ha descargado el adjunto '{AttachmentId}' de la factura '{InvoiceId}'", _userContextService.GetCurrentUserId(), id, attachment.InvoiceId);
             return (file, fileResult.UniqueFileName);
         }
 
@@ -300,7 +302,7 @@ namespace GPA.Business.Services.Invoice
                 invoice.CreatedBy = _userContextService.GetCurrentUserId();
                 invoice.CreatedAt = DateTimeOffset.UtcNow;
                 var entity = await _stockRepository.AddAsync(ToStock(invoice));
-                _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', por el usaurio", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
+                _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', por el usaurio '{UserId}'", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
             }
         }
 

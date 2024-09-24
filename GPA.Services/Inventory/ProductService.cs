@@ -82,7 +82,7 @@ namespace GPA.Business.Services.Inventory
 
             var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
             await _repository.AddHistory(rawProduct, ActionConstants.Add, _userContextService.GetCurrentUserId());
-            _logger.LogInformation("El usuario '{User}' ha agregado el producto '{Producto}'", _userContextService.GetCurrentUserId(), rawProduct.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha agregado el producto '{ProductId}'", _userContextService.GetCurrentUserId(), rawProduct.Id);
             return _mapper.Map<ProductDto>(savedProduct);
         }
 
@@ -109,7 +109,7 @@ namespace GPA.Business.Services.Inventory
 
             var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
             await _repository.AddHistory(rawProduct, ActionConstants.Update, _userContextService.GetCurrentUserId());
-            _logger.LogInformation("El usuario '{User}' ha actualizado el producto '{Producto}'", _userContextService.GetCurrentUserId(), rawProduct.Id);
+            _logger.LogInformation("El usuario '{UserId}' ha modificado el producto '{ProductId}'", _userContextService.GetCurrentUserId(), rawProduct.Id);
         }
 
         public async Task SavePhoto(ProductUploadPhotoDto dto)
@@ -122,7 +122,7 @@ namespace GPA.Business.Services.Inventory
 
             var uploadResult = await _blobStorageServiceFactory.UploadFile(dto.Photo, folder: "products/", isPublic: true);
             await _repository.SavePhoto(uploadResult.AsJson(), savedProduct.Id);
-            _logger.LogInformation("El usuario '{User}' ha cambiado la foto del producto '{Producto}'", _userContextService.GetCurrentUserId(), dto.ProductId);
+            _logger.LogInformation("El usuario '{UserId}' ha cambiado la foto del producto '{ProductId}'", _userContextService.GetCurrentUserId(), dto.ProductId);
         }
 
         public async Task RemoveAsync(Guid id)
@@ -130,7 +130,7 @@ namespace GPA.Business.Services.Inventory
             var rawProduct = await _repository.GetProductAsync(id);
             await _repository.AddHistory(rawProduct, ActionConstants.Remove, _userContextService.GetCurrentUserId());
             await _repository.SoftDelete(id);
-            _logger.LogInformation("El usuario '{User}' ha eliminado el producto '{Producto}'", _userContextService.GetCurrentUserId(), id);
+            _logger.LogInformation("El usuario '{UserId}' ha eliminado el producto '{ProductId}'", _userContextService.GetCurrentUserId(), id);
         }
 
         private async Task<AddonDto[]?> GetAddons(RawProduct? product)
