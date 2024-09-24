@@ -53,8 +53,10 @@ namespace GPA.Business.Security.Extensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidateLifetime = false, //ToDo: implement REFRESH_TOKEN to validate ACCESS_TOKEN, and accept validate expire time for REFRESH_TOKEN
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    RequireSignedTokens = true,
+                    RequireExpirationTime = true,
                 };
             });
         }

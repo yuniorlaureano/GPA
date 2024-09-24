@@ -596,7 +596,16 @@ namespace GPA.Api.Controllers.Security
 
             if (profiles is { Count: > 0 })
             {
-                var profileId = profiles.First().Id.ToString();
+                var currentProfile = "";
+                var profileId = "";
+                foreach (var profile in profiles)
+                {
+                    if (string.IsNullOrEmpty(currentProfile) || profile.Value?.Length > currentProfile.Length)
+                    {
+                        currentProfile = profile.Value;
+                        profileId = profile.Id.ToString();
+                    }
+                }
                 claims.Add(new Claim(GPAClaimTypes.ProfileId, profileId));
                 return profileId;
             }
