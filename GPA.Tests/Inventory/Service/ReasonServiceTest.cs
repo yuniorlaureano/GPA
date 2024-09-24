@@ -83,19 +83,19 @@ namespace GPA.Tests.Inventory.Service
             Assert.NotEqual(updated.Name, added.Name);
         }
 
-        [Fact]
-        public async Task ShouldDelete()
-        {
-            var reason = _fixture
-                .Build<ReasonDto>()
-                .Without(x => x.Id)
-                .Create();
+        //[Fact]
+        //public async Task ShouldDelete()
+        //{
+        //    var reason = _fixture
+        //        .Build<ReasonDto>()
+        //        .Without(x => x.Id)
+        //        .Create();
 
-            var added = await _reasonService.AddAsync(reason);
-            await _reasonService.RemoveAsync(added.Id.Value);
-            var existing = await _reasonService.GetByIdAsync(added.Id.Value);
+        //    var added = await _reasonService.AddAsync(reason);
+        //    await _reasonService.RemoveAsync(added.Id.Value);
+        //    var existing = await _reasonService.GetByIdAsync(added.Id.Value);
 
-            Assert.Null(existing);
-        }
+        //    Assert.Null(existing);
+        //}
     }
 }

@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using GPA.Api.Extensions;
 using GPA.Api.Utils.Filters;
 using GPA.Business.Services.Inventory;
 using GPA.Common.DTOs;
@@ -45,38 +44,38 @@ namespace GPA.Inventory.Api.Controllers
             return Ok(reasons);
         }
 
-        [HttpPost()]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Create)]
-        public async Task<IActionResult> Create(ReasonDto reason)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState.ErrorMessage());
-            }
+        //[HttpPost()]
+        //[ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Create)]
+        //public async Task<IActionResult> Create(ReasonDto reason)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState.ErrorMessage());
+        //    }
 
-            var entity = await _reasonService.AddAsync(reason);
-            return Created(Url.Action(nameof(Get)), new { id = entity.Id });
-        }
+        //    var entity = await _reasonService.AddAsync(reason);
+        //    return Created(Url.Action(nameof(Get)), new { id = entity.Id });
+        //}
 
-        [HttpPut()]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Update)]
-        public async Task<IActionResult> Update(ReasonDto reason)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //[HttpPut()]
+        //[ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Update)]
+        //public async Task<IActionResult> Update(ReasonDto reason)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            await _reasonService.UpdateAsync(reason);
-            return NoContent();
-        }
+        //    await _reasonService.UpdateAsync(reason);
+        //    return NoContent();
+        //}
 
-        [HttpDelete("{id}")]
-        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Delete)]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _reasonService.RemoveAsync(id);
-            return NoContent();
-        }
+        //[HttpDelete("{id}")]
+        //[ProfileFilter(path: $"{Apps.GPA}.{Modules.Inventory}.{Components.Reason}", permission: Permissions.Delete)]
+        //public async Task<IActionResult> Delete(int id)
+        //{
+        //    await _reasonService.RemoveAsync(id);
+        //    return NoContent();
+        //}
     }
 }

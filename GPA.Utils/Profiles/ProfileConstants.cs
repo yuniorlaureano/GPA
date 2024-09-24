@@ -152,14 +152,14 @@ namespace GPA.Utils.Profiles
                                     Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
                                 }
                             },
-                            new Component
-                            {
-                                Id = Components.ProductLocation,
-                                Permissions = new List<string>
-                                {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
-                                }
-                            },
+                            //new Component
+                            //{
+                            //    Id = Components.ProductLocation,
+                            //    Permissions = new List<string>
+                            //    {
+                            //        Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
+                            //    }
+                            //},
                             new Component
                             {
                                 Id = Components.Product,
@@ -181,7 +181,7 @@ namespace GPA.Utils.Profiles
                                 Id = Components.Reason,
                                 Permissions = new List<string>
                                 {
-                                    Permissions.Create, Permissions.Update, Permissions.Delete, Permissions.Read
+                                    Permissions.Read
                                 }
                             },
                             new Component
