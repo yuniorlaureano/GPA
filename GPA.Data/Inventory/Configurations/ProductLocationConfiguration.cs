@@ -10,8 +10,6 @@ namespace GPA.Data.Inventory.Configurations
     {
         public void Configure(EntityTypeBuilder<ProductLocation> builder)
         {
-            builder.HasQueryFilter(x => !x.Deleted);
-
             builder.ToTable("ProductLocations", GPASchema.INVENTORY);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasValueGenerator<SequentialGuidValueGenerator>()

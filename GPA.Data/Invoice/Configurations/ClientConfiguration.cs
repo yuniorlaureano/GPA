@@ -9,8 +9,6 @@ namespace GPA.Data.Invoice.Configurations
     {
         public void Configure(EntityTypeBuilder<Client> builder)
         {
-            builder.HasQueryFilter(x => !x.Deleted);
-
             builder.ToTable("Clients", GPASchema.INVOICE);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")

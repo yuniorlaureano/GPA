@@ -9,8 +9,6 @@ namespace GPA.Data.General.Configurations
     {
         public void Configure(EntityTypeBuilder<Unit> builder)
         {
-            builder.HasQueryFilter(x => !x.Deleted);
-
             builder.ToTable("Units", GPASchema.GENERAL);
 
             builder.Property(x => x.Code).HasMaxLength(10).IsRequired();

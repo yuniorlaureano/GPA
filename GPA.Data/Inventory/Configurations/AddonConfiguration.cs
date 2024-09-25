@@ -9,8 +9,6 @@ namespace GPA.Data.Inventory.Configurations
     {
         public void Configure(EntityTypeBuilder<Addon> builder)
         {
-            builder.HasQueryFilter(x => !x.Deleted);
-
             builder.ToTable("Addons", GPASchema.INVENTORY);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")

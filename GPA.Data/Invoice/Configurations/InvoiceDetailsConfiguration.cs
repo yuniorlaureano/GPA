@@ -9,8 +9,6 @@ namespace GPA.Data.Invoice.Configurations
     {
         public void Configure(EntityTypeBuilder<InvoiceDetails> builder)
         {
-            builder.HasQueryFilter(x => !x.Deleted);
-
             builder.ToTable("InvoiceDetails", GPASchema.INVOICE);
             builder.HasKey(x => x.Id);
 

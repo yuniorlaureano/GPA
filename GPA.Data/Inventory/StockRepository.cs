@@ -18,6 +18,7 @@ namespace GPA.Data.Inventory
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(RequestFilterDto filter);
         Task<int> GetProductCatalogCountAsync(RequestFilterDto filter);
         Task<IEnumerable<RawProductCatalog>> GetProductCatalogAsync(Guid[] productIds);
+        Task<IEnumerable<RawProductCatalog>> GetProductCatalogWithDeletedAsync(Guid[] productIds);
         Task UpdateAsync(Stock model, IEnumerable<StockDetails> stockDetails);
         Task<IEnumerable<Existence>> GetExistenceAsync(RequestFilterDto filter);
         Task<int> GetExistenceCountAsync(RequestFilterDto filter);
@@ -223,6 +224,48 @@ namespace GPA.Data.Inventory
 		                               ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                             WHERE 
 	                            [p].[Deleted] = CAST(0 AS bit) AND
+                                [p].[Id] IN ({string.Join(",", productIds.Select(id => $"'{id}'"))}) AND   
+	                            [p].[Type] = {(byte)ProductType.FinishedProduct} 
+                            GROUP BY 
+	                            [p].[Id], 
+	                            [p].[Name], 
+	                            [p].[Code], 
+	                            [p].[CategoryId]";
+            return await _context.Database.SqlQueryRaw<RawProductCatalog>(sqlQuery).ToListAsync();
+        }
+
+        public async Task<IEnumerable<RawProductCatalog>> GetProductCatalogWithDeletedAsync(Guid[] productIds)
+        {
+            var sqlQuery = @$"SELECT 
+	                            SUM(CASE
+			                            WHEN [t0].[TransactionType] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+			                            ELSE [t].[Quantity]
+	                            END) AS [Stock],
+	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0
+			                            WHEN [t0].[TransactionType] = 0 THEN [t].[Quantity]
+			                            ELSE 0
+	                            END) AS [Input],
+	                            SUM(CASE
+                                        WHEN [t0].[TransactionType] IS NULL THEN 0  
+			                            WHEN [t0].[TransactionType] = 1 THEN [t].[Quantity] * -1
+			                            ELSE 0
+	                            END) AS [Output],
+	                            MAX([p].[Price]) AS [Price],
+	                            MAX([P].[Type]) AS [ProductType],
+	                            [p].[CategoryId],
+	                            [p].[Code] AS [ProductCode],
+	                            [p].[Name] AS [ProductName],
+	                            [p].[Id] AS [ProductId]
+                            FROM 
+	                            [Inventory].[Products] AS [p]
+	                            LEFT JOIN [Inventory].[StockDetails] [t] ON [p].[Id] = [t].[ProductId]
+	                            LEFT JOIN [Inventory].[Stocks] AS [t0] 
+		                            ON [t].[StockId] = [t0].[Id] AND  
+		                               ([t0].[Status] <> 0 OR [t0].[Status] IS NULL) AND 
+		                               ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
+                            WHERE 
                                 [p].[Id] IN ({string.Join(",", productIds.Select(id => $"'{id}'"))}) AND   
 	                            [p].[Type] = {(byte)ProductType.FinishedProduct} 
                             GROUP BY 

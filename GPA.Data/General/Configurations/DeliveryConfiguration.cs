@@ -8,9 +8,7 @@ namespace GPA.Data.General.Configurations
     public class DeliveryConfiguration : IEntityTypeConfiguration<Delivery>
     {
         public void Configure(EntityTypeBuilder<Delivery> builder)
-        {
-            builder.HasQueryFilter(x => !x.Deleted);
-
+        {            
             builder.ToTable("Deliveries", GPASchema.GENERAL);
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasDefaultValueSql("NEWSEQUENTIALID()")

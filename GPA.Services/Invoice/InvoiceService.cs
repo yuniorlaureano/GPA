@@ -435,7 +435,7 @@ namespace GPA.Business.Services.Invoice
                 return null;
             }
 
-            return (await _stockRepository.GetProductCatalogAsync(productsId.ToArray()))
+            return (await _stockRepository.GetProductCatalogWithDeletedAsync(productsId.ToArray()))
                         .ToDictionary(k => k.ProductId, v => v);
         }
 
