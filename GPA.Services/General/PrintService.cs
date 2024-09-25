@@ -75,6 +75,7 @@ namespace GPA.Services.General
             await _repository.UpdateAsync(savedPrintInformation, printInformation, (entityState, _) =>
             {
                 entityState.Property(x => x.Id).IsModified = false;
+                entityState.Property(x => x.CompanyLogo).IsModified = false;
             });
             _logger.LogInformation("El usuario '{UserId}' ha modificado la información de impresión '{PrintId}'", _userContextService.GetCurrentUserId(), Id);
         }
