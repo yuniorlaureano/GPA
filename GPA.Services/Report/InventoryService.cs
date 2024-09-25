@@ -311,7 +311,6 @@ namespace GPA.Business.Services.Inventory
                     <td>{invoice.Note}</td>
                     <td>{invoice.ClientName} {invoice.ClientLastName}</td>
                     <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
-                    <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
                     <td>{invoice.CreatedByName}</td>
                     <td>{invoice.UpdatedByName}</td>
                   </tr>");
