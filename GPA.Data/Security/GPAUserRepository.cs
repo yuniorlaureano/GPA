@@ -54,7 +54,7 @@ namespace GPA.Data.Security
                     {termFilter}
                     {confirmFilter}
                     {invitedFilter}
-                ORDER BY Id
+                ORDER BY Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
 
