@@ -82,6 +82,16 @@ namespace GPA.Inventory.Api.Controllers
                 return BadRequest(ModelState.ErrorMessage());
             }
 
+            if (product.Photo != null)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var fileExtension = Path.GetExtension(product.Photo.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return BadRequest(new[] { "Solo admite imágenes .jpg, .jpeg, .png.", $"{fileExtension} no es válida" });
+                }
+            }
+
             await _ProductService.SavePhoto(product);
             return NoContent();
         }

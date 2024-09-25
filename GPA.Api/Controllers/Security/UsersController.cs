@@ -189,6 +189,13 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "Debe proveer la foto" });
             }
 
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var fileExtension = Path.GetExtension(photo.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new[] { "Solo admite imágenes .jpg, .jpeg, .png.", $"{fileExtension} no es válida" });
+            }
+
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             if (user is null)

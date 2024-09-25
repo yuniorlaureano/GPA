@@ -279,6 +279,8 @@ namespace GPA.Business.Services.Inventory
                     <td>{stock.ProviderName}</td>
                     <td>{stock.ReasonName}</td>
                     <td>{stock.Description}</td>
+                    <td>{stock.CreatedByName}</td>
+                    <td>{stock.UpdatedByName}</td>
                   </tr>");
             }
 
@@ -309,6 +311,9 @@ namespace GPA.Business.Services.Inventory
                     <td>{invoice.Note}</td>
                     <td>{invoice.ClientName} {invoice.ClientLastName}</td>
                     <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
+                    <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
+                    <td>{invoice.CreatedByName}</td>
+                    <td>{invoice.UpdatedByName}</td>
                   </tr>");
             }
 

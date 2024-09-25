@@ -1,7 +1,6 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Security;
 using GPA.Dtos.Security;
-using GPA.Entities;
 using GPA.Entities.Security;
 using GPA.Entities.Unmapped;
 using GPA.Entities.Unmapped.Security;
@@ -25,6 +24,7 @@ namespace GPA.Data.Security
         Task RevokeInvitationAsync(Guid id, Guid revokedBy);
         Task<IEnumerable<RawInvitationToken>> GetInvitationTokensAsync(Guid userId);
         Task<IEnumerable<RawUser>> GetUsersAsync(List<Guid> ids);
+        Task<Dictionary<Guid, RawUser>> GetUsersAsDictionaryAsync(List<Guid> ids);
     }
 
     public class GPAUserRepository : Repository<GPAUser>, IGPAUserRepository
@@ -224,6 +224,42 @@ namespace GPA.Data.Security
             ";
 
             return await _context.Database.SqlQueryRaw<RawUser>(query).ToListAsync();
+        }
+
+        public async Task<Dictionary<Guid, RawUser>> GetUsersAsDictionaryAsync(List<Guid> ids)
+        {
+            if (!ids.Any())
+            {
+                return new Dictionary<Guid, RawUser>();
+            }
+
+            var userIds = ids.Select(x => $"'{x}'");
+            var query = $@"
+                SELECT 
+	                Id,
+	                FirstName,
+	                LastName,
+	                UserName,
+	                Photo,
+	                Email,
+	                Invited,
+	                Deleted,
+                    EmailConfirmed,
+                    CAST(0 AS BIT) AS IsAssigned
+                FROM [GPA].[Security].[Users]
+                WHERE Id IN({string.Join(",", userIds)})  
+            ";
+
+            var results = await _context.Database.SqlQueryRaw<RawUser>(query).ToListAsync();
+            var users = new Dictionary<Guid, RawUser>();
+            foreach (var item in results)
+            {
+                if (!users.ContainsKey(item.Id))
+                {
+                    users.Add(item.Id, item);
+                }
+            }
+            return users;
         }
 
         private (UserFilterDto? userFilterDto, string termFilter, string confirmFilter, string invitedFilter) SetUserFilterParametersIfNotEmpty(RequestFilterDto filter)

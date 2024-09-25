@@ -379,6 +379,13 @@ namespace GPA.Api.Controllers.Security
                 return BadRequest(new[] { "Debe proveer la foto" });
             }
 
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var fileExtension = Path.GetExtension(photo.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new[] { "Solo admite imágenes .jpg, .jpeg, .png.", $"{fileExtension} no es válida" });
+            }
+
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             if (user is null)
@@ -431,7 +438,7 @@ namespace GPA.Api.Controllers.Security
 
             var serializedToken = Encoding.UTF8.GetString(Convert.FromBase64String(token));
             var decryptedToken = _aesHelper.Decrypt(serializedToken);
-            var tokenData = JsonSerializer.Deserialize<Dictionary<string,string>>(decryptedToken);
+            var tokenData = JsonSerializer.Deserialize<Dictionary<string, string>>(decryptedToken);
 
             var tokenId = tokenData["id"];
             var userId = tokenData["userId"];
@@ -564,7 +571,7 @@ namespace GPA.Api.Controllers.Security
             await _gPAUserService.RedeemInvitationAsync(user.Id);
 
             await AddHistory(user, ActionConstants.InvitationAccepted, user.Id);
-            
+
             _logger.LogWarning("Intento de cambio de contraseña. Contraseña cambiada '{UserId}'", user.Id);
             return Ok();
         }

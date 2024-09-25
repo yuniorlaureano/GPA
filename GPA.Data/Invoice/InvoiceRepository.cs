@@ -124,7 +124,11 @@ namespace GPA.Data.Invoice
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
+                    ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
+	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Invoice].[Invoices] INV
+	                LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
                 WHERE INV.[Id] = @Id
                     ";
 
@@ -151,7 +155,7 @@ namespace GPA.Data.Invoice
 
             var query = @$"
                 SELECT 
-	                 INV.[Id]
+                     INV.[Id]
                     ,INV.[Type]
                     ,INV.[Status]
                     ,INV.Code  
@@ -160,8 +164,13 @@ namespace GPA.Data.Invoice
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
+                    ,INV.[CreatedBy]
+	                ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
+	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Invoice].[Invoices] INV
 	                JOIN [GPA].[Invoice].[Clients] CL ON INV.ClientId = CL.Id
+	                LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
                 WHERE 1 = 1 
                     {termFilter}
                     {dateFilter}

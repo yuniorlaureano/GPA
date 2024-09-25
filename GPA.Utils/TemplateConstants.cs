@@ -67,6 +67,8 @@
         <th>Proveedor</th>
         <th>Motivo</th>
         <th>Descripción</th>
+        <th>Realizada por</th>
+        <th>Actualizada por</th>
       </tr>
       {{Content}}
     </table>
@@ -141,6 +143,8 @@
         <th>Nota</th>
         <th>Cliente</th>
         <th>Estado de pago</th>
+        <th>Realizada por</th>
+        <th>Actualizada por</th>
       </tr>
       {{Content}}
     </table>

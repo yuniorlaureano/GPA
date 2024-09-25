@@ -14,6 +14,8 @@
         public string? StoreName { get; set; }
         public int ReasonId { get; set; }
         public string ReasonName { get; set; }
+        public string? CreatedByName { get; set; }
+        public string? UpdatedByName { get; set; }
 
         public IEnumerable<StockDetailsDto> StockDetails { get; set; }
     }

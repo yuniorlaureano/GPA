@@ -7,13 +7,15 @@ namespace GPA.Utils.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-
+        private readonly IExceptionHandlerService _exceptionHandlerService;
         public ExceptionHandlingMiddleware(
             RequestDelegate next,
-            ILogger<ExceptionHandlingMiddleware> logger)
+            ILogger<ExceptionHandlingMiddleware> logger,
+            IExceptionHandlerService exceptionHandlerService)
         {
             _next = next;
             _logger = logger;
+            _exceptionHandlerService = exceptionHandlerService;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -31,7 +33,7 @@ namespace GPA.Utils.Middleware
 
         private Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            var result = ExceptionHolderOptions.ProcessException(exception, context);
+            var result = _exceptionHandlerService.ProcessException(exception, context);
             return context.Response.WriteAsync(result);
         }
     }

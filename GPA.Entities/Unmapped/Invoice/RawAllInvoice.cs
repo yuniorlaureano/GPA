@@ -13,5 +13,7 @@
         public Guid ClientId { get; set; }
         public string ClientName { get; set; }
         public string? ClientLastName { get; set; }
+        public string? CreatedByName { get; set; }
+        public string? UpdatedByName { get; set; }
     }
 }

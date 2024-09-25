@@ -14,6 +14,8 @@ namespace GPA.Common.DTOs.Invoices
         public string? Note { get; set; }
         public Guid ClientId { get; set; }
         public ClientDto Client { get; set; }
+        public string? CreatedByName { get; set; }
+        public string? UpdatedByName { get; set; }
 
         public ICollection<InvoiceListDetailDto> InvoiceDetails { get; set; }
     }

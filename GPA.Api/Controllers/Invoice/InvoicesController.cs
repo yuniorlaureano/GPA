@@ -106,6 +106,16 @@ namespace GPA.Invoice.Api.Controllers
 
             foreach (var file in files.Files)
             {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".xlsx", ".xls" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return BadRequest(new[] { "Solo admite imágenes .jpg, .jpeg, .png., y archivos .xlsx, .xsl y pdf", $"{fileExtension} no es válida" });
+                }
+            }
+
+            foreach (var file in files.Files)
+            {
                 await _invoiceService.SaveAttachment(invoiceId, file);
             }
 

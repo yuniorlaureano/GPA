@@ -99,10 +99,14 @@ namespace GPA.Data.Inventory
 	                ,PROV.Identification ProviderIdentification
 	                ,RS.[Name] ReasonName
 	                ,STRS.[Name] StoreName
+                    ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
+	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Inventory].[Stocks] ST
 	                LEFT JOIN [GPA].[Inventory].[Providers] PROV ON ST.ProviderId = PROV.Id
 	                JOIN [GPA].[Inventory].[Reasons] RS ON ST.ReasonId = RS.Id
 	                LEFT JOIN [GPA].[Inventory].[Stores] STRS ON ST.StoreId = STRS.Id
+                    LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = ST.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = ST.UpdatedBy
                 WHERE 1 = 1  
                     {termFilter}
                     {statusFilter}
@@ -137,8 +141,12 @@ namespace GPA.Data.Inventory
                     ,INV.[ClientId]
                     ,CL.[Name] AS ClientName
                     ,CL.[LastName] AS ClientLastName 
+                    ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
+	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Invoice].[Invoices] INV
 	                JOIN [GPA].[Invoice].[Clients] CL ON INV.ClientId = CL.Id
+                    LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
                 WHERE 1 = 1 
                     {termFilter}
                     {dateFilter}

@@ -33,7 +33,12 @@ namespace GPA.Data.Invoice
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
+                    ,INV.[CreatedBy]
+                    ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
+	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Invoice].[Invoices] INV
+	                LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
                 WHERE INV.[Id] = @Id
                     ";
 

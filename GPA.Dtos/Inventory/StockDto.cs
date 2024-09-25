@@ -15,5 +15,7 @@
         public int ReasonId { get; set; }
         public string ReasonName { get; set; }
         public Guid? InvoiceId { get; set; }
+        public string? CreatedByName { get; set; }
+        public string? UpdatedByName { get; set; }
     }
 }

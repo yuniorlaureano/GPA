@@ -4,13 +4,11 @@ using GPA.Dtos.Cache;
 using GPA.Entities.Report;
 using GPA.Utils.Caching;
 using GPA.Utils.CodeGenerators;
-using GPA.Utils.Exceptions;
 using GPA.Utils.Middleware;
 using GPA.Utils.Permissions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net;
 
 namespace GPA.Utils.Extensions
 {
@@ -22,8 +20,7 @@ namespace GPA.Utils.Extensions
             var includeStackTrace = stackTraceOption == true;
 
             services.AddScoped<IPermissionComparer, PermissionComparer>();
-            services.AddExceptionHandler<AttachmentDeserializingException>(HttpStatusCode.Unauthorized, includeStackTrace);
-            services.AddExceptionHandler<AttachmentNotFoundException>(HttpStatusCode.BadRequest, includeStackTrace);
+            services.AddSingleton<IExceptionHandlerService, ExceptionHandlerService>(services => new());
             services.AddSingleton(new InvoiceCodeGenerator());
             services.AddSingleton(new ProductCodeGenerator());
             services.AddSingleton<IGenericCache<string>, GenericCache<string>>();

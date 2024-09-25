@@ -209,6 +209,8 @@ namespace GPA.Business.Services.Invoice
                 InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
                 newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
                 newInvoice.UpdatedAt = DateTimeOffset.UtcNow;
+                newInvoice.CreatedBy = savedInvoice.CreatedBy;
+                newInvoice.CreatedAt = savedInvoice.CreatedAt;
                 newInvoice.Date = savedInvoice.Date;
                 newInvoice.Code = savedInvoice.Code;
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
@@ -275,7 +277,7 @@ namespace GPA.Business.Services.Invoice
         }
 
 
-        private Stock ToStock(GPA.Common.Entities.Invoice.Invoice invoice)
+        private Stock ToStock(GPA.Common.Entities.Invoice.Invoice invoice, Guid createdBy)
         {
             return new Stock
             {
@@ -284,13 +286,15 @@ namespace GPA.Business.Services.Invoice
                 Date = DateTime.Now,
                 ReasonId = (int)ReasonTypes.Sale,
                 CreatedAt = DateTime.Now,
+                CreatedBy = createdBy,
                 Status = StockStatus.Saved,
                 InvoiceId = invoice.Id,
                 StockDetails = invoice.InvoiceDetails.Select(x => new StockDetails
                 {
                     Quantity = x.Quantity,
                     ProductId = x.ProductId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = createdBy,
                 }).ToList()
             };
         }
@@ -301,7 +305,7 @@ namespace GPA.Business.Services.Invoice
             {
                 invoice.CreatedBy = _userContextService.GetCurrentUserId();
                 invoice.CreatedAt = DateTimeOffset.UtcNow;
-                var entity = await _stockRepository.AddAsync(ToStock(invoice));
+                var entity = await _stockRepository.AddAsync(ToStock(invoice, invoice.CreatedBy.Value));
                 _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', por el usaurio '{UserId}'", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
             }
         }
@@ -367,8 +371,8 @@ namespace GPA.Business.Services.Invoice
                     }
                 }
                 return;
-            } 
-            
+            }
+
             if (products is not null)
             {
                 var mappedAddons = await _addonRepository.GetAddonsByProductIdAsDictionary(products.Select(x => x.ProductId).ToList());

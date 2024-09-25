@@ -88,6 +88,16 @@ namespace GPA.Api.Controllers.General
                 return BadRequest(ModelState.ErrorMessage());
             }
 
+            if (printInformationUploadPhotoDto.Photo != null)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var fileExtension = Path.GetExtension(printInformationUploadPhotoDto.Photo.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    return BadRequest(new[] { "Solo admite imágenes .jpg, .jpeg, .png.", $"{fileExtension} no es válida" });
+                }
+            }
+
             await _printService.SavePhoto(printInformationUploadPhotoDto);
             return NoContent();
         }

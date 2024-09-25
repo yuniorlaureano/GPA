@@ -1,59 +1,44 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using System.Net;
+﻿using GPA.Utils.Exceptions;
+using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 
 namespace GPA.Utils.Middleware
 {
-    public class ExceptionOption
+    public interface IExceptionHandlerService
     {
-        public Type Exception { get; set; }
-        public HttpStatusCode StatusCode { get; set; }
-        public bool IncludeStackTrace { get; set; }
-        public Func<string, string> MessageHandler { get; set; } = (message) => message;
+        string? ProcessException<T>(T exceptionType, HttpContext context) where T : Exception;
     }
 
-    public static class ExceptionHolderOptions
+    public class ExceptionHandlerService : IExceptionHandlerService
     {
-        private static Dictionary<Type, ExceptionOption> _exceptionsOptions = new Dictionary<Type, ExceptionOption>();
+        private readonly bool _includeStackTrace;
 
-        public static void AddExceptionHandler<T>(this IServiceCollection serviceCollection, HttpStatusCode statusCode, bool includeStackTrace = false, Func<string, string> messageHandler = null) where T : Exception
+        public ExceptionHandlerService(bool includeStackTrace = false)
         {
-            var exceptionOption = new ExceptionOption
-            {
-                Exception = typeof(T),
-                StatusCode = statusCode,
-                IncludeStackTrace = includeStackTrace
-            };
-
-            if (messageHandler is not null)
-            {
-                exceptionOption.MessageHandler = exceptionOption.MessageHandler;
-            }
-
-            _exceptionsOptions.TryAdd(typeof(T), exceptionOption);
+            _includeStackTrace = includeStackTrace;
         }
 
-        public static string? ProcessException<T>(T exceptionType, HttpContext context) where T : Exception
+        public string? ProcessException<T>(T exception, HttpContext context) where T : Exception
         {
             context.Response.ContentType = "application/json";
-            if (_exceptionsOptions.TryGetValue(exceptionType.GetType(), out var ex))
+            if (exception is IGPAException gPAException)
             {
-                context.Response.StatusCode = (int)ex.StatusCode;
+                context.Response.StatusCode = (int)gPAException.StatusCode;
                 return JsonSerializer.Serialize(new
                 {
-                    Message = ex.MessageHandler(exceptionType.Message),
-                    Detailed = ex.IncludeStackTrace ? exceptionType.StackTrace : null
+                    StatusCode = context.Response.StatusCode,
+                    Message = exception.Message,
+                    Detail = _includeStackTrace ? exception.StackTrace : null
                 });
             }
-            else
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return JsonSerializer.Serialize(new
             {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                return JsonSerializer.Serialize(new
-                {
-                    Message = exceptionType.Message,
-                });
-            }
+                StatusCode = context.Response.StatusCode,
+                Message = exception.Message,
+                Detail = _includeStackTrace ? exception.StackTrace : null
+            });
         }
     }
 }

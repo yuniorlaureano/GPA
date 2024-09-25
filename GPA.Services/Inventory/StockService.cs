@@ -164,6 +164,8 @@ namespace GPA.Business.Services.Inventory
                 }
                 newStock.UpdatedBy = _userContextService.GetCurrentUserId();
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
+                newStock.CreatedBy = savedStock.CreatedBy;
+                newStock.CreatedAt = savedStock.CreatedAt;
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
@@ -203,6 +205,8 @@ namespace GPA.Business.Services.Inventory
                 }
                 newStock.UpdatedBy = _userContextService.GetCurrentUserId();
                 newStock.UpdatedAt = DateTimeOffset.UtcNow;
+                newStock.CreatedBy = savedStock.CreatedBy;
+                newStock.CreatedAt = savedStock.CreatedAt;
                 newStock.Date = savedStock.Date;
                 await _repository.UpdateAsync(newStock, stockDetails);
                 await _repository.AddHistory(newStock, newStock.StockDetails, ActionConstants.Update, _userContextService.GetCurrentUserId());
