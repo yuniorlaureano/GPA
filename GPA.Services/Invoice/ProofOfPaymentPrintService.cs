@@ -104,10 +104,15 @@ namespace GPA.Business.Services.Invoice
 
             var template = await GetTemplate();
             var htmlContent = template.Template;
-            var logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+
+            string? logo = string.Empty;
+            if (invoicePrintData.CompanyLogo is not null)
             {
-                return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
-            });
+                logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+                {
+                    return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+                });
+            }
 
             var totalPrice = 0.0M;
             var totalAddon = 0.0M;

@@ -89,10 +89,14 @@ namespace GPA.Business.Services.Invoice
 
         public async Task<byte[]> GenerateInvoice(InvoicePrintData invoicePrintData)
         {
-            var logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+            string? logo = string.Empty;
+            if (invoicePrintData.CompanyLogo is not null)
             {
-                return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
-            });
+                logo = await _logoCache.GetOrCreate(CacheType.CompanyLogo, invoicePrintData.CompanyLogo, async () =>
+                {
+                    return await GetLogoAsDataUri(invoicePrintData.CompanyLogo);
+                });
+            }
 
             var qrCodeImage = ConvertQrCodeToDataUri(GenerateQRCode(invoicePrintData.Invoice.Id.ToString()));
 
