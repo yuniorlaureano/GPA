@@ -9,6 +9,7 @@ namespace GPA.Utils.Caching
         Task<TItem> GetOrCreate(CacheType cacheType, string key, Func<Task<TItem>> func);
         Task<IEnumerable<TItem>> GetOrCreate(CacheType cacheType, string key, Func<Task<IEnumerable<TItem>>> func);
         IEnumerable<TItem> GetOrCreate(CacheType cacheType, string key, Func<IEnumerable<TItem>> func);
+        void RemoveKey(string key);
     }
 
     public class GenericCache<TItem> : IGenericCache<TItem>
@@ -62,6 +63,11 @@ namespace GPA.Utils.Caching
 
 
             return cacheEntry;
+        }
+
+        public void RemoveKey(string key)
+        {
+            _cache.Remove(key);
         }
 
         public async Task<IEnumerable<TItem>> GetOrCreate(CacheType cacheType, string key, Func<Task<IEnumerable<TItem>>> func)

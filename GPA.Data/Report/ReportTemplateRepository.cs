@@ -1,4 +1,5 @@
 ﻿using GPA.Entities.Report;
+using GPA.Utils.Caching;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +16,12 @@ namespace GPA.Data.Inventory
     public class ReportTemplateRepository : IReportTemplateRepository
     {
         private readonly GPADbContext _context;
+        private readonly IGenericCache<ReportTemplate> _cache;
 
-        public ReportTemplateRepository(GPADbContext context)
+        public ReportTemplateRepository(GPADbContext context, IGenericCache<ReportTemplate> cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         public async Task<ReportTemplate?> GetTemplateByCode(string code)
@@ -88,6 +91,12 @@ namespace GPA.Data.Inventory
 
         public async Task UpdateTemplate(Guid id, ReportTemplate reportTemplate)
         {
+            var template = await _context.ReportTemplates.FirstOrDefaultAsync(x => x.Id == id);
+            if (template == null)
+            {
+                throw new Exception("Template not found");
+            }
+
             await _context.ReportTemplates.Where(x => x.Id == id)
                 .ExecuteUpdateAsync(x => 
                     x.SetProperty(p => p.Template, reportTemplate.Template)
@@ -96,6 +105,7 @@ namespace GPA.Data.Inventory
                      .SetProperty(p => p.UpdatedAt, reportTemplate.UpdatedAt)
                      .SetProperty(p => p.UpdatedBy, reportTemplate.UpdatedBy)
                  );
+            _cache.RemoveKey(template.Code);
         }
     }
 }
