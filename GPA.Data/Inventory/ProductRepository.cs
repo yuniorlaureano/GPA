@@ -89,7 +89,7 @@ namespace GPA.Data.Inventory
 	              OR PRO.[Code] LIKE CONCAT('%', @Search, '%')
 	              OR PRO.[Name] LIKE CONCAT('%', @Search, '%')
 	              OR CA.[Name] LIKE CONCAT('%', @Search, '%'))
-                ORDER BY PRO.Id
+                ORDER BY PRO.Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
 

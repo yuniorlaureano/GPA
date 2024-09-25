@@ -51,7 +51,7 @@ namespace GPA.Data.Inventory
                 WHERE Deleted = 0 AND (
                     @Search IS NULL
                     OR [Name] LIKE CONCAT('%', @Search, '%'))
-                ORDER BY Id
+                ORDER BY Id DESC
                 OFFSET @Page ROWS FETCH NEXT @PageSize ROWS ONLY 
             ";
 
