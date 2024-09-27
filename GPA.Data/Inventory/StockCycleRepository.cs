@@ -82,7 +82,7 @@ namespace GPA.Data.Inventory
 		                    ([t0].[Status] <> 2 OR [t0].[Status] IS NULL)
                 WHERE 
 	                [p].[Deleted] = CAST(0 AS bit) 
-                    AND CONVERT(date, [t0].[Date]) >= @StartDate
+                    AND (CONVERT(date, [t0].[Date]) >= @StartDate OR [t0].[Date] IS NULL)
                 GROUP BY 
 	                [p].[Id], 
 	                [p].[Name]
