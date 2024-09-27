@@ -225,6 +225,7 @@ namespace GPA.Data.Inventory
                 ,STD.[StockCycleId]
             FROM [GPA].[Inventory].[StockCycleDetails] STD
 	            JOIN [Inventory].[Products] P ON STD.ProductId = P.Id
+            WHERE STD.StockCycleId = @StockCycleId
                     ";
 
             return await _context.Database
