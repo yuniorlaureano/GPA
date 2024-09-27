@@ -109,6 +109,11 @@ namespace GPA.Business.Services.Invoice
 
             if (paymentDetail is not null && invoice is not null)
             {
+                if (dto.Payment > paymentDetail.PendingPayment)
+                {
+                    dto.Payment = paymentDetail.PendingPayment;
+                }
+
                 var (pendingPayment, hasMorePayments) = await MakePayment(paymentDetail, dto);
 
                 if (hasMorePayments)
