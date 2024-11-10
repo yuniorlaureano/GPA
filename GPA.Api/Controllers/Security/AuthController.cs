@@ -428,8 +428,8 @@ namespace GPA.Api.Controllers.Security
         }
 
         [AllowAnonymous]
-        [HttpGet("totp-invitation/{token}/send")]
-        public async Task<IActionResult> SendTOTPInvitationCode([FromRoute] string token)
+        [HttpGet("totp-invitation/send")]
+        public async Task<IActionResult> SendTOTPInvitationCode([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
             {
