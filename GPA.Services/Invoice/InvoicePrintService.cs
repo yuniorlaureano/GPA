@@ -66,6 +66,7 @@ namespace GPA.Business.Services.Invoice
                 Hour = DateTime.Now.ToString("hh:mm:ss tt", new CultureInfo("es-ES")),
                 Date = DateTime.Now.ToString("MM/dd/yyyy", new CultureInfo("es-ES")),
                 Invoice = invoice,
+                ClientName = invoice.ClientName,
                 User = _userContextService.GetCurrentUserName()
             };
 
@@ -172,6 +173,8 @@ namespace GPA.Business.Services.Invoice
                 .Replace("{Totals}", totals.ToString())
                 .Replace("{TotalPrice}", total.ToString("C2", CultureInfo.GetCultureInfo("en-US")))
                 .Replace("{Logo}", logo)
+                .Replace("{Client}", invoicePrintData.ClientName)
+                .Replace("{InvoiceCode}", invoicePrintData.Invoice.Code)
                 .Replace("{QrCode}", qrCodeImage);
 
             var width = $"{template.Width}mm" ?? "65mm";

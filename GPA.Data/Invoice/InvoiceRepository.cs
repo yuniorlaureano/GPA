@@ -124,6 +124,7 @@ namespace GPA.Data.Invoice
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
+                    ,'' AS ClientName
                     ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
 	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName
                 FROM [GPA].[Invoice].[Invoices] INV
@@ -164,6 +165,7 @@ namespace GPA.Data.Invoice
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
+                    ,'' AS ClientName
                     ,INV.[CreatedBy]
 	                ,CONCAT(USR1.FirstName, ' ', USR1.LastName) CreatedByName
 	                ,CONCAT(USR2.FirstName, ' ', USR2.LastName) UpdatedByName

@@ -19,6 +19,7 @@ namespace GPA.Entities.Unmapped
         public string Hour { get; set; }
         public string Date { get; set; }
         public string Signer { get; set; }
+        public string ClientName { get; set; }
 
         public RawClient Client { get; set; }
         public RawInvoice Invoice { get; set; }
