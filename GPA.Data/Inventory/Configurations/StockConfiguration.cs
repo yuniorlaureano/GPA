@@ -41,8 +41,8 @@ namespace GPA.Data.Inventory.Configurations
                .IsRequired();
 
             builder.HasOne(x => x.Invoice)
-               .WithOne(x => x.Stock)
-               .HasForeignKey<Stock>(x => x.InvoiceId);
+               .WithMany(x => x.Stocks)
+               .HasForeignKey(x => x.InvoiceId);
         }
     }
 }

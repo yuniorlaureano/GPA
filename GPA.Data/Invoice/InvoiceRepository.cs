@@ -4,6 +4,7 @@ using GPA.Common.Entities.Invoice;
 using GPA.Dtos.Audit;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
+using GPA.Entities.Unmapped.Inventory;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Utils;
 using GPA.Utils.Database;
@@ -68,6 +69,8 @@ namespace GPA.Data.Invoice
 
             if (invoice is not null && invoice.Status == InvoiceStatus.Saved)
             {
+                var relatedProducts = await GetStockDetailsRelatedProductsByInvoiceIdAsync(id);
+
                 await _context.Invoices.Where(x => x.Id == id).ExecuteUpdateAsync(
                     setter => setter
                         .SetProperty(x => x.Status, InvoiceStatus.Cancel)
@@ -92,15 +95,40 @@ namespace GPA.Data.Invoice
                         CreatedBy = updatedBy
                     }).ToList()
                 };
+
+                var relatedProductsStock = new Stock
+                {
+                    TransactionType = TransactionType.Input,
+                    Description = "Productos asociados a productos de factura",
+                    Date = DateTime.Now,
+                    ReasonId = (int)ReasonTypes.Return,
+                    Status = StockStatus.Saved,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedBy = updatedBy,
+                    StockDetails = relatedProducts.Select(x => new StockDetails
+                    {
+                        Quantity = x.Quantity,
+                        ProductId = x.ProductId,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        CreatedBy = updatedBy
+                    }).ToList()
+                };
+
                 try
                 {
-
                     _context.Stocks.Add(stock);
+
+                    if (relatedProducts.Any())
+                    {
+                        _context.Stocks.Add(relatedProductsStock);
+                    }
+                    
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     await AddHistory(invoice, invoice.InvoiceDetails, ActionConstants.Canceled, updatedBy);
                     _logger.LogInformation("Cancelando factura: {InvoiceId}", id);
                     _logger.LogInformation("Generando entrada: {StockId}", stock.Id);
+                    _logger.LogInformation("Generando entrada: {StockId}", relatedProductsStock.Id);
                 }
                 catch (Exception ex)
                 {
@@ -109,6 +137,22 @@ namespace GPA.Data.Invoice
                     throw;
                 }
             }
+        }
+
+        public async Task<IEnumerable<RawStockDetailsRelatedProduct>> GetStockDetailsRelatedProductsByInvoiceIdAsync(Guid invoiceId)
+        {
+            var query = @$"
+                SELECT 
+	                ProductId,
+	                Quantity
+                FROM Inventory.StockDetails 
+                WHERE StockId = (
+	                SELECT TOP 1 Id FROM Inventory.Stocks 
+	                WHERE InvoiceId = @InvoiceId and ReasonId = 7
+                )
+                    ";
+
+            return await _context.Database.SqlQueryRaw<RawStockDetailsRelatedProduct>(query, new SqlParameter("@InvoiceId", invoiceId)).ToListAsync();
         }
 
         public async Task<RawInvoice?> GetInvoiceByIdAsync(Guid id)

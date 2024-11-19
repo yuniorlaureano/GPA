@@ -303,6 +303,7 @@ namespace GPA.Data.Inventory
             var stock = await _context.Stocks.Include(x => x.StockDetails).FirstAsync(x => x.Id == id);
             var canCancel =
                 stock.ReasonId != (int)ReasonTypes.Sale &&
+                stock.InvoiceId == null &&
                 (stock.Status == StockStatus.Draft || stock.Status == StockStatus.Saved);
 
             if (!canCancel)

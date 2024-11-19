@@ -50,6 +50,7 @@ namespace GPA.Data
         public DbSet<Addon> Addons { get; set; }
         public DbSet<ProductAddon> ProductAddons { get; set; }
         public DbSet<StockAttachment> StockAttachments { get; set; }
+        public DbSet<RelatedProduct> RelatedProducts { get; set; }
 
         //INVOICE
         public DbSet<Client> Client { get; set; }

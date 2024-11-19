@@ -37,12 +37,15 @@ namespace GPA.Bussiness.Services.Inventory.Mappers
             CreateMap<Product, ProductDto>()
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => "Unidad"))
                 .ForMember(dest => dest.Category, opt => opt.MapFrom(src => "Category"))
-                .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"));
+                .ForMember(dest => dest.ProductLocation, opt => opt.MapFrom(src => "Loc-002"))
+                .ForMember(dest => dest.RelatedProducts, opt => opt.Ignore());
 
             CreateMap<RawProduct, ProductDto>();
             CreateMap<ProductDto, Product>();
-            CreateMap<ProductCreationDto, Product>();
-            CreateMap<Product, ProductCreationDto>();
+            CreateMap<ProductCreationDto, Product>()
+                .ForMember(dest => dest.RelatedProducts, opt => opt.Ignore());
+            CreateMap<Product, ProductCreationDto>()
+                .ForMember(dest => dest.RelatedProducts, opt => opt.Ignore());
 
             CreateMap<ProductLocation, ProductLocationDto>();
             CreateMap<ProductLocationDto, ProductLocation>();

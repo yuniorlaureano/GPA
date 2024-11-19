@@ -15,8 +15,8 @@ namespace GPA.Common.Entities.Invoice
         public string? Note { get; set; }
         public Guid ClientId { get; set; }
         public required Client Client { get; set; }
-        public Stock Stock { get; set; }
-
+        
+        public ICollection<Stock> Stocks { get; set; }
         public required ICollection<InvoiceDetails> InvoiceDetails { get; set; }
         public ICollection<InvoiceDelivery>? InvoiceDeliveries { get; set; }
         public ICollection<ClientPaymentsDetails>? ClientPaymentsDetails { get; set; }

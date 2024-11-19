@@ -13,6 +13,7 @@ using GPA.Dtos.General;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Unmapped;
+using GPA.Entities.Unmapped.Inventory;
 using GPA.Entities.Unmapped.Invoice;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
@@ -50,6 +51,7 @@ namespace GPA.Business.Services.Invoice
         private readonly IInvoiceAttachmentRepository _invoiceAttachmentRepository;
         private readonly IMapper _mapper;
         private readonly InvoiceCodeGenerator _invoiceCodeGenerator;
+        private readonly IProductRepository _productRepository;
         private readonly ILogger<InvoiceService> _logger;
 
         public InvoiceService(
@@ -64,6 +66,7 @@ namespace GPA.Business.Services.Invoice
             IInvoiceAttachmentRepository invoiceAttachmentRepository,
             IMapper mapper,
             InvoiceCodeGenerator invoiceCodeGenerator,
+            IProductRepository productRepository,
             ILogger<InvoiceService> logger)
         {
             _clientRepository = clientRepository;
@@ -77,6 +80,7 @@ namespace GPA.Business.Services.Invoice
             _invoiceAttachmentRepository = invoiceAttachmentRepository;
             _mapper = mapper;
             _invoiceCodeGenerator = invoiceCodeGenerator;
+            _productRepository = productRepository;
             _logger = logger;
         }
 
@@ -162,6 +166,7 @@ namespace GPA.Business.Services.Invoice
             var savedInvoice = await _repository.AddAsync(invoice);
 
             await AddStock(savedInvoice);
+            await AddRelatedProductsToStock(invoice);
             await AddReceivableAccount(invoice, addons);
             await _repository.AddHistory(savedInvoice, savedInvoice.InvoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
 
@@ -213,10 +218,13 @@ namespace GPA.Business.Services.Invoice
                 newInvoice.CreatedAt = savedInvoice.CreatedAt;
                 newInvoice.Date = savedInvoice.Date;
                 newInvoice.Code = savedInvoice.Code;
+
                 await _repository.UpdateAsync(newInvoice, invoiceDetails);
                 await AddStock(newInvoice);
+                await AddRelatedProductsToStock(newInvoice);
                 await AddReceivableAccount(newInvoice, addons);
                 await _repository.AddHistory(newInvoice, invoiceDetails, ActionConstants.Add, _userContextService.GetCurrentUserId());
+
                 _logger.LogInformation("El usuario '{UserId}', Ha actualizado la factura '{InvoiceId}', con estado de pago: '{PaymentStatus}', y estado '{Status}'", _userContextService.GetCurrentUserName(), savedInvoice.Id, Enum.GetName(newInvoice.PaymentStatus), Enum.GetName(newInvoice.Status));
             }
         }
@@ -282,7 +290,7 @@ namespace GPA.Business.Services.Invoice
             return new Stock
             {
                 TransactionType = TransactionType.Output,
-                Description = $"Venta {(invoice.Type == SaleType.Credit ? "a Crédito" : "al Contado")}",
+                Description = $"Venta {(invoice.Type == SaleType.Credit ? "a crédito" : "al contado")}",
                 Date = DateTime.Now,
                 ReasonId = (int)ReasonTypes.Sale,
                 CreatedAt = DateTime.Now,
@@ -299,6 +307,28 @@ namespace GPA.Business.Services.Invoice
             };
         }
 
+        private Stock AddRelatedProductsToStock(Guid invoiceId, SaleType saleType, IEnumerable<RawRelatedProduct> rawRelatedProducts, Guid createdBy)
+        {
+            return new Stock
+            {
+                TransactionType = TransactionType.Output,
+                Description = $"Materia prima en venta de producto {(saleType == SaleType.Credit ? "a crédito" : "al contado")}",
+                Date = DateTime.Now,
+                ReasonId = (int)ReasonTypes.RawMaterial,
+                CreatedAt = DateTime.Now,
+                CreatedBy = createdBy,
+                Status = StockStatus.Saved,
+                InvoiceId = invoiceId,
+                StockDetails = rawRelatedProducts.Select(x => new StockDetails
+                {
+                    Quantity = x.Quantity,
+                    ProductId = x.RelatedProductId,
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = createdBy,
+                }).ToList()
+            };
+        }
+
         private async Task AddStock(GPA.Common.Entities.Invoice.Invoice invoice)
         {
             if (invoice.Status == InvoiceStatus.Saved)
@@ -308,6 +338,54 @@ namespace GPA.Business.Services.Invoice
                 var entity = await _stockRepository.AddAsync(ToStock(invoice, invoice.CreatedBy.Value));
                 _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', por el usaurio '{UserId}'", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
             }
+        }
+
+        private async Task AddRelatedProductsToStock(GPA.Common.Entities.Invoice.Invoice invoice)
+        {
+            if (invoice.Status == InvoiceStatus.Saved)
+            {
+                var productsIds = invoice.InvoiceDetails.Select(x => x.ProductId).ToList();
+                if (productsIds is { Count: > 0 })
+                {
+                    var relatedProducts = await _productRepository.GetRawRelatedProductsByProductIdAsync(productsIds);
+
+                    if (relatedProducts?.Any() == true)
+                    {
+                        relatedProducts = IncrementRelatedProductQuantityBasedOnProductsInInvoice(invoice, relatedProducts);
+
+                        var createdBy = _userContextService.GetCurrentUserId();
+                        var entity = await _stockRepository.AddAsync(AddRelatedProductsToStock(invoice.Id, invoice.Type, relatedProducts, createdBy));
+                        _logger.LogInformation("Generando transacción de inventario '{StockId}', para la factura '{InvoiceId}', de productos relacionados, por el usaurio '{UserId}'", entity.Id, invoice.Id, _userContextService.GetCurrentUserName());
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<RawRelatedProduct> IncrementRelatedProductQuantityBasedOnProductsInInvoice(Common.Entities.Invoice.Invoice invoice, IEnumerable<RawRelatedProduct> relatedProducts)
+        {
+            var relatedProductsWithQuantityUpdated = new Dictionary<Guid, RawRelatedProduct>();
+            var productsInInvoice = invoice.InvoiceDetails.ToDictionary(k => k.ProductId, v => v);
+            var quantityInInvoice = 0;
+            foreach (var relatedProduct in relatedProducts)
+            {
+                quantityInInvoice = (productsInInvoice.ContainsKey(relatedProduct.ProductId) ? productsInInvoice[relatedProduct.ProductId].Quantity : 1);
+                if (!relatedProductsWithQuantityUpdated.ContainsKey(relatedProduct.RelatedProductId))
+                {
+                    relatedProductsWithQuantityUpdated.Add(relatedProduct.RelatedProductId, new RawRelatedProduct
+                    {
+                        Id = relatedProduct.Id,
+                        ProductId = relatedProduct.ProductId,
+                        RelatedProductId = relatedProduct.RelatedProductId,
+                        Quantity = relatedProduct.Quantity * quantityInInvoice
+                    });
+                    continue;
+                }
+
+                relatedProductsWithQuantityUpdated[relatedProduct.RelatedProductId].Quantity =
+                            relatedProductsWithQuantityUpdated[relatedProduct.RelatedProductId].Quantity + (relatedProduct.Quantity * quantityInInvoice);
+            }
+
+            return relatedProductsWithQuantityUpdated.Values.ToList();
         }
 
         private async Task AddReceivableAccount(GPA.Common.Entities.Invoice.Invoice invoice, Dictionary<Guid, List<RawAddons>> addons)

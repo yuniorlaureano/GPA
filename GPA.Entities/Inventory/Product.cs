@@ -1,5 +1,6 @@
 ﻿using GPA.Entities;
 using GPA.Entities.General;
+using GPA.Entities.Inventory;
 
 namespace GPA.Common.Entities.Inventory
 {
@@ -23,5 +24,6 @@ namespace GPA.Common.Entities.Inventory
 
         public ICollection<StockDetails> Stocks { get; set; }
         public ICollection<ProductAddon> ProductAddons { get; set; }
+        public ICollection<RelatedProduct> RelatedProducts { get; set; }
     }
 }

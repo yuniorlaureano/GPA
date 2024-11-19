@@ -1,4 +1,6 @@
-﻿namespace GPA.Common.DTOs.Inventory
+﻿using GPA.Dtos.Unmapped;
+
+namespace GPA.Common.DTOs.Inventory
 {
     public class ProductDto
     {
@@ -20,5 +22,6 @@
         public Guid? ProductLocationId { get; set; }
         public string ProductLocation { get; set; }
         public AddonDto[]? Addons { get; set; }
+        public IEnumerable<RawRelatedProductRead> RelatedProducts { get; set; }
     }
 }

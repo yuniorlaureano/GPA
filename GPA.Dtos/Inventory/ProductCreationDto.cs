@@ -1,4 +1,6 @@
-﻿namespace GPA.Common.DTOs.Inventory
+﻿using GPA.Dtos.Inventory;
+
+namespace GPA.Common.DTOs.Inventory
 {
     public class ProductCreationDto
     {
@@ -14,5 +16,6 @@
         public Guid CategoryId { get; set; }
         public Guid? ProductLocationId { get; set; }
         public Guid[]? Addons { get; set; }
+        public ProductCreationRelatedProductDto[]? RelatedProducts { get; set; }
     }
 }

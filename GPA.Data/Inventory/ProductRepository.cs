@@ -1,5 +1,6 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Common.Entities.Inventory;
+using GPA.Dtos.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Utils.Database;
 using Microsoft.Data.SqlClient;
@@ -16,6 +17,9 @@ namespace GPA.Data.Inventory
         Task SavePhoto(string fullFileName, Guid productId);
         Task SoftDelete(Guid productId);
         Task AddHistory(RawProduct product, string action, Guid by);
+        Task<IEnumerable<RawRelatedProductRead>> GetRelatedProductsByProductIdAsync(Guid id);
+        Task DeleteRelatedProductsByProductIdAsync(Guid productId);
+        Task<IEnumerable<RawRelatedProduct>> GetRawRelatedProductsByProductIdAsync(List<Guid> ids);
     }
 
     public class ProductRepository : Repository<Product>, IProductRepository
@@ -217,6 +221,49 @@ namespace GPA.Data.Inventory
             };
 
             await _context.Database.ExecuteSqlRawAsync(query, parameters.ToArray());
+        }
+
+        public async Task<IEnumerable<RawRelatedProductRead>> GetRelatedProductsByProductIdAsync(Guid id)
+        {
+            var query = @"
+                SELECT 
+	                 RP.[Id]
+                    ,RP.[ProductId]
+                    ,RP.[RelatedProductId]
+                    ,RP.[Quantity]
+	                ,P.Code
+	                ,P.[Name]
+	                ,P.Photo
+                FROM [gpa].[Inventory].[RelatedProducts] RP
+	                JOIN gpa.Inventory.Products P ON RP.[RelatedProductId] = P.Id
+                WHERE 
+	                RP.[ProductId] = @ProductID
+            ";
+
+            return await _context.Database.SqlQueryRaw<RawRelatedProductRead>(
+                query,
+                new SqlParameter("@ProductID", id)
+            ).ToListAsync();
+        }
+
+        public async Task<IEnumerable<RawRelatedProduct>> GetRawRelatedProductsByProductIdAsync(List<Guid> ids)
+        {
+            var query = @$"
+                SELECT 
+	                 [Id]
+                    ,[ProductId]
+                    ,[RelatedProductId]
+                    ,[Quantity]
+                FROM [gpa].[Inventory].[RelatedProducts]
+                WHERE [ProductId] IN({string.Join(",", ids.Select(id => $"'{id}'"))})
+                            ";
+
+            return await _context.Database.SqlQueryRaw<RawRelatedProduct>(query).ToListAsync();
+        }
+
+        public async Task DeleteRelatedProductsByProductIdAsync(Guid productId)
+        {
+            await _context.RelatedProducts.Where(x => x.ProductId == productId).ExecuteDeleteAsync();
         }
     }
 }

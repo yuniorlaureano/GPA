@@ -5,6 +5,7 @@ using GPA.Common.Entities.Inventory;
 using GPA.Data.Inventory;
 using GPA.Dtos.Audit;
 using GPA.Dtos.Inventory;
+using GPA.Dtos.Unmapped;
 using GPA.Entities.Unmapped.Inventory;
 using GPA.Services.General.BlobStorage;
 using GPA.Services.Security;
@@ -57,6 +58,7 @@ namespace GPA.Business.Services.Inventory
             var product = await _repository.GetProductAsync(id);
             var productDto = _mapper.Map<ProductDto>(product);
             productDto.Addons = await GetAddons(product);
+            productDto.RelatedProducts = await GetRelatedProducts(product);
             return productDto;
         }
 
@@ -75,9 +77,11 @@ namespace GPA.Business.Services.Inventory
             var newProduct = _mapper.Map<Product>(dto);
 
             MapAddons(newProduct, dto.Addons);
+            MapRelatedProducts(dto, newProduct);
             newProduct.CreatedBy = _userContextService.GetCurrentUserId();
             newProduct.CreatedAt = DateTimeOffset.UtcNow;
             newProduct.Code = _productCodeGenerator.GenerateCode();
+
             var savedProduct = await _repository.AddAsync(newProduct);
 
             var rawProduct = await _repository.GetProductAsync(savedProduct.Id);
@@ -98,6 +102,8 @@ namespace GPA.Business.Services.Inventory
             newProduct.Id = dto.Id.Value;
 
             await MapAddons(newProduct, dto.Addons, dto.Id.Value);
+            await MapRelatedProducts(newProduct, dto.RelatedProducts, dto.Id.Value);
+
             newProduct.UpdatedBy = _userContextService.GetCurrentUserId();
             newProduct.UpdatedAt = DateTimeOffset.UtcNow;
             newProduct.Code = savedProduct.Code;
@@ -143,6 +149,16 @@ namespace GPA.Business.Services.Inventory
             return _mapper.Map<AddonDto[]>(addons);
         }
 
+        private async Task<IEnumerable<RawRelatedProductRead>> GetRelatedProducts(RawProduct? product)
+        {
+            if (product == null)
+            {
+                return null;
+            }
+            var relatedProducts = await _repository.GetRelatedProductsByProductIdAsync(product.Id);
+            return relatedProducts;
+        }
+
         private void MapAddons(Product product, Guid[]? addons)
         {
             if (addons is { Length: > 0 })
@@ -159,6 +175,32 @@ namespace GPA.Business.Services.Inventory
             {
                 product.ProductAddons = addons.Select(
                     addon => new ProductAddon { AddonId = addon }).ToList();
+            }
+        }
+
+        private async Task MapRelatedProducts(Product product, ProductCreationRelatedProductDto[]? productCreationRelatedProductDtos, Guid productId)
+        {
+            await _repository.DeleteRelatedProductsByProductIdAsync(productId);
+
+            if (productCreationRelatedProductDtos is { Length: > 0 })
+            {
+                product.RelatedProducts = productCreationRelatedProductDtos.Select(x => new Entities.Inventory.RelatedProduct
+                {
+                    RelatedProductId = x.ProductId,
+                    Quantity = x.Quantity,
+                }).ToList();
+            }
+        }
+
+        private static void MapRelatedProducts(ProductCreationDto dto, Product newProduct)
+        {
+            if (dto.RelatedProducts is { Length: > 0 })
+            {
+                newProduct.RelatedProducts = dto.RelatedProducts.Select(x => new Entities.Inventory.RelatedProduct
+                {
+                    RelatedProductId = x.ProductId,
+                    Quantity = x.Quantity,
+                }).ToList();
             }
         }
     }
