@@ -158,7 +158,7 @@ namespace GPA.Business.Services.Invoice
 
             InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
 
-            invoice.PaymentStatus = PaymentCalculator.GetPaymentStatus(invoice, addons);
+            invoice.PaymentStatus = PaymentCalculator.GetPaymentStatus(invoice, addons);            
             invoice.CreatedBy = _userContextService.GetCurrentUserId();
             invoice.CreatedAt = DateTimeOffset.UtcNow;
             invoice.Date = DateTime.UtcNow;

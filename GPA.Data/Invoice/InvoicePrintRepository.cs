@@ -30,6 +30,7 @@ namespace GPA.Data.Invoice
                     ,INV.[Code]
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
+                    ,INV.[PaymentMethod]
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]

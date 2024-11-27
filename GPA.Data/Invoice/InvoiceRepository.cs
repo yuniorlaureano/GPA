@@ -165,6 +165,7 @@ namespace GPA.Data.Invoice
                     ,INV.Code
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
+                    ,INV.[PaymentMethod]
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
@@ -206,6 +207,7 @@ namespace GPA.Data.Invoice
                     ,INV.Code  
                     ,INV.[Payment]
                     ,INV.[PaymentStatus]
+                    ,INV.[PaymentMethod]
                     ,INV.[Date]
                     ,INV.[Note]
                     ,INV.[ClientId]
@@ -305,6 +307,7 @@ namespace GPA.Data.Invoice
                    ,[Payment]
                    ,[Code]
                    ,[PaymentStatus]
+                   ,[PaymentMethod]
                    ,[Date]
                    ,[Note]
                    ,[ClientId]
@@ -319,6 +322,7 @@ namespace GPA.Data.Invoice
                    ,@Payment
                    ,@Code
                    ,@PaymentStatus
+                   ,@PaymentMethod
                    ,@Date
                    ,@Note
                    ,@ClientId
@@ -350,6 +354,7 @@ namespace GPA.Data.Invoice
                ,new("@Payment", invoice.Payment)
                ,new("@Code", invoice.Code)
                ,new("@PaymentStatus", invoice.PaymentStatus)
+               ,new("@PaymentMethod", invoice.PaymentMethod)
                ,new("@Date", invoice.Date)
                ,new("@Note", invoice.Note ?? "")
                ,new("@ClientId", invoice.ClientId)
