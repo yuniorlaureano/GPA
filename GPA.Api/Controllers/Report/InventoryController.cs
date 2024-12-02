@@ -45,10 +45,18 @@ namespace GPA.Api.Controllers.Report
 
         [HttpGet("sales/print")]
         [ProfileFilter(path: $"{Apps.GPA}.{Modules.Reporting}.{Components.Report}", permission: Permissions.TransactionReport)]
-        public async Task<IActionResult> PrintSales([FromQuery] RequestFilterDto filter)
+        public async Task<IActionResult> GetSales([FromQuery] RequestFilterDto filter)
         {
             var report = await _stockReportsService.ExportSales(filter);
             return File(report, "application/pdf", "generated.pdf");
+        }
+
+        [HttpGet("sales")]
+        [ProfileFilter(path: $"{Apps.GPA}.{Modules.Reporting}.{Components.Report}", permission: Permissions.TransactionReport)]
+        public async Task<IActionResult> PrintSales([FromQuery] RequestFilterDto filter)
+        {
+            var report = await _stockReportsService.GetSales(filter);
+            return Ok(report);
         }
     }
 }

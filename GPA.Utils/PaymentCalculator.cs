@@ -30,6 +30,12 @@ namespace GPA.Utils
             }
         }
 
+        public static decimal GetToPayPayment(ICollection<InvoiceDetails> invoiceDetails, Dictionary<Guid, List<RawAddons>> addons)
+        {
+            var toPay = invoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons));
+            return toPay;
+        }
+
         public static PaymentStatus GetPaymentStatus(Invoice invoice, Dictionary<Guid, List<RawAddons>> addons)
         {
             if (invoice.Payment < invoice.InvoiceDetails.Sum(x => x.Quantity * GetNetPrice(x, addons)))

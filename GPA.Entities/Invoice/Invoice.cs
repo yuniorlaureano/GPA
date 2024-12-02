@@ -10,6 +10,7 @@ namespace GPA.Common.Entities.Invoice
         public SaleType Type { get; set; }
         public InvoiceStatus Status { get; set; }
         public decimal Payment { get; set; }
+        public decimal ToPay { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public DateTime Date { get; set; }

@@ -164,6 +164,7 @@ namespace GPA.Data.Invoice
                     ,INV.[Status]
                     ,INV.Code
                     ,INV.[Payment]
+                    ,INV.[ToPay]
                     ,INV.[PaymentStatus]
                     ,INV.[PaymentMethod]
                     ,INV.[Date]
@@ -206,6 +207,7 @@ namespace GPA.Data.Invoice
                     ,INV.[Status]
                     ,INV.Code  
                     ,INV.[Payment]
+                    ,INV.[ToPay]
                     ,INV.[PaymentStatus]
                     ,INV.[PaymentMethod]
                     ,INV.[Date]
@@ -305,6 +307,7 @@ namespace GPA.Data.Invoice
                    ([Type]
                    ,[Status]
                    ,[Payment]
+                   ,[ToPay]
                    ,[Code]
                    ,[PaymentStatus]
                    ,[PaymentMethod]
@@ -320,6 +323,7 @@ namespace GPA.Data.Invoice
                     @Type
                    ,@Status
                    ,@Payment
+                   ,@ToPay
                    ,@Code
                    ,@PaymentStatus
                    ,@PaymentMethod
@@ -352,6 +356,7 @@ namespace GPA.Data.Invoice
                 new("@Type", invoice.Type)
                ,new("@Status", invoice.Status)
                ,new("@Payment", invoice.Payment)
+               ,new("@ToPay", invoice.ToPay)
                ,new("@Code", invoice.Code)
                ,new("@PaymentStatus", invoice.PaymentStatus)
                ,new("@PaymentMethod", invoice.PaymentMethod)

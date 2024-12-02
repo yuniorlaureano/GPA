@@ -22,6 +22,7 @@ namespace GPA.Business.Services.Inventory
         Task<byte[]> ExportExistence(RequestFilterDto filter);
         Task<byte[]> ExportTransactions(RequestFilterDto filter);
         Task<byte[]> ExportSales(RequestFilterDto filter);
+        Task<IEnumerable<RawAllInvoice>> GetSales(RequestFilterDto filter);
     }
 
     public class InventoryService : IStockReportsService
@@ -69,8 +70,16 @@ namespace GPA.Business.Services.Inventory
         {
             _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
             var sales = await _repository.GetAllInvoicesAsync(filter);
+
+
+
             var htmlContent = await GetSaleTemplate(sales);
             return _reportPdfBase.GeneratePdf(htmlContent);
+        }
+
+        public async Task<IEnumerable<RawAllInvoice>> GetSales(RequestFilterDto filter)
+        {
+            return await _repository.GetAllInvoicesAsync(filter);
         }
 
         public async Task<byte[]> ExportExistence(RequestFilterDto filter)

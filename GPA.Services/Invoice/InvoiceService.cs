@@ -159,6 +159,7 @@ namespace GPA.Business.Services.Invoice
             InitializeInvoiceDetailWithAddons(invoice.InvoiceDetails, addons);
 
             invoice.PaymentStatus = PaymentCalculator.GetPaymentStatus(invoice, addons);            
+            invoice.ToPay = PaymentCalculator.GetToPayPayment(invoice.InvoiceDetails, addons);
             invoice.CreatedBy = _userContextService.GetCurrentUserId();
             invoice.CreatedAt = DateTimeOffset.UtcNow;
             invoice.Date = DateTime.UtcNow;
@@ -213,6 +214,7 @@ namespace GPA.Business.Services.Invoice
 
                 InitializeInvoiceDetailWithAddons(invoiceDetails, addons);
                 newInvoice.UpdatedBy = _userContextService.GetCurrentUserId();
+                newInvoice.ToPay = PaymentCalculator.GetToPayPayment(invoiceDetails, addons);
                 newInvoice.UpdatedAt = DateTimeOffset.UtcNow;
                 newInvoice.CreatedBy = savedInvoice.CreatedBy;
                 newInvoice.CreatedAt = savedInvoice.CreatedAt;
