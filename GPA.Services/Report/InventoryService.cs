@@ -1,5 +1,6 @@
 ﻿using GPA.Common.DTOs;
 using GPA.Data.Inventory;
+using GPA.Dtos.Invoice;
 using GPA.Entities.General;
 using GPA.Entities.Report;
 using GPA.Entities.Unmapped;
@@ -9,9 +10,11 @@ using GPA.Services.Report;
 using GPA.Services.Security;
 using GPA.Utils;
 using GPA.Utils.Caching;
+using GPA.Utils.Database;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 
 namespace GPA.Business.Services.Inventory
 {
@@ -71,9 +74,7 @@ namespace GPA.Business.Services.Inventory
             _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
             var sales = await _repository.GetAllInvoicesAsync(filter);
 
-
-
-            var htmlContent = await GetSaleTemplate(sales);
+            var htmlContent = await GetSaleTemplate(sales, filter);
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -306,23 +307,19 @@ namespace GPA.Business.Services.Inventory
             return template.Template.Replace("{{Content}}", content.ToString());
         }
 
-        private async Task<string> GetSaleTemplate(IEnumerable<RawAllInvoice> rawInvoices)
+        private async Task<string> GetSaleTemplate(IEnumerable<RawAllInvoice> rawInvoices, RequestFilterDto filter)
         {
             var content = new StringBuilder();
             foreach (var invoice in rawInvoices)
             {
                 content.Append($@"
-                    <tr class=""content"">
-                    <td>{GetSaleStatus(invoice.Status)}</td>
-                    <td>{invoice.Code}</td>
-                    <td>{GetSaleType(invoice.Type)}</td>
-                    <td>{invoice.Date.ToString("MM d yyyy")}</td>
-                    <td>{invoice.Note}</td>
-                    <td>{invoice.ClientName} {invoice.ClientLastName}</td>
-                    <td>{GetPaymentStatus(invoice.PaymentStatus)}</td>
-                    <td>{invoice.CreatedByName}</td>
-                    <td>{invoice.UpdatedByName}</td>
-                  </tr>");
+                     <tr>
+                      <td>{invoice.Code}</td>
+                      <td>{invoice.Date.ToString("MM d yyyy")}</td>
+                      <td>{invoice.ClientName} {invoice.ClientLastName}</td>
+                      <td>{GetPaymentMethod((PaymentMethod)invoice.PaymentMethod)}</td>
+                      <td>{invoice.ToPay.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                    </tr>");
             }
 
             var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.SALE_TEMPLATE, async () =>
@@ -335,9 +332,31 @@ namespace GPA.Business.Services.Inventory
                 throw new Exception("El template para el reporte no existe");
             }
 
-            return template.Template.Replace("{{Content}}", content.ToString());
-        }
+            var search = SearchHelper.ConvertSearchToString(filter);
+            var invoiceListFilter = JsonSerializer.Deserialize<InvoiceFilterDto>(search, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
 
+            return template.Template
+                .Replace("{{Content}}", content.ToString())
+                .Replace("{{Date}}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt", new CultureInfo("es-ES")))
+                .Replace("{{From}}", DetailedDateUtil.GetDetailedDateAsDateTime(invoiceListFilter.From).ToString("MM/dd/yyyy", new CultureInfo("es-ES")))
+                .Replace("{{To}}", DetailedDateUtil.GetDetailedDateAsDateTime(invoiceListFilter.From).ToString("MM/dd/yyyy", new CultureInfo("es-ES")));
+        } 
+
+        private string GetPaymentMethod(PaymentMethod paymentMethod)
+        {
+            return paymentMethod switch
+            {
+                PaymentMethod.Cash => "Efectivo",
+                PaymentMethod.BankTransfer => "Transferencia",
+                PaymentMethod.CreditCard => "Tarjeta",
+                PaymentMethod.Check => "Cheque",
+                PaymentMethod.Other => "Otro",
+                _ => ""
+            };
+        }
         private string GetSaleType(int transactionType)
         {
             return transactionType switch

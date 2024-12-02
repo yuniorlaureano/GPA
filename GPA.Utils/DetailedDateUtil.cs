@@ -13,5 +13,10 @@ namespace GPA.Utils
 
             return new DateOnly(date.Year, date.Month, date.Day);
         }
+
+        public static DateTime GetDetailedDateAsDateTime(DetailedDate? date)
+        {
+            return new DateTime(date.Year, date.Month, date.Day);
+        }
     }
 }
