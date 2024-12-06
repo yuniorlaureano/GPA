@@ -17,6 +17,7 @@ namespace GPA.Data.Inventory
         Task<IEnumerable<Existence>> GetAllExistenceAsync(RequestFilterDto filter);
         Task<IEnumerable<RawStock>> GetTransactionsAsync(RequestFilterDto filter);
         Task<IEnumerable<RawAllInvoice>> GetAllInvoicesAsync(RequestFilterDto filter);
+        Task<IEnumerable<RawPaymentByPaymentMethodSummary>> GetPaymentByPaymentMethodSummary(RequestFilterDto filter);
     }
 
     public class StockReportRepository : IStockReportRepository
@@ -149,7 +150,7 @@ namespace GPA.Data.Inventory
 	                JOIN [GPA].[Invoice].[Clients] CL ON INV.ClientId = CL.Id
                     LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
                     LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
-                WHERE 1 = 1 
+                WHERE 1 = 1 AND INV.[Status] = 1
                     {termFilter}
                     {dateFilter}
                     {statusFilter}
@@ -180,6 +181,51 @@ namespace GPA.Data.Inventory
             }
 
             return await _context.Database.SqlQueryRaw<RawAllInvoice>(query, parameters.ToArray()).ToListAsync();
+        }
+
+        public async Task<IEnumerable<RawPaymentByPaymentMethodSummary>> GetPaymentByPaymentMethodSummary(RequestFilterDto filter)
+        {
+            var (termFilter, dateFilter, statusFilter, typeFilter, invoiceListFilter) = GetInvoiceFilter(filter);
+
+            var query = @$"
+                SELECT 
+                     [PaymentMethod]
+                    ,SUM([ToPay]) Payment
+                FROM [GPA].[Invoice].[Invoices] INV
+                    JOIN [GPA].[Invoice].[Clients] CL ON INV.ClientId = CL.Id
+                    LEFT JOIN [GPA].[Security].[Users] USR1 ON USR1.Id = INV.CreatedBy
+                    LEFT JOIN [GPA].[Security].[Users] USR2 ON USR2.Id = INV.UpdatedBy
+                WHERE 1 = 1 AND INV.[Status] = 1
+                    {termFilter}
+                    {dateFilter}
+                    {statusFilter}
+                    {typeFilter}
+                GROUP BY PaymentMethod ";
+
+            var (from, to, status, saleType, term) = GetInvoiceFilterParameter(invoiceListFilter);
+            var parameters = new List<SqlParameter>();
+
+            if (termFilter is { Length: > 0 })
+            {
+                parameters.Add(term);
+            }
+
+            if (dateFilter is { Length: > 0 })
+            {
+                parameters.AddRange([from, to]);
+            }
+
+            if (statusFilter is { Length: > 0 })
+            {
+                parameters.Add(status);
+            }
+
+            if (typeFilter is { Length: > 0 })
+            {
+                parameters.Add(saleType);
+            }
+
+            return await _context.Database.SqlQueryRaw<RawPaymentByPaymentMethodSummary>(query, parameters.ToArray()).ToListAsync();
         }
 
         private (TransactionsFilterDto? transactionsFilterDto, string dateFilter, string termFilter, string statusFilter, string transactionTypeFilter, string reasonFilter) SetStockFilterParametersIfNotEmpty(RequestFilterDto filter)

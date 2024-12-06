@@ -1,4 +1,5 @@
 ﻿using GPA.Common.DTOs;
+using GPA.Common.Entities.Invoice;
 using GPA.Data.Inventory;
 using GPA.Dtos.Invoice;
 using GPA.Entities.General;
@@ -73,8 +74,9 @@ namespace GPA.Business.Services.Inventory
         {
             _logger.LogInformation("El usuario '{UserId}' está generando el reporte de ventas", _userContextService.GetCurrentUserId());
             var sales = await _repository.GetAllInvoicesAsync(filter);
+            var salesSummary = await _repository.GetPaymentByPaymentMethodSummary(filter);
 
-            var htmlContent = await GetSaleTemplate(sales, filter);
+            var htmlContent = await GetSaleTemplate(sales, salesSummary, filter);
             return _reportPdfBase.GeneratePdf(htmlContent);
         }
 
@@ -307,9 +309,10 @@ namespace GPA.Business.Services.Inventory
             return template.Template.Replace("{{Content}}", content.ToString());
         }
 
-        private async Task<string> GetSaleTemplate(IEnumerable<RawAllInvoice> rawInvoices, RequestFilterDto filter)
+        private async Task<string> GetSaleTemplate(IEnumerable<RawAllInvoice> rawInvoices, IEnumerable<RawPaymentByPaymentMethodSummary> summary, RequestFilterDto filter)
         {
             var content = new StringBuilder();
+            var summaryContent = new StringBuilder();
             foreach (var invoice in rawInvoices)
             {
                 content.Append($@"
@@ -320,6 +323,17 @@ namespace GPA.Business.Services.Inventory
                       <td>{GetPaymentMethod((PaymentMethod)invoice.PaymentMethod)}</td>
                       <td>{invoice.ToPay.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
                     </tr>");
+            }
+
+            decimal total = 0.0M;
+            foreach (var sum in summary)
+            {
+                summaryContent.Append($@"
+                     <tr>
+                      <td>{GetPaymentMethod((PaymentMethod)sum.PaymentMethod)}</td>
+                      <td>{sum.Payment.ToString("C2", CultureInfo.GetCultureInfo("en-US"))}</td>
+                    </tr>");
+                total = total + sum.Payment;
             }
 
             var template = await _cache.GetOrCreate(CacheType.ReportTemplates, TemplateConstants.SALE_TEMPLATE, async () =>
@@ -342,7 +356,9 @@ namespace GPA.Business.Services.Inventory
                 .Replace("{{Content}}", content.ToString())
                 .Replace("{{Date}}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt", new CultureInfo("es-ES")))
                 .Replace("{{From}}", DetailedDateUtil.GetDetailedDateAsDateTime(invoiceListFilter.From).ToString("MM/dd/yyyy", new CultureInfo("es-ES")))
-                .Replace("{{To}}", DetailedDateUtil.GetDetailedDateAsDateTime(invoiceListFilter.From).ToString("MM/dd/yyyy", new CultureInfo("es-ES")));
+                .Replace("{{To}}", DetailedDateUtil.GetDetailedDateAsDateTime(invoiceListFilter.To).ToString("MM/dd/yyyy", new CultureInfo("es-ES")))
+                .Replace("{{Summary}}", summaryContent.ToString())
+                .Replace("{{SummaryTotal}}", total.ToString("C2", CultureInfo.GetCultureInfo("en-US")));
         } 
 
         private string GetPaymentMethod(PaymentMethod paymentMethod)
